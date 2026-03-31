@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.venv/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+data/raw/*.csv
+data/raw/*.json
+data/raw/*.html
+data/processed/*.db
+logs/*.log

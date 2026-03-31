@@ -1,0 +1,34 @@
+GRANDCHASE META ANALYZER QUICKSTART
+
+1. Bootstrap once
+   bash scripts/bootstrap.sh
+
+2. Run the full pipeline
+   bash scripts/run_pipeline.sh
+
+3. Verify the local environment
+   bash scripts/verify_setup.sh
+
+4. Open the notebook
+   .venv/bin/python -m jupyter notebook notebooks/analysis.ipynb
+
+5. Optional local-LLM tagging
+   edit .env and set ENABLE_LLM_TAGGING=1
+   .venv/bin/python -m grandchase_meta_analyzer.cli tag-skills
+
+6. Local explorer port policy
+   bash scripts/run_explorer.sh
+   fixed default port: 8506
+
+7. GitHub Pages static atlas
+   make pages
+   push the repo to GitHub
+   enable GitHub Pages with GitHub Actions
+   workflow: .github/workflows/pages.yml
+   commit data/processed/grandchase.db when you want hosted data refreshed
+
+8. Free hosted Streamlit deployment
+   push the repo to GitHub
+   deploy on Streamlit Community Cloud
+   app entrypoint: streamlit_app.py
+   keep data/processed/grandchase.db committed when you want hosted data updated

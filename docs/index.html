@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GrandChase Atlas</title>
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <header class="hero-shell">
+      <div class="hero-panel">
+        <p class="eyebrow">GitHub Pages Static Atlas</p>
+        <h1>GrandChase Atlas</h1>
+        <p class="lede">
+          A phone-friendly, read-only export of the local SQLite atlas. This
+          version runs fully on static hosting, so it works on GitHub Pages
+          without your Mac running a server.
+        </p>
+        <div class="meta-row">
+          <span class="meta-chip" id="buildStamp"
+            >Loading build metadata...</span
+          >
+          <span class="meta-chip" id="sourceStamp"
+            >Preparing exported atlas...</span
+          >
+        </div>
+      </div>
+    </header>
+
+    <nav class="view-nav" aria-label="Atlas views">
+      <button class="view-tab is-active" data-view="overview">Overview</button>
+      <button class="view-tab" data-view="search">Search</button>
+      <button class="view-tab" data-view="hero">Hero Dossier</button>
+      <button class="view-tab" data-view="compare">Compare</button>
+    </nav>
+
+    <main class="page-shell">
+      <div class="status-banner" id="statusBanner">
+        Loading exported atlas...
+      </div>
+
+      <section class="view-panel" id="view-overview">
+        <div class="card-grid" id="overviewCards"></div>
+
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Ranked Snapshot</p>
+                <h2>Top Heroes</h2>
+              </div>
+              <p class="panel-copy">
+                Current leaderboard from the exported local database.
+              </p>
+            </div>
+            <div id="topHeroesTable"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Roster Shape</p>
+                <h2>Role Summary</h2>
+              </div>
+              <p class="panel-copy">Average and best scores by role.</p>
+            </div>
+            <div id="roleSummaryTable"></div>
+          </section>
+        </div>
+
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Variant Spread</p>
+                <h2>Variant Mix</h2>
+              </div>
+              <p class="panel-copy">
+                Base, Former (T), and Special (S) page coverage.
+              </p>
+            </div>
+            <div id="variantMixList" class="stack-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Coverage Leaders</p>
+                <h2>Most Documented Heroes</h2>
+              </div>
+              <p class="panel-copy">
+                Heroes with the most captured section blocks.
+              </p>
+            </div>
+            <div id="coverageLeadersTable"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view-panel is-hidden" id="view-search">
+        <section class="panel control-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Global Search</p>
+              <h2>Captured Pages</h2>
+            </div>
+            <p class="panel-copy">
+              Search sections, parsed skills, and feature flags from the
+              exported atlas.
+            </p>
+          </div>
+          <div class="control-grid">
+            <label>
+              <span>Hero</span>
+              <input id="searchHero" type="text" placeholder="Ronan" />
+            </label>
+            <label>
+              <span>Keyword</span>
+              <input
+                id="searchText"
+                type="text"
+                placeholder="seconds, shield, overwrite..."
+              />
+            </label>
+            <label>
+              <span>Section</span>
+              <input
+                id="searchSection"
+                type="text"
+                placeholder="Patch Details"
+              />
+            </label>
+            <label>
+              <span>Variant Kind</span>
+              <select id="searchKind"></select>
+            </label>
+            <label>
+              <span>Result Limit</span>
+              <input
+                id="searchLimit"
+                type="number"
+                min="5"
+                max="100"
+                step="5"
+                value="25"
+              />
+            </label>
+          </div>
+        </section>
+
+        <div class="card-grid" id="searchCards"></div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Section Results</p>
+              <h2>Heading Blocks</h2>
+            </div>
+            <p class="panel-copy">
+              Full captured section text with variant labels.
+            </p>
+          </div>
+          <div id="searchSections"></div>
+        </section>
+
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Parsed Skills</p>
+                <h2>Skill Rows</h2>
+              </div>
+              <p class="panel-copy">
+                Parsed skill entries from exported Namu sections.
+              </p>
+            </div>
+            <div id="searchSkills"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Feature Flags</p>
+                <h2>System Markers</h2>
+              </div>
+              <p class="panel-copy">
+                Availability markers such as Chaser or Transcendence.
+              </p>
+            </div>
+            <div id="searchFeatures"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view-panel is-hidden" id="view-hero">
+        <section class="panel control-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Single-Hero View</p>
+              <h2>Hero Dossier</h2>
+            </div>
+            <p class="panel-copy">
+              Browse variants, parsed skills, features, and captured section
+              blocks for one hero at a time.
+            </p>
+          </div>
+          <div class="control-grid two-column">
+            <label>
+              <span>Hero</span>
+              <select id="heroSelect"></select>
+            </label>
+            <label>
+              <span>Variant</span>
+              <select id="heroVariantSelect"></select>
+            </label>
+          </div>
+        </section>
+
+        <div class="card-grid" id="heroCards"></div>
+
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Variant Snapshot</p>
+                <h2>Features</h2>
+              </div>
+              <p class="panel-copy">
+                System availability markers for the selected hero scope.
+              </p>
+            </div>
+            <div id="heroFeatures"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Variant Snapshot</p>
+                <h2>Parsed Skills</h2>
+              </div>
+              <p class="panel-copy">
+                Skill rows with visible Base, Former (T), and Special (S)
+                labels.
+              </p>
+            </div>
+            <div id="heroSkills"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Captured Section Text</p>
+              <h2>Section Blocks</h2>
+            </div>
+            <p class="panel-copy">
+              This static site keeps the section browser and hero dossier, but
+              does not yet replicate the full Streamlit comparison workspace.
+            </p>
+          </div>
+          <div id="heroSections"></div>
+        </section>
+      </section>
+
+      <section class="view-panel is-hidden" id="view-compare">
+        <section class="panel control-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Head To Head</p>
+              <h2>Hero Compare</h2>
+            </div>
+            <p class="panel-copy">
+              Compare roster role, meta rank, tiers, variant coverage, and
+              sampled skills side by side in the static Pages atlas.
+            </p>
+          </div>
+          <div class="control-grid two-column">
+            <label>
+              <span>Left Hero</span>
+              <select id="compareLeftHero"></select>
+            </label>
+            <label>
+              <span>Right Hero</span>
+              <select id="compareRightHero"></select>
+            </label>
+          </div>
+        </section>
+
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header compare-panel-header">
+              <div>
+                <p class="panel-kicker">Left Profile</p>
+                <h2 id="compareLeftHeading">Left Hero</h2>
+              </div>
+            </div>
+            <div id="compareLeftProfile"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header compare-panel-header">
+              <div>
+                <p class="panel-kicker">Right Profile</p>
+                <h2 id="compareRightHeading">Right Hero</h2>
+              </div>
+            </div>
+            <div id="compareRightProfile"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Head To Head</p>
+              <h2>Comparison Matrix</h2>
+            </div>
+            <p class="panel-copy">
+              Lower meta rank is better. Score and coverage values favor the
+              higher side.
+            </p>
+          </div>
+          <div id="compareSummaryTable"></div>
+        </section>
+
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header compare-panel-header">
+              <div>
+                <p class="panel-kicker">Left Hero</p>
+                <h2>Sample Skills</h2>
+              </div>
+            </div>
+            <div id="compareLeftSkills"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header compare-panel-header">
+              <div>
+                <p class="panel-kicker">Right Hero</p>
+                <h2>Sample Skills</h2>
+              </div>
+            </div>
+            <div id="compareRightSkills"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "bootstrap",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/bootstrap.sh"],
+      "group": "build"
+    },
+    {
+      "label": "run pipeline",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/run_pipeline.sh"],
+      "group": "build"
+    },
+    {
+      "label": "normalize only",
+      "type": "shell",
+      "command": ".venv/bin/python",
+      "args": ["scripts/04_normalize_and_build_db.py"]
+    },
+    {
+      "label": "launch explorer",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/run_explorer.sh"],
+      "isBackground": true
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": ".venv/bin/python",
+      "args": ["-m", "ruff", "check", "src", "tests"],
+      "group": "test"
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": ".venv/bin/python",
+      "args": ["-m", "pytest"],
+      "group": "test"
+    },
+    {
+      "label": "verify setup",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/verify_setup.sh"]
+    }
+  ]
+}
