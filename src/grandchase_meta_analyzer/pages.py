@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,6 +9,7 @@ from typing import Any
 
 import pandas as pd
 
+from .explorer_skill_details import parse_patch_entries, split_patch_details
 from .paths import PROJECT_ROOT
 from .settings import RuntimeSettings
 
@@ -21,6 +23,26 @@ VARIANT_KIND_LABELS = {
     "former": "Former",
     "special": "Special",
 }
+PATCH_COLUMNS = [
+    "name_en",
+    "name_ko",
+    "variant_id",
+    "variant_title",
+    "variant_kind",
+    "variant_label",
+    "heading_title",
+    "section_path",
+    "source_name",
+    "source_page",
+    "patch_block_key",
+    "patch_entry_index",
+    "patch_entry_count_in_block",
+    "patch_date",
+    "patch_date_iso",
+    "patch_change_type",
+    "patch_change",
+    "body_excerpt",
+]
 
 
 def _read_sql(connection: sqlite3.Connection, query: str) -> pd.DataFrame:
@@ -29,6 +51,10 @@ def _read_sql(connection: sqlite3.Connection, query: str) -> pd.DataFrame:
 
 def _preview_series(series: pd.Series, length: int) -> pd.Series:
     return series.str.replace(r"\s+", " ", regex=True).str.strip().str.slice(0, length)
+
+
+def _preview_text(text: str, length: int) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()[:length]
 
 
 def _format_variant_kind_label(variant_kind: str, variant_suffix: str = "") -> str:
@@ -81,6 +107,164 @@ def _json_default(value: Any) -> Any:
     if isinstance(value, Path):
         return str(value)
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
+def _parse_patch_date_iso(date_text: str) -> str:
+    cleaned = str(date_text or "").strip()
+    if not cleaned:
+        return ""
+    try:
+        return datetime.strptime(cleaned, "%B %d, %Y").date().isoformat()
+    except ValueError:
+        return ""
+
+
+def _classify_patch_change_type(change: str) -> str:
+    lowered = str(change or "").strip().lower()
+    if not lowered:
+        return "Change"
+
+    has_buff = bool(re.search(r"\bbuff\b", lowered))
+    has_nerf = bool(re.search(r"\bnerf\b", lowered))
+    has_hotfix = bool(re.search(r"\bhot\s*fix\b", lowered))
+    has_fix = bool(re.search(r"\bfix(?:ed)?\b", lowered))
+    has_remake = bool(re.search(r"\b(remake|rework|renewal)\b", lowered))
+    has_adjustment = bool(re.search(r"\b(other|others|adjust|adjustment)\b", lowered))
+
+    if has_buff and has_nerf:
+        return "Mixed"
+    if has_hotfix:
+        return "Hotfix"
+    if has_fix:
+        return "Fix"
+    if has_remake:
+        return "Remake"
+    if has_buff:
+        return "Buff"
+    if has_nerf:
+        return "Nerf"
+    if has_adjustment:
+        return "Adjustment"
+    return "Change"
+
+
+def _extract_patch_entries_from_sections(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(columns=PATCH_COLUMNS)
+
+    rows: list[dict[str, Any]] = []
+    for row in frame.itertuples(index=False):
+        content = str(getattr(row, "content", "") or "")
+        body_text, patch_text = split_patch_details(content)
+        if not patch_text:
+            continue
+
+        patch_entries = parse_patch_entries(patch_text)
+        if not patch_entries:
+            continue
+
+        heading_title = str(getattr(row, "heading_title", "") or "")
+        section_path = str(getattr(row, "section_path", "") or "")
+        source_name = (
+            heading_title
+            or section_path
+            or str(getattr(row, "variant_title", "") or "Variant")
+        )
+        patch_block_key = "::".join(
+            [
+                str(getattr(row, "variant_id", "")),
+                heading_title,
+                section_path,
+            ]
+        )
+
+        for index, entry in enumerate(patch_entries, start=1):
+            rows.append(
+                {
+                    "name_en": str(getattr(row, "name_en", "") or ""),
+                    "name_ko": str(getattr(row, "name_ko", "") or ""),
+                    "variant_id": getattr(row, "variant_id", ""),
+                    "variant_title": str(getattr(row, "variant_title", "") or ""),
+                    "variant_kind": str(getattr(row, "variant_kind", "") or ""),
+                    "variant_label": str(getattr(row, "variant_label", "") or ""),
+                    "heading_title": heading_title,
+                    "section_path": section_path,
+                    "source_name": source_name,
+                    "source_page": str(getattr(row, "source_page", "") or ""),
+                    "patch_block_key": patch_block_key,
+                    "patch_entry_index": index,
+                    "patch_entry_count_in_block": len(patch_entries),
+                    "patch_date": entry.date or "Undated",
+                    "patch_date_iso": _parse_patch_date_iso(entry.date),
+                    "patch_change_type": _classify_patch_change_type(entry.change),
+                    "patch_change": str(entry.change or "").strip(),
+                    "body_excerpt": _preview_text(body_text or source_name, 220),
+                }
+            )
+
+    if not rows:
+        return pd.DataFrame(columns=PATCH_COLUMNS)
+
+    patch_entries_df = pd.DataFrame(rows)
+    patch_entries_df = patch_entries_df.drop_duplicates(
+        subset=[
+            "patch_block_key",
+            "patch_date",
+            "patch_change",
+        ]
+    ).reset_index(drop=True)
+    patch_entries_df = patch_entries_df.sort_values(
+        [
+            "patch_date_iso",
+            "patch_date",
+            "name_en",
+            "variant_title",
+            "source_name",
+            "patch_entry_index",
+        ],
+        ascending=[False, False, True, True, True, True],
+        na_position="last",
+    ).reset_index(drop=True)
+    return patch_entries_df
+
+
+def _summarize_patch_coverage(patch_entries_df: pd.DataFrame) -> pd.DataFrame:
+    if patch_entries_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "name_en",
+                "patch_entries",
+                "patch_blocks",
+                "variants",
+                "latest_patch_date",
+                "latest_patch_type",
+            ]
+        )
+
+    latest_rows = patch_entries_df.drop_duplicates(subset=["name_en"])[
+        ["name_en", "patch_date", "patch_change_type"]
+    ].rename(
+        columns={
+            "patch_date": "latest_patch_date",
+            "patch_change_type": "latest_patch_type",
+        }
+    )
+    coverage_df = (
+        patch_entries_df.groupby("name_en", dropna=False)
+        .agg(
+            patch_entries=("patch_change", "count"),
+            patch_blocks=("patch_block_key", "nunique"),
+            variants=("variant_title", "nunique"),
+        )
+        .reset_index()
+        .merge(latest_rows, on="name_en", how="left")
+        .sort_values(
+            ["patch_entries", "patch_blocks", "name_en"],
+            ascending=[False, False, True],
+        )
+        .reset_index(drop=True)
+    )
+    return coverage_df
 
 
 def build_pages_payload(database_path: Path) -> dict[str, Any]:
@@ -170,6 +354,7 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             )
         )
         sections_df["content_preview"] = _preview_series(sections_df["content"], 320)
+        patch_entries_df = _extract_patch_entries_from_sections(sections_df)
 
         skills_df = _apply_variant_display_columns(
             _read_sql(
@@ -221,9 +406,17 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             )
         )
 
-    patch_df = sections_df[
-        sections_df["section_path"].str.contains("Patch Details", case=False, na=False)
-    ].copy()
+    patch_blocks_df = (
+        patch_entries_df.drop_duplicates(subset=["patch_block_key"]).copy()
+        if not patch_entries_df.empty
+        else patch_entries_df.copy()
+    )
+    patch_coverage_df = _summarize_patch_coverage(patch_entries_df)
+    patch_counts_by_hero_df = (
+        patch_coverage_df[["name_en", "patch_blocks", "patch_entries"]].copy()
+        if not patch_coverage_df.empty
+        else pd.DataFrame(columns=["name_en", "patch_blocks", "patch_entries"])
+    )
 
     top_heroes_df = (
         heroes_df[
@@ -261,18 +454,18 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
         .agg(
             variants=("variant_title", "nunique"),
             section_blocks=("heading_title", "count"),
-            patch_blocks=(
-                "section_path",
-                lambda values: values.str.contains(
-                    "Patch Details", case=False, na=False
-                ).sum(),
-            ),
         )
         .reset_index()
+        .merge(patch_counts_by_hero_df, on="name_en", how="left")
+        .fillna({"patch_blocks": 0, "patch_entries": 0})
         .sort_values(["section_blocks", "variants"], ascending=[False, False])
         .reset_index(drop=True)
         .head(20)
     )
+    if not section_coverage_df.empty:
+        section_coverage_df[["patch_blocks", "patch_entries"]] = section_coverage_df[
+            ["patch_blocks", "patch_entries"]
+        ].astype(int)
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -286,17 +479,20 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             "section_count": int(len(sections_df.index)),
             "skill_count": int(len(skills_df.index)),
             "feature_count": int(len(features_df.index)),
-            "patch_block_count": int(len(patch_df.index)),
+            "patch_block_count": int(len(patch_blocks_df.index)),
+            "patch_entry_count": int(len(patch_entries_df.index)),
         },
         "top_heroes": _to_records(top_heroes_df),
         "role_summary": _to_records(role_summary_df),
         "variant_mix": _to_records(variant_mix_df),
         "section_coverage": _to_records(section_coverage_df),
+        "patch_coverage": _to_records(patch_coverage_df.head(20)),
         "heroes": _to_records(heroes_df),
         "variants": _to_records(variants_df),
         "sections": _to_records(sections_df),
         "skills": _to_records(skills_df),
         "features": _to_records(features_df),
+        "patches": _to_records(patch_entries_df),
     }
 
 
@@ -326,4 +522,5 @@ def export_pages_site(
         "skill_count": payload["summary"]["skill_count"],
         "feature_count": payload["summary"]["feature_count"],
         "patch_block_count": payload["summary"]["patch_block_count"],
+        "patch_entry_count": payload["summary"]["patch_entry_count"],
     }

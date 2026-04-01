@@ -25,6 +25,7 @@ function cacheElements() {
   elements.coverageLeadersTable = document.querySelector(
     "#coverageLeadersTable",
   );
+  elements.patchCoverageTable = document.querySelector("#patchCoverageTable");
 
   elements.searchHero = document.querySelector("#searchHero");
   elements.searchText = document.querySelector("#searchText");
@@ -32,6 +33,7 @@ function cacheElements() {
   elements.searchKind = document.querySelector("#searchKind");
   elements.searchLimit = document.querySelector("#searchLimit");
   elements.searchCards = document.querySelector("#searchCards");
+  elements.searchPatches = document.querySelector("#searchPatches");
   elements.searchSections = document.querySelector("#searchSections");
   elements.searchSkills = document.querySelector("#searchSkills");
   elements.searchFeatures = document.querySelector("#searchFeatures");
@@ -41,6 +43,7 @@ function cacheElements() {
   elements.heroCards = document.querySelector("#heroCards");
   elements.heroFeatures = document.querySelector("#heroFeatures");
   elements.heroSkills = document.querySelector("#heroSkills");
+  elements.heroPatches = document.querySelector("#heroPatches");
   elements.heroSections = document.querySelector("#heroSections");
 
   elements.compareLeftHero = document.querySelector("#compareLeftHero");
@@ -253,9 +256,9 @@ function renderOverview() {
       meta: "system availability markers",
     },
     {
-      label: "Patch Blocks",
-      value: summary.patch_block_count,
-      meta: "captured patch detail sections",
+      label: "Patch Entries",
+      value: summary.patch_entry_count,
+      meta: `${formatNumber(summary.patch_block_count)} captured blocks with dated balance history`,
     },
   ]);
 
@@ -290,7 +293,21 @@ function renderOverview() {
     ["variants", "Variants"],
     ["section_blocks", "Sections"],
     ["patch_blocks", "Patch Blocks"],
+    ["patch_entries", "Patch Entries"],
   ]);
+
+  renderTable(
+    elements.patchCoverageTable,
+    state.payload.patch_coverage,
+    [
+      ["name_en", "Hero"],
+      ["patch_entries", "Patch Entries"],
+      ["patch_blocks", "Patch Blocks"],
+      ["latest_patch_date", "Latest Patch"],
+      ["latest_patch_type", "Latest Type"],
+    ],
+    "No parsed balance history was exported.",
+  );
 }
 
 function renderSearch() {
@@ -312,17 +329,20 @@ function renderSearch() {
   let sections = state.payload.sections.slice();
   let skills = state.payload.skills.slice();
   let features = state.payload.features.slice();
+  let patches = state.payload.patches.slice();
 
   if (heroQuery) {
     sections = sections.filter((row) => matchesHero(row, heroQuery));
     skills = skills.filter((row) => matchesHero(row, heroQuery));
     features = features.filter((row) => matchesHero(row, heroQuery));
+    patches = patches.filter((row) => matchesHero(row, heroQuery));
   }
 
   if (kind) {
     sections = sections.filter((row) => row.variant_kind === kind);
     skills = skills.filter((row) => row.variant_kind === kind);
     features = features.filter((row) => row.variant_kind === kind);
+    patches = patches.filter((row) => row.variant_kind === kind);
   }
 
   if (sectionQuery) {
@@ -330,6 +350,12 @@ function renderSearch() {
       (row) =>
         includesNormalized(row.section_path, sectionQuery) ||
         includesNormalized(row.heading_title, sectionQuery),
+    );
+    patches = patches.filter(
+      (row) =>
+        includesNormalized(row.section_path, sectionQuery) ||
+        includesNormalized(row.heading_title, sectionQuery) ||
+        includesNormalized(row.source_name, sectionQuery),
     );
   }
 
@@ -349,6 +375,13 @@ function renderSearch() {
         includesNormalized(row.feature_key, textQuery) ||
         includesNormalized(row.feature_value, textQuery),
     );
+    patches = patches.filter(
+      (row) =>
+        includesNormalized(row.patch_change, textQuery) ||
+        includesNormalized(row.patch_change_type, textQuery) ||
+        includesNormalized(row.source_name, textQuery) ||
+        includesNormalized(row.body_excerpt, textQuery),
+    );
   }
 
   renderCards(elements.searchCards, [
@@ -365,12 +398,17 @@ function renderSearch() {
     },
     {
       label: "Patch Matches",
-      value: sections.filter((row) =>
-        includesNormalized(row.section_path, "patch details"),
-      ).length,
-      meta: "matching patch sections",
+      value: patches.length,
+      meta: "dated balance changes",
     },
   ]);
+
+  renderPatchTimeline(
+    elements.searchPatches,
+    patches.slice(0, limit),
+    "No matching balance-history entries.",
+    { highlightTerms },
+  );
 
   renderSectionEntries(
     elements.searchSections,
@@ -418,6 +456,9 @@ function renderHero() {
   const heroFeatures = state.payload.features.filter(
     (row) => row.name_en === heroName,
   );
+  const heroPatchEntries = state.payload.patches.filter(
+    (row) => row.name_en === heroName,
+  );
   const heroRecord =
     state.payload.heroes.find((row) => row.name_en === heroName) || {};
 
@@ -430,14 +471,17 @@ function renderHero() {
   const scopedFeatures = selectedVariantTitle
     ? heroFeatures.filter((row) => row.variant_title === selectedVariantTitle)
     : heroFeatures;
+  const scopedPatches = selectedVariantTitle
+    ? heroPatchEntries.filter(
+        (row) => row.variant_title === selectedVariantTitle,
+      )
+    : heroPatchEntries;
 
-  const patchSections = scopedSections.filter((row) =>
-    includesNormalized(row.section_path, "patch details"),
-  );
   const variantCount = dedupeBy(
     heroSections,
     (row) => row.variant_title,
   ).length;
+  const latestPatchDate = heroPatchEntries[0]?.patch_date || "-";
   const currentVariantLabel = selectedVariantTitle
     ? (
         heroSections.find(
@@ -487,9 +531,12 @@ function renderHero() {
     { label: "Skills", value: scopedSkills.length, meta: "parsed skill rows" },
     { label: "Features", value: scopedFeatures.length, meta: "system markers" },
     {
-      label: "Patch Blocks",
-      value: patchSections.length,
-      meta: "matching patch sections",
+      label: "Patch Entries",
+      value: scopedPatches.length,
+      meta:
+        latestPatchDate === "-"
+          ? "no parsed balance history"
+          : `latest ${latestPatchDate}`,
     },
   ]);
 
@@ -508,6 +555,13 @@ function renderHero() {
     elements.heroSkills,
     scopedSkills,
     "No parsed skill rows were exported for this hero scope.",
+    { expandedByDefault: true },
+  );
+
+  renderPatchTimeline(
+    elements.heroPatches,
+    scopedPatches,
+    "No parsed balance history was exported for this hero scope.",
     { expandedByDefault: true },
   );
 
@@ -654,6 +708,55 @@ function renderSkillCards(container, rows, emptyText, options = {}) {
   `;
 }
 
+function renderPatchTimeline(container, rows, emptyText, options = {}) {
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
+    return;
+  }
+
+  const expandedByDefault = Boolean(options.expandedByDefault);
+  const highlightTerms = options.highlightTerms || [];
+
+  container.innerHTML = `
+    <div class="patch-grid">
+      ${rows
+        .map((row, index) => {
+          const openAttribute = expandedByDefault && index < 4 ? " open" : "";
+          const patchDate = row.patch_date || "Undated";
+          const patchType = row.patch_change_type || "Change";
+          const patchPreview = formatReadablePatchPreview(
+            row.patch_change || "",
+            240,
+          );
+          const sourceLabel =
+            row.source_name || row.heading_title || "Captured block";
+
+          return `
+            <details class="patch-entry"${openAttribute}>
+              <summary class="patch-summary">
+                <div class="patch-topline">
+                  <div class="patch-title-block">
+                    <p class="patch-overline">${highlightText(`${row.name_en} · ${row.variant_label}`, highlightTerms)}</p>
+                    <h3>${highlightText(patchDate, highlightTerms)}</h3>
+                  </div>
+                  <span class="patch-type-chip patch-type-${patchTypeClassName(patchType)}">${escapeHtml(patchType)}</span>
+                </div>
+                <p class="patch-source">${highlightText(sourceLabel, highlightTerms)}</p>
+                <p class="patch-change-preview">${highlightText(patchPreview, highlightTerms)}</p>
+              </summary>
+              <div class="patch-body">
+                ${row.body_excerpt ? `<p class="patch-context">${highlightText(row.body_excerpt, highlightTerms)}</p>` : ""}
+                <p class="patch-change">${highlightText(formatReadablePatchText(row.patch_change || ""), highlightTerms)}</p>
+                ${renderSourceLink(row.source_page)}
+              </div>
+            </details>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 function renderSectionEntries(container, rows, emptyText, options = {}) {
   if (!rows.length) {
     container.innerHTML = `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
@@ -707,6 +810,23 @@ function formatReadableSkillText(value) {
     .trim();
 }
 
+function formatReadablePatchText(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+(Buff|Nerf|Others|Other|Fix|Hotfix)\s*:/gi, "\n$1:")
+    .replace(/\s+-\s+/g, "\n- ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function formatReadablePatchPreview(value, maxLength) {
+  const normalized = formatReadablePatchText(value);
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  return `${normalized.slice(0, maxLength).trimEnd()}...`;
+}
+
 function formatReadableSkillPreview(value, maxLength) {
   const normalized = String(value || "")
     .replace(/\n{3,}/g, "\n\n")
@@ -725,6 +845,10 @@ function formatLabel(value) {
 
 function formatFeatureKeyLabel(value) {
   return formatLabel(value).replaceAll("  ", " ");
+}
+
+function patchTypeClassName(value) {
+  return normalize(value).replace(/[^a-z0-9]+/g, "-") || "change";
 }
 
 function collectHighlightTerms(...inputs) {
@@ -794,9 +918,11 @@ function buildHeroBundle(heroName) {
   const features = state.payload.features.filter(
     (row) => row.name_en === heroName,
   );
-  const patches = sections.filter((row) =>
-    includesNormalized(row.section_path, "patch details"),
+  const patches = state.payload.patches.filter(
+    (row) => row.name_en === heroName,
   );
+  const patchBlocks = dedupeBy(patches, (row) => row.patch_block_key);
+  const latestPatchDate = patches[0]?.patch_date || "-";
 
   const variantLabels = dedupeBy(variants, (row) => row.variant_title).map(
     (row) => row.variant_label,
@@ -807,6 +933,9 @@ function buildHeroBundle(heroName) {
   const skillMix = Array.from(
     countBy(skills, (row) => formatLabel(row.skill_type || "unknown")),
   ).map(([label, count]) => `${label} ${formatNumber(count)}`);
+  const patchTypeMix = Array.from(
+    countBy(patches, (row) => row.patch_change_type || "Change"),
+  ).map(([label, count]) => `${label} ${formatNumber(count)}`);
 
   return {
     heroName,
@@ -816,9 +945,12 @@ function buildHeroBundle(heroName) {
     skills,
     features,
     patches,
+    patchBlocks,
+    latestPatchDate,
     variantLabels,
     featureLabels,
     skillMix,
+    patchTypeMix,
   };
 }
 
@@ -834,6 +966,10 @@ function renderHeroProfile(container, bundle) {
   const skillMixMarkup = renderPillCluster(
     bundle.skillMix,
     "No parsed skill rows exported",
+  );
+  const patchMixMarkup = renderPillCluster(
+    bundle.patchTypeMix,
+    "No parsed balance history exported",
   );
 
   container.innerHTML = `
@@ -851,6 +987,8 @@ function renderHeroProfile(container, bundle) {
         ${renderProfileMetric("Sections", bundle.sections.length)}
         ${renderProfileMetric("Skills", bundle.skills.length)}
         ${renderProfileMetric("Features", bundle.features.length)}
+        ${renderProfileMetric("Patch Entries", bundle.patches.length)}
+        ${renderProfileMetric("Patch Blocks", bundle.patchBlocks.length)}
       </div>
 
       <div class="profile-pill-group">
@@ -859,7 +997,7 @@ function renderHeroProfile(container, bundle) {
           <span class="pill">Adventure ${escapeHtml(bundle.hero.adventure_tier || "-")}</span>
           <span class="pill">Battle ${escapeHtml(bundle.hero.battle_tier || "-")}</span>
           <span class="pill">Boss ${escapeHtml(bundle.hero.boss_tier || "-")}</span>
-          <span class="pill">Patch Blocks ${escapeHtml(String(bundle.patches.length))}</span>
+          <span class="pill">Latest Patch ${escapeHtml(bundle.latestPatchDate)}</span>
         </div>
       </div>
 
@@ -876,6 +1014,11 @@ function renderHeroProfile(container, bundle) {
       <div class="profile-pill-group">
         <p class="profile-group-label">System Markers</p>
         <div class="profile-pill-wrap">${featureMarkup}</div>
+      </div>
+
+      <div class="profile-pill-group">
+        <p class="profile-group-label">Balance Mix</p>
+        <div class="profile-pill-wrap">${patchMixMarkup}</div>
       </div>
     </div>
   `;
@@ -979,7 +1122,7 @@ function renderCompareSummary(container, leftBundle, rightBundle) {
       ),
     },
     {
-      label: "Patch Blocks",
+      label: "Patch Entries",
       left: leftBundle.patches.length,
       right: rightBundle.patches.length,
       winner: chooseWinner(
@@ -987,6 +1130,21 @@ function renderCompareSummary(container, leftBundle, rightBundle) {
         rightBundle.patches.length,
         "max",
       ),
+    },
+    {
+      label: "Patch Blocks",
+      left: leftBundle.patchBlocks.length,
+      right: rightBundle.patchBlocks.length,
+      winner: chooseWinner(
+        leftBundle.patchBlocks.length,
+        rightBundle.patchBlocks.length,
+        "max",
+      ),
+    },
+    {
+      label: "Latest Patch",
+      left: leftBundle.latestPatchDate,
+      right: rightBundle.latestPatchDate,
     },
   ];
 
