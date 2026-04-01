@@ -9,9 +9,29 @@ import streamlit as st
 try:
     from .explorer_skill_details import extract_skill_insight
     from .paths import PROCESSED_DATA_DIR
+    from .team_analysis import (
+        build_default_team_variant_ids,
+        build_team_defense_evidence_frame,
+        build_team_defense_summary,
+        build_team_member_snapshot,
+        build_team_skill_cost_frame,
+        build_team_source_frame,
+        build_team_sp_evidence_frame,
+        build_team_sp_summary,
+    )
 except ImportError:  # pragma: no cover - Streamlit runs this file as a script
     from grandchase_meta_analyzer.explorer_skill_details import extract_skill_insight
     from grandchase_meta_analyzer.paths import PROCESSED_DATA_DIR
+    from grandchase_meta_analyzer.team_analysis import (
+        build_default_team_variant_ids,
+        build_team_defense_evidence_frame,
+        build_team_defense_summary,
+        build_team_member_snapshot,
+        build_team_skill_cost_frame,
+        build_team_source_frame,
+        build_team_sp_evidence_frame,
+        build_team_sp_summary,
+    )
 
 
 DB_PATH = PROCESSED_DATA_DIR / "grandchase.db"
@@ -3083,6 +3103,320 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                 )
 
 
+def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
+    variant_leaderboard_df = data["variant_leaderboard"]
+    skills_df = data["skills"]
+    sections_df = data["sections"]
+    features_df = data["features"]
+    progression_values_df = data["progression_values"]
+    progression_tracks_df = data["progression_tracks"]
+    progression_relationships_df = data["progression_relationships"]
+
+    st.subheader("Team Lab")
+    st.caption(
+        "This view is explicit-only. It surfaces captured SP economy and defensive coverage from real source text and stored progression rows, but it does not simulate rotations, uptime, or true combat throughput."
+    )
+
+    roster_df = (
+        variant_leaderboard_df[
+            [
+                "variant_id",
+                "variant_label",
+                "name_en",
+                "role",
+                "rarity",
+                "meta_rank",
+                "final_meta_score",
+            ]
+        ]
+        .drop_duplicates(subset=["variant_id"])
+        .sort_values(["meta_rank", "variant_label"])
+        .reset_index(drop=True)
+    )
+    option_label_map = {
+        int(row["variant_id"]): (
+            f"#{int(row['meta_rank'])} {row['variant_label']} · {row['role']}"
+        )
+        for _, row in roster_df.iterrows()
+    }
+    default_team_ids = build_default_team_variant_ids(variant_leaderboard_df, size=4)
+    selected_variant_ids = st.multiselect(
+        "Units",
+        roster_df["variant_id"].tolist(),
+        default=default_team_ids,
+        format_func=lambda variant_id: option_label_map.get(
+            int(variant_id), str(variant_id)
+        ),
+        help="Select up to 4 units. If you choose more than 4, only the first 4 are analyzed.",
+    )
+    if len(selected_variant_ids) > 4:
+        st.warning("Only the first 4 selected units are analyzed in Team Lab.")
+        selected_variant_ids = selected_variant_ids[:4]
+    if not selected_variant_ids:
+        st.info("Select up to 4 units to inspect SP economy and defensive coverage.")
+        return
+
+    selected_roster_df = roster_df[
+        roster_df["variant_id"].isin(selected_variant_ids)
+    ].copy()
+    selected_roster_df["selection_order"] = pd.Categorical(
+        selected_roster_df["variant_id"],
+        categories=selected_variant_ids,
+        ordered=True,
+    )
+    selected_roster_df = selected_roster_df.sort_values("selection_order").drop(
+        columns=["selection_order"]
+    )
+
+    team_sources_df = build_team_source_frame(
+        skills_df,
+        sections_df,
+        features_df,
+        selected_variant_ids,
+    )
+    sp_summary_df = build_team_sp_summary(team_sources_df)
+    sp_evidence_df = build_team_sp_evidence_frame(team_sources_df)
+    skill_cost_df = build_team_skill_cost_frame(team_sources_df)
+    defense_evidence_df = build_team_defense_evidence_frame(team_sources_df)
+    defense_summary_df = build_team_defense_summary(defense_evidence_df)
+    member_snapshot_df = build_team_member_snapshot(selected_roster_df, team_sources_df)
+    team_values_df = progression_values_df[
+        progression_values_df["variant_id"].isin(selected_variant_ids)
+    ].copy()
+    team_tracks_df = progression_tracks_df[
+        progression_tracks_df["variant_id"].isin(selected_variant_ids)
+    ].copy()
+    team_relationships_df = build_relationship_frame(
+        progression_relationships_df[
+            progression_relationships_df["variant_id"].isin(selected_variant_ids)
+        ].copy()
+    )
+
+    metric_columns = st.columns(6)
+    metric_columns[0].metric("Units", len(selected_variant_ids))
+    metric_columns[1].metric("SP Clauses", len(sp_evidence_df.index))
+    metric_columns[2].metric("Defensive Rows", len(defense_evidence_df.index))
+    metric_columns[3].metric("Exact Values", len(team_values_df.index))
+    metric_columns[4].metric("Track Steps", len(team_tracks_df.index))
+    metric_columns[5].metric("Overlap Rules", len(team_relationships_df.index))
+
+    summary_tab, sp_tab, defense_tab, values_tab, overlap_tab = st.tabs(
+        [
+            "Summary",
+            "SP Economy",
+            "Defense",
+            "Exact Values",
+            "Overlap Rules",
+        ]
+    )
+
+    with summary_tab:
+        render_readable_dataframe(
+            selected_roster_df[
+                [
+                    "meta_rank",
+                    "variant_label",
+                    "name_en",
+                    "role",
+                    "rarity",
+                    "final_meta_score",
+                ]
+            ],
+            height=180,
+            medium_columns=("variant_label", "name_en", "role"),
+            number_formats={"final_meta_score": "%.2f"},
+        )
+        render_readable_dataframe(
+            member_snapshot_df,
+            height=260,
+            medium_columns=("variant_label", "name_en", "role"),
+            number_formats={
+                "final_meta_score": "%.2f",
+                "highest_sp_cost": "%.2f",
+                "flat_sp_gain": "%.2f",
+                "sp_per_second": "%.2f",
+            },
+        )
+        left_col, right_col = st.columns(2)
+        with left_col:
+            if sp_summary_df.empty:
+                st.info(
+                    "No explicit SP generation or SP cost-management clauses were found for the selected units."
+                )
+            else:
+                render_readable_dataframe(
+                    sp_summary_df,
+                    height=240,
+                    large_columns=("examples",),
+                    medium_columns=("economy_type",),
+                )
+        with right_col:
+            if defense_summary_df.empty:
+                st.info(
+                    "No explicit defensive clauses were found for the selected units."
+                )
+            else:
+                render_readable_dataframe(
+                    defense_summary_df,
+                    height=240,
+                    large_columns=("examples",),
+                    medium_columns=("defense_type",),
+                )
+
+    with sp_tab:
+        if skill_cost_df.empty:
+            st.info("No skill SP costs were captured for the selected units.")
+        else:
+            render_readable_dataframe(
+                skill_cost_df,
+                height=240,
+                large_columns=("source_preview",),
+                medium_columns=("variant_label", "source_name", "stage_label"),
+                number_formats={"sp_cost": "%.2f", "cooldown_seconds": "%.2f"},
+            )
+        if sp_evidence_df.empty:
+            st.info(
+                "No explicit SP generation, discount, or free-cast clauses were captured for the selected units."
+            )
+        else:
+            render_readable_dataframe(
+                sp_evidence_df,
+                height=320,
+                large_columns=("context",),
+                medium_columns=(
+                    "variant_label",
+                    "source_name",
+                    "economy_type",
+                    "value_text",
+                ),
+                number_formats={
+                    "numeric_value": "%.2f",
+                    "sp_cost": "%.2f",
+                    "cooldown_seconds": "%.2f",
+                },
+            )
+
+    with defense_tab:
+        if defense_summary_df.empty:
+            st.info(
+                "No explicit defensive toolkit rows were captured for the selected units."
+            )
+        else:
+            render_readable_dataframe(
+                defense_summary_df,
+                height=220,
+                large_columns=("examples",),
+                medium_columns=("defense_type",),
+            )
+        if defense_evidence_df.empty:
+            st.info("No defensive evidence rows matched the selected units.")
+        else:
+            render_readable_dataframe(
+                defense_evidence_df[
+                    [
+                        "variant_label",
+                        "stage_label",
+                        "source_kind",
+                        "source_name",
+                        "defense_type",
+                        "strongest_value",
+                        "duration_summary",
+                        "target_summary",
+                        "mechanics",
+                        "context",
+                    ]
+                ],
+                height=360,
+                large_columns=("mechanics", "context"),
+                medium_columns=(
+                    "variant_label",
+                    "source_name",
+                    "defense_type",
+                ),
+            )
+
+    with values_tab:
+        st.caption(
+            "These tables include all stored exact-value rows and progression ladders for the selected units. SP gain clauses are parsed live from source text above because the older normalized exact-value tables only index percentage and ladder captures."
+        )
+        value_tab, track_tab = st.tabs(["Exact Values", "Track Steps"])
+        with value_tab:
+            if team_values_df.empty:
+                st.info(
+                    "No stored exact-value rows are available for the selected units."
+                )
+            else:
+                render_readable_dataframe(
+                    team_values_df[
+                        [
+                            "variant_label",
+                            "progression_stage_label",
+                            "source_name",
+                            "value_kind",
+                            "category",
+                            "value_text",
+                            "numeric_value",
+                            "unit",
+                            "context",
+                        ]
+                    ],
+                    height=360,
+                    large_columns=("context",),
+                    medium_columns=(
+                        "variant_label",
+                        "source_name",
+                        "value_text",
+                    ),
+                    number_formats={"numeric_value": "%.2f"},
+                )
+        with track_tab:
+            if team_tracks_df.empty:
+                st.info(
+                    "No stored progression-track rows are available for the selected units."
+                )
+            else:
+                render_readable_dataframe(
+                    team_tracks_df[
+                        [
+                            "variant_label",
+                            "progression_stage_label",
+                            "source_name",
+                            "track_label",
+                            "step_index",
+                            "step_value",
+                            "numeric_value",
+                            "unit",
+                            "context",
+                        ]
+                    ],
+                    height=320,
+                    large_columns=("context",),
+                    medium_columns=(
+                        "variant_label",
+                        "source_name",
+                        "track_label",
+                    ),
+                    number_formats={"numeric_value": "%.2f"},
+                )
+
+    with overlap_tab:
+        if team_relationships_df.empty:
+            st.info(
+                "No explicit non-stacking, overwrite, or exclusivity rules were captured for the selected units."
+            )
+        else:
+            render_readable_dataframe(
+                team_relationships_df,
+                height=320,
+                large_columns=("evidence_text", "source_page"),
+                medium_columns=(
+                    "variant_label",
+                    "source_name",
+                    "target_source_name",
+                ),
+            )
+
+
 def main() -> None:
     apply_styles()
     render_header()
@@ -3103,7 +3437,9 @@ def main() -> None:
         st.header("Atlas Controls")
         st.caption("Search the captured database without touching raw files.")
         page = st.radio(
-            "View", ["Overview", "Search", "Hero Dossier", "Comparisons"], index=0
+            "View",
+            ["Overview", "Search", "Hero Dossier", "Comparisons", "Team Lab"],
+            index=0,
         )
 
         hero_query = ""
@@ -3152,6 +3488,8 @@ def main() -> None:
         )
     elif page == "Comparisons":
         render_comparisons(data)
+    elif page == "Team Lab":
+        render_team_lab(data)
     else:
         render_dossier(data, focus_hero)
 

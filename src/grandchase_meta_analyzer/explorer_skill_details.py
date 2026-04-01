@@ -6,6 +6,10 @@ from dataclasses import dataclass
 
 COOLDOWN_PATTERN = re.compile(r"⏰\s*([0-9]+(?:\.[0-9]+)?)\s*seconds?", re.IGNORECASE)
 SP_PATTERN = re.compile(r"\bSP\s*([0-9]+(?:\.[0-9]+)?)\b", re.IGNORECASE)
+SP_VALUE_PATTERN = re.compile(
+    r"\bSP\s*([0-9]+(?:\.[0-9]+)?)\b|([0-9]+(?:\.[0-9]+)?)\s*SP\b",
+    re.IGNORECASE,
+)
 DURATION_PATTERN = re.compile(r"([0-9]+(?:\.[0-9]+)?\s*seconds?)", re.IGNORECASE)
 COEFFICIENT_PATTERN = re.compile(r"([0-9]+(?:\.[0-9]+)?%)")
 PATCH_SPLIT_PATTERN = re.compile(r"Patch Details", re.IGNORECASE)
@@ -44,9 +48,25 @@ TRIGGER_KEYWORDS = (
     "if ",
     "upon",
 )
+SP_GAIN_VERB_PATTERN = re.compile(
+    r"\b(?:gain(?:s|ed)?|generate(?:s|d)?|obtain(?:s|ed)?|acquire(?:s|d)?|recover(?:s|ed)?|restore(?:s|d)?|get(?:s|ting|ted)?)\b",
+    re.IGNORECASE,
+)
+SP_GAIN_CONTEXT_PATTERN = re.compile(
+    r"(?:gain(?:s|ed)?|generate(?:s|d)?|obtain(?:s|ed)?|acquire(?:s|d)?|get(?:s|ting|ted)?|recover(?:s|ed)?|restore(?:s|d)?)\b.{0,24}\bSP\b|\bSP\b.{0,24}(?:is|are|was|were)?\s*(?:acquired|obtained|generated|gained|recovered|restored)|\bSP\b.{0,24}(?:per second|every second)|automatic acquisition|automatically acquires|continuously acquired",
+    re.IGNORECASE,
+)
+SP_FREE_CAST_PATTERN = re.compile(r"(?:without|no)\s+SP\s+consumption", re.IGNORECASE)
+SP_COST_DISCOUNT_VERB_PATTERN = re.compile(
+    r"\b(?:reduce(?:s|d)?|decrease(?:s|d)?|lower(?:s|ed)?)\b",
+    re.IGNORECASE,
+)
 MECHANIC_TAG_PATTERNS = {
-    "shield": re.compile(r"shield|protective film", re.IGNORECASE),
-    "invincibility": re.compile(r"invincible|invincibility", re.IGNORECASE),
+    "shield": re.compile(r"shield|barrier|protective film", re.IGNORECASE),
+    "invincibility": re.compile(
+        r"invincible|invincibility|immune to enemy damage",
+        re.IGNORECASE,
+    ),
     "summon": re.compile(r"summon|totem|magic sword|tempest blade", re.IGNORECASE),
     "damage reduction": re.compile(
         r"reduce(?:s|d)?(?: the)?(?: amount of)? damage|damage reduction|reduction effect",
@@ -146,6 +166,15 @@ class ProgressionTrack:
 
 
 @dataclass(frozen=True)
+class EconomyMention:
+    category: str
+    value_text: str
+    numeric_value: float | None
+    unit: str
+    context: str
+
+
+@dataclass(frozen=True)
 class ExplicitRelationship:
     relation_type: str
     relation_scope: str
@@ -173,6 +202,7 @@ class SkillInsight:
     scaling_series: list[ScalingSeries]
     stat_bonuses: list[StatBonus]
     progression_tracks: list[ProgressionTrack]
+    economy_mentions: list[EconomyMention]
     explicit_relationships: list[ExplicitRelationship]
 
 
@@ -327,6 +357,92 @@ def _extract_progression_tracks(text: str) -> list[ProgressionTrack]:
     return _unique_dataclasses(tracks)
 
 
+def _sp_numeric_value(match: re.Match[str]) -> float:
+    return float(next(group for group in match.groups() if group is not None))
+
+
+def _sp_value_text(match: re.Match[str], *, is_rate: bool) -> str:
+    numeric_text = next(group for group in match.groups() if group is not None)
+    return f"{numeric_text} SP/s" if is_rate else f"{numeric_text} SP"
+
+
+def _extract_economy_mentions(text: str) -> list[EconomyMention]:
+    normalized = _normalize_text(text)
+    if not normalized:
+        return []
+
+    clauses = re.split(r"(?<=[.!?;])\s+", normalized)
+    if not clauses:
+        clauses = [normalized]
+
+    mentions: list[EconomyMention] = []
+    for clause in clauses:
+        lowered = clause.lower()
+        if "sp" not in lowered:
+            continue
+
+        if SP_FREE_CAST_PATTERN.search(clause):
+            mentions.append(
+                EconomyMention(
+                    category="sp_free_cast",
+                    value_text="Without SP consumption",
+                    numeric_value=None,
+                    unit="clause",
+                    context=_normalize_text(clause),
+                )
+            )
+
+        gain_clause = SP_GAIN_VERB_PATTERN.search(clause) is not None or any(
+            marker in lowered
+            for marker in (
+                "is acquired",
+                "is obtained",
+                "is restored",
+                "is recovered",
+                "is generated",
+                "automatic acquisition",
+                "automatically acquires",
+                "continuously acquired",
+            )
+        )
+        if gain_clause:
+            for match in SP_VALUE_PATTERN.finditer(clause):
+                match_context = _context_slice(
+                    clause, match.start(), match.end(), radius=48
+                ).lower()
+                local_gain_clause = SP_GAIN_CONTEXT_PATTERN.search(match_context)
+                is_rate = (
+                    "per second" in match_context or "every second" in match_context
+                )
+                if not local_gain_clause and not is_rate:
+                    continue
+                mentions.append(
+                    EconomyMention(
+                        category="sp_gain_rate" if is_rate else "sp_gain",
+                        value_text=_sp_value_text(match, is_rate=is_rate),
+                        numeric_value=_sp_numeric_value(match),
+                        unit="sp_per_second" if is_rate else "sp",
+                        context=_normalize_text(clause),
+                    )
+                )
+
+        if "sp consumption" in lowered and "enemy" not in lowered:
+            for match in COEFFICIENT_PATTERN.finditer(clause):
+                if SP_COST_DISCOUNT_VERB_PATTERN.search(clause) is None:
+                    continue
+                mentions.append(
+                    EconomyMention(
+                        category="sp_cost_discount",
+                        value_text=match.group(1),
+                        numeric_value=float(match.group(1).rstrip("%")),
+                        unit="percent",
+                        context=_normalize_text(clause),
+                    )
+                )
+
+    return _unique_dataclasses(mentions)
+
+
 def _clean_relation_target(target_text: str) -> str:
     cleaned = _normalize_text(target_text).strip(" .,:;\"'")
     cleaned = re.sub(
@@ -432,6 +548,7 @@ def extract_skill_insight(text: str) -> SkillInsight:
     scaling_series = _extract_scaling_series(body_text)
     stat_bonuses = _extract_stat_bonuses(body_text)
     progression_tracks = _extract_progression_tracks(body_text)
+    economy_mentions = _extract_economy_mentions(body_text)
     explicit_relationships = _extract_explicit_relationships(body_text)
     return SkillInsight(
         body_text=body_text,
@@ -452,5 +569,6 @@ def extract_skill_insight(text: str) -> SkillInsight:
         scaling_series=scaling_series,
         stat_bonuses=stat_bonuses,
         progression_tracks=progression_tracks,
+        economy_mentions=economy_mentions,
         explicit_relationships=explicit_relationships,
     )

@@ -106,3 +106,32 @@ def test_extract_skill_insight_reads_explicit_relationships_only() -> None:
     assert insight.explicit_relationships[1].relation_type == "overwrites"
     assert insight.explicit_relationships[1].target_text == "Guardian Oath"
     assert insight.stack_mentions == ["Up to 5 stacks"]
+
+
+def test_extract_skill_insight_reads_sp_economy_mentions() -> None:
+    text = (
+        "The party gains 0.5 SP during a basic attack. "
+        "When the remaining SP is less than 5, 0.25 SP per second is continuously acquired. "
+        "The recovered party hero reduces SP consumption by 30% for 10 seconds. "
+        "Holly Dance can be used without SP consumption."
+    )
+
+    insight = extract_skill_insight(text)
+
+    categories = [mention.category for mention in insight.economy_mentions]
+    assert categories.count("sp_gain") == 1
+    assert categories.count("sp_gain_rate") == 1
+    assert categories.count("sp_cost_discount") == 1
+    assert categories.count("sp_free_cast") == 1
+    assert any(
+        mention.value_text == "0.5 SP" and mention.numeric_value == 0.5
+        for mention in insight.economy_mentions
+    )
+    assert any(
+        mention.value_text == "0.25 SP/s" and mention.numeric_value == 0.25
+        for mention in insight.economy_mentions
+    )
+    assert any(
+        mention.value_text == "30%" and mention.numeric_value == 30.0
+        for mention in insight.economy_mentions
+    )
