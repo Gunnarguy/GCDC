@@ -190,7 +190,8 @@ def load_atlas() -> dict[str, pd.DataFrame]:
                 hv.variant_id,
                 h.name_en,
                 h.name_ko,
-                h.role,
+                hv.variant_role AS role,
+                hv.variant_rarity AS rarity,
                 hv.variant_name_en,
                 hv.variant_kind,
                 hv.variant_suffix,
@@ -204,6 +205,70 @@ def load_atlas() -> dict[str, pd.DataFrame]:
             connection,
         ).fillna("")
         variants_df = apply_variant_display_columns(variants_df)
+
+        variant_leaderboard_df = read_optional_sql(
+            """
+            WITH mode_pivot AS (
+                SELECT
+                    hero_id,
+                    MAX(CASE WHEN mode = 'adventure' THEN tier_letter END) AS adventure_tier,
+                    MAX(CASE WHEN mode = 'battle' THEN tier_letter END) AS battle_tier,
+                    MAX(CASE WHEN mode = 'boss' THEN tier_letter END) AS boss_tier
+                FROM hero_modes
+                GROUP BY hero_id
+            )
+            SELECT
+                hv.variant_id,
+                hv.hero_id,
+                h.name_en,
+                COALESCE(hv.name_ko, h.name_ko) AS name_ko,
+                hv.variant_name_en,
+                hv.variant_kind,
+                hv.variant_suffix,
+                hv.availability_marker,
+                hv.variant_role AS role,
+                hv.variant_rarity AS rarity,
+                hv.source_title AS variant_title,
+                hv.note_excerpt,
+                mp.adventure_tier,
+                mp.battle_tier,
+                mp.boss_tier,
+                vms.base_score,
+                vms.rarity_adjusted,
+                vms.final_meta_score,
+                vms.meta_rank,
+                vms.score_basis
+            FROM hero_variants hv
+            JOIN heroes h ON h.hero_id = hv.hero_id
+            LEFT JOIN mode_pivot mp ON mp.hero_id = hv.hero_id
+            LEFT JOIN variant_meta_scores vms ON vms.variant_id = hv.variant_id
+            ORDER BY vms.meta_rank, h.name_en, hv.variant_kind, hv.variant_name_en
+            """,
+            [
+                "variant_id",
+                "hero_id",
+                "name_en",
+                "name_ko",
+                "variant_name_en",
+                "variant_kind",
+                "variant_suffix",
+                "availability_marker",
+                "role",
+                "rarity",
+                "variant_title",
+                "note_excerpt",
+                "adventure_tier",
+                "battle_tier",
+                "boss_tier",
+                "base_score",
+                "rarity_adjusted",
+                "final_meta_score",
+                "meta_rank",
+                "score_basis",
+            ],
+            {"hero_variants", "variant_meta_scores", "heroes", "hero_modes"},
+        )
+        variant_leaderboard_df = apply_variant_display_columns(variant_leaderboard_df)
 
         sections_df = pd.read_sql_query(
             """
@@ -540,9 +605,9 @@ def load_atlas() -> dict[str, pd.DataFrame]:
         sections_df["section_path"].str.contains("Patch Details", case=False, na=False)
     ].copy()
     role_summary_df = (
-        heroes_df.groupby("role", dropna=False)
+        variant_leaderboard_df.groupby("role", dropna=False)
         .agg(
-            hero_count=("hero_id", "count"),
+            unit_count=("variant_id", "count"),
             avg_meta_score=("final_meta_score", "mean"),
             best_meta_score=("final_meta_score", "max"),
         )
@@ -582,6 +647,7 @@ def load_atlas() -> dict[str, pd.DataFrame]:
     return {
         "heroes": heroes_df,
         "variants": variants_df,
+        "variant_leaderboard": variant_leaderboard_df,
         "sections": sections_df,
         "skills": skills_df,
         "features": features_df,
@@ -955,15 +1021,15 @@ def relationship_counts_by_progression(
 def prepare_progression_rows_for_comparison(
     progression_rows_df: pd.DataFrame,
     relationships_df: pd.DataFrame,
-    heroes_df: pd.DataFrame,
+    variant_leaderboard_df: pd.DataFrame,
 ) -> pd.DataFrame:
     if progression_rows_df.empty:
         return progression_rows_df.copy()
     relation_counts_df = relationship_counts_by_progression(relationships_df)
-    hero_meta_df = heroes_df[
-        ["name_en", "role", "meta_rank", "final_meta_score"]
+    variant_meta_df = variant_leaderboard_df[
+        ["variant_id", "role", "meta_rank", "final_meta_score"]
     ].copy()
-    frame = progression_rows_df.merge(hero_meta_df, on="name_en", how="left")
+    frame = progression_rows_df.merge(variant_meta_df, on="variant_id", how="left")
     frame = frame.merge(relation_counts_df, on="progression_key", how="left")
     frame["explicit_relationship_count"] = (
         frame["explicit_relationship_count"].fillna(0).astype(int)
@@ -1120,7 +1186,7 @@ def build_role_stage_coverage_frame(
             ["role", "progression_stage_label", "stage_order"], dropna=False
         )
         .agg(
-            hero_count=("name_en", "nunique"),
+            unit_count=("variant_id", "nunique"),
             row_count=("progression_key", "count"),
             explicit_relationships=("explicit_relationship_count", "sum"),
         )
@@ -1148,7 +1214,7 @@ def build_role_family_frame(
     return (
         filtered.groupby(["role", "skill_family"], dropna=False)
         .agg(
-            hero_count=("name_en", "nunique"),
+            unit_count=("variant_id", "nunique"),
             row_count=("progression_key", "count"),
             stage_coverage=(
                 "progression_stage_label",
@@ -1168,7 +1234,7 @@ def build_role_family_frame(
         )
         .reset_index()
         .sort_values(
-            ["role", "hero_count", "row_count", "skill_family"],
+            ["role", "unit_count", "row_count", "skill_family"],
             ascending=[True, False, False, True],
         )
         .reset_index(drop=True)
@@ -1488,6 +1554,7 @@ def render_header() -> None:
 def render_overview(data: dict[str, pd.DataFrame]) -> None:
     heroes_df = data["heroes"]
     variants_df = data["variants"]
+    variant_leaderboard_df = data["variant_leaderboard"]
     sections_df = data["sections"]
     skills_df = data["skills"]
     features_df = data["features"]
@@ -1506,13 +1573,12 @@ def render_overview(data: dict[str, pd.DataFrame]) -> None:
 
     left, right = st.columns([1.1, 0.9])
     with left:
-        st.subheader("Top Heroes")
+        st.subheader("Top Units")
         st.dataframe(
-            heroes_df[
+            variant_leaderboard_df[
                 [
                     "meta_rank",
-                    "name_en",
-                    "name_ko",
+                    "variant_label",
                     "role",
                     "rarity",
                     "final_meta_score",
@@ -1676,6 +1742,8 @@ def render_search(
 
 def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
     heroes_df = data["heroes"]
+    variants_df = data["variants"]
+    variant_leaderboard_df = data["variant_leaderboard"]
     sections_df = data["sections"]
     skills_df = data["skills"]
     features_df = data["features"]
@@ -1717,6 +1785,10 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
         return
 
     hero_record = hero_row.iloc[0]
+    hero_variant_records = variants_df[variants_df["name_en"] == hero_name].copy()
+    hero_variant_scores_df = variant_leaderboard_df[
+        variant_leaderboard_df["name_en"] == hero_name
+    ].copy()
     st.subheader(f"Hero Dossier: {hero_name}")
     st.caption(
         "Use the sidebar hero picker to switch to any other hero in the database."
@@ -1742,6 +1814,23 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
     )
     st.caption(f"Current variant: {selected_variant_label}")
 
+    selected_variant_record = hero_variant_records[
+        hero_variant_records["variant_title"] == selected_variant
+    ].head(1)
+    selected_variant_score_record = hero_variant_scores_df[
+        hero_variant_scores_df["variant_title"] == selected_variant
+    ].head(1)
+    variant_record = (
+        selected_variant_record.iloc[0]
+        if not selected_variant_record.empty
+        else hero_record
+    )
+    variant_score_record = (
+        selected_variant_score_record.iloc[0]
+        if not selected_variant_score_record.empty
+        else hero_record
+    )
+
     variant_sections = hero_sections[
         hero_sections["variant_title"] == selected_variant
     ].copy()
@@ -1755,13 +1844,15 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
     ].copy()
 
     metric_columns = st.columns(6)
-    metric_columns[0].metric("Role", hero_record["role"])
-    metric_columns[1].metric("Rarity", hero_record["rarity"])
-    metric_columns[2].metric("Meta Rank", int(hero_record["meta_rank"]))
+    metric_columns[0].metric("Role", variant_record["role"])
+    metric_columns[1].metric("Rarity", variant_record["rarity"])
+    metric_columns[2].metric("Meta Rank", int(variant_score_record["meta_rank"]))
     metric_columns[3].metric(
-        "Meta Score", round(float(hero_record["final_meta_score"]), 2)
+        "Meta Score", round(float(variant_score_record["final_meta_score"]), 2)
     )
-    metric_columns[4].metric("Variants", hero_sections["variant_title"].nunique())
+    metric_columns[4].metric(
+        "Variants", hero_variant_records["variant_title"].nunique()
+    )
     metric_columns[5].metric("Patch Blocks", len(variant_patches))
 
     hero_mechanic_tags = sorted(
@@ -2403,6 +2494,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
     heroes_df = data["heroes"]
     variants_df = data["variants"]
+    variant_leaderboard_df = data["variant_leaderboard"]
     progression_rows_df = data["progression_rows"]
     progression_values_df = data["progression_values"]
     progression_tracks_df = data["progression_tracks"]
@@ -2411,7 +2503,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
     comparison_rows_df = prepare_progression_rows_for_comparison(
         progression_rows_df,
         progression_relationships_df,
-        heroes_df,
+        variant_leaderboard_df,
     )
     if comparison_rows_df.empty:
         st.warning(
@@ -2872,10 +2964,12 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
             kind_filter,
             stage_filter,
         )
-        role_hero_df = heroes_df[heroes_df["role"].isin(selected_roles)].copy()
+        role_hero_df = variant_leaderboard_df[
+            variant_leaderboard_df["role"].isin(selected_roles)
+        ].copy()
         role_relationship_df = progression_relationships_df.merge(
-            heroes_df[["name_en", "role"]],
-            on="name_en",
+            variant_leaderboard_df[["variant_id", "role"]],
+            on="variant_id",
             how="left",
         )
         role_relationship_df = role_relationship_df[
@@ -2891,7 +2985,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
             ]
 
         role_metrics = st.columns(4)
-        role_metrics[0].metric("Heroes", role_hero_df["name_en"].nunique())
+        role_metrics[0].metric("Units", role_hero_df["variant_id"].nunique())
         role_metrics[1].metric(
             "Progression Rows",
             len(role_coverage_df.index)
@@ -2917,6 +3011,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                     [
                         "meta_rank",
                         "name_en",
+                        "variant_label",
                         "name_ko",
                         "role",
                         "rarity",
@@ -2925,9 +3020,9 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                         "boss_tier",
                         "final_meta_score",
                     ]
-                ].sort_values(["role", "meta_rank"]),
+                ].sort_values(["role", "meta_rank", "variant_label"]),
                 height=280,
-                medium_columns=("name_en", "name_ko", "role"),
+                medium_columns=("name_en", "variant_label", "name_ko", "role"),
                 number_formats={"final_meta_score": "%.2f"},
             )
         with role_stage_tab:

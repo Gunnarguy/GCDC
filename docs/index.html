@@ -47,10 +47,10 @@
             <div class="panel-header">
               <div>
                 <p class="panel-kicker">Ranked Snapshot</p>
-                <h2>Top Heroes</h2>
+                <h2>Top Units</h2>
               </div>
               <p class="panel-copy">
-                Current leaderboard from the exported local database.
+                Variant-aware leaderboard from the exported local database.
               </p>
             </div>
             <div id="topHeroesTable"></div>
@@ -62,7 +62,9 @@
                 <p class="panel-kicker">Roster Shape</p>
                 <h2>Role Summary</h2>
               </div>
-              <p class="panel-copy">Average and best scores by role.</p>
+              <p class="panel-copy">
+                Average and best scores by ranked unit role.
+              </p>
             </div>
             <div id="roleSummaryTable"></div>
           </section>
@@ -107,6 +109,49 @@
             </p>
           </div>
           <div id="patchCoverageTable"></div>
+        </section>
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Global Systems</p>
+                <h2>Veteran Reference Notes</h2>
+              </div>
+              <p class="panel-copy">
+                Structured NamuWiki sections for growth systems, former heroes,
+                soul imprint, transcendence, liking, and destiny.
+              </p>
+            </div>
+            <div id="systemReferences"></div>
+          </section>
+        
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Release Chronology</p>
+                <h2>Hero Release Timeline</h2>
+              </div>
+              <p class="panel-copy">
+                Parsed release rows from the SS-grade index, including modern T
+                and S variants.
+              </p>
+            </div>
+            <div id="releaseTimelineTable"></div>
+          </section>
+        </div>
+        
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Legacy Matrices</p>
+              <h2>Hero Growth Table Values</h2>
+            </div>
+            <p class="panel-copy">
+              Flattened StrategyWiki Upgrade and Evolve matrix values, kept as
+              legacy-era reference data.
+            </p>
+          </div>
+          <div id="systemReferenceValuesTable"></div>
         </section>
       </section>
 

@@ -1,0 +1,158 @@
+variant_id,hero_id,name_en,name_ko,variant_name_en,variant_kind,variant_suffix,availability_marker,variant_role,variant_rarity,variant_title,note_excerpt,adventure_tier,battle_tier,boss_tier,base_score,rarity_adjusted,final_meta_score,meta_rank,score_basis
+4,82,Amy,에이미,Amy,base,,,Healer,SS,Amy (Grand Chase for kakao),Amy,SS,SS,SS,5.0,6.0,6.9,1,inherited_hero_modes
+5,82,Amy,에이미,Amy,former,T,T,Assault,SS,Amy (Grand Chase for kakao)/former hero,Amy (T),SS,SS,SS,5.0,6.0,6.9,2,inherited_hero_modes
+76,40,Ley,레이,Ray,base,,,Mage,SS,Ray (Grand Chase for kakao),ray,SS,SS,SS,5.0,6.0,6.9,3,inherited_hero_modes
+77,40,Ley,레이,Ray,former,T,T,Mage,SS,Ray (Grand Chase for kakao)/former hero,Ray (T),SS,SS,SS,5.0,6.0,6.9,4,inherited_hero_modes
+67,1,Jin,진,Jin,base,,,Tank,SS,Jin (Grand Chase for kakao),jin,SS,S,SS,4.7,5.64,6.49,5,inherited_hero_modes
+68,1,Jin,진,Jin,former,T,T,Tank,SS,Jin (Grand Chase for kakao)/former hero,Jin (T),SS,S,SS,4.7,5.64,6.49,6,inherited_hero_modes
+46,18,Elesis,엘리시스,Elesis,base,,1,Assault,SS,Elesis (Grand Chase for kakao),Elesis 1,SS,S,S,4.5,5.4,6.21,7,inherited_hero_modes
+47,18,Elesis,엘리시스,Elesis,former,T,T,Tank,SS,Elesis (Grand Chase for kakao)/former hero,Elesis (T),SS,S,S,4.5,5.4,6.21,8,inherited_hero_modes
+48,18,Elesis,엘리시스,Elesis,special,S,S,Assault,SS,Elesis (Grand Chase for Kakao)/Special Hero,Elesis (S),SS,S,S,4.5,5.4,6.21,9,inherited_hero_modes
+75,17,Lass,,Lass,base,,,Assault,S,Lass,,SS,SS,SS,5.0,5.25,6.04,10,inherited_hero_modes
+44,19,Edel,에델,Ethel,base,,,Assault,SS,Ethel (Grand Chase for kakao),Ethel,S,S,SS,4.2,5.04,5.8,11,inherited_hero_modes
+45,19,Edel,에델,Ethel,former,T,T,Assault,SS,Ethel (Grand Chase for kakao)/former hero,Ethel (T),S,S,SS,4.2,5.04,5.8,12,inherited_hero_modes
+37,20,Dio,디오,D.O,base,,,Assault,SS,D.O (Grand Chase for kakao),D.I.O,S,SS,A,4.1,4.92,5.66,13,inherited_hero_modes
+38,20,Dio,디오,Dio,former,T,T,Tank,SS,Dio (Grand Chase for Kakao)/Former Hero,Dio (T),S,SS,A,4.1,4.92,5.66,14,inherited_hero_modes
+79,83,Lime,라임,Lime,base,,,Healer,SS,Lime (Grand Chase for kakao),Lime,S,SS,A,4.1,4.92,5.66,15,inherited_hero_modes
+80,83,Lime,라임,Lime,former,T,T,Tank,SS,Lime (Grand Chase for kakao)/former hero,Lime (T),S,SS,A,4.1,4.92,5.66,16,inherited_hero_modes
+81,83,Lime,라임,Lime,special,S,S,Mage,SS,Lime (Grand Chase for Kakao)/Special Hero,Lime (S),S,SS,A,4.1,4.92,5.66,17,inherited_hero_modes
+119,84,Rin,린,Lin,base,,,Healer,SS,Lin (Grand Chase for kakao),Lin,S,SS,A,4.1,4.92,5.66,18,inherited_hero_modes
+120,84,Rin,린,Lin,former,T,T,Mage,SS,Lin (Grand Chase for Kakao)/Former Hero,Lin (T),S,SS,A,4.1,4.92,5.66,19,inherited_hero_modes
+122,2,Ronan,로난,Ronan,base,,,Tank,SS,Ronan (Grand Chase for kakao),Ronan,S,SS,B,3.9,4.68,5.38,20,inherited_hero_modes
+123,2,Ronan,로난,Ronan,former,T,T,Tank,SS,Ronan (Grand Chase for kakao)/former hero,Ronan (T),S,SS,B,3.9,4.68,5.38,21,inherited_hero_modes
+125,63,Rufus,루퍼스,Rufus,base,,5,Ranger,SS,Rufus (Grand Chase for kakao),Rufus 5,S,A,SS,3.9,4.68,5.38,22,inherited_hero_modes
+126,63,Rufus,루퍼스,Rufus,former,T,T,Mage,SS,Rufus (Grand Chase for Kakao)/Former Hero,Rufus (T),S,A,SS,3.9,4.68,5.38,23,inherited_hero_modes
+127,3,Ryan,라이언,Ryan,base,,4,Tank,SS,Ryan (Grand Chase for kakao),Ryan 4,SS,A,B,3.8,4.56,5.24,24,inherited_hero_modes
+128,3,Ryan,라이언,Ryan,former,T,T,Tank,SS,Ryan (Grand Chase for Kakao)/Former Hero,Ryan (T),SS,A,B,3.8,4.56,5.24,25,inherited_hero_modes
+11,41,Baigas,,Baigas,base,,,Mage,S,Baigas,,S,S,SS,4.2,4.41,5.07,26,inherited_hero_modes
+134,22,Sieghart,지크하르트,Sieghart,base,,,Assault,SS,Sieghart (Grand Chase for kakao),Sieghart,S,S,B,3.6,4.32,4.97,27,inherited_hero_modes
+135,22,Sieghart,지크하르트,Sieghart,former,T,T,Tank,SS,Sieghart (Grand Chase for kakao)/former hero,Sieghart (T),S,S,B,3.6,4.32,4.97,28,inherited_hero_modes
+6,43,Arme,아르메,Arme,base,,2,Mage,SS,Arme (Grand Chase for kakao),arme 2,S,A,A,3.5,4.2,4.83,29,inherited_hero_modes
+7,43,Arme,아르메,Arme,former,T,T,Mage,SS,Arme (Grand Chase for kakao)/former hero,Arme (T),S,A,A,3.5,4.2,4.83,30,inherited_hero_modes
+8,43,Arme,아르메,Arme,special,S,S,Mage,SS,Arme (Grand Chase for Kakao)/Special Hero,Arme (S),S,A,A,3.5,4.2,4.83,31,inherited_hero_modes
+91,42,Mari,마리,Marie,base,,,Mage,SS,Marie (Grand Chase for kakao),number of animals,S,A,A,3.5,4.2,4.83,32,inherited_hero_modes
+92,42,Mari,마리,Marie,former,T,T,Mage,SS,Marie (Grand Chase for kakao)/former hero,Marie (T),S,A,A,3.5,4.2,4.83,33,inherited_hero_modes
+82,64,Lire,리르,Lire,base,,,Ranger,SS,Lire (Grand Chase for kakao),lire,A,A,SS,3.4,4.08,4.69,34,inherited_hero_modes
+83,64,Lire,리르,Lire,former,T,T,Assault,SS,Lire (Grand Chase for kakao)/former hero,Lire (T),A,A,SS,3.4,4.08,4.69,35,inherited_hero_modes
+84,64,Lire,리르,Lirer,special,S,S,Ranger,SS,Lirer (Grand Chase for Kakao)/Special Hero,Lir (S),A,A,SS,3.4,4.08,4.69,36,inherited_hero_modes
+107,21,Olivia,,Olivia,base,,,Assault,S,Olivia,,A,S,A,3.3,3.47,3.98,37,inherited_hero_modes
+104,44,Nephilim,,Nephilim,base,,,Mage,S,Nephilim,,A,A,A,3.0,3.15,3.62,38,inherited_hero_modes
+118,45,Rasel,,Rasel,base,,,Mage,S,Rasel,,A,A,A,3.0,3.15,3.62,39,inherited_hero_modes
+130,86,Sage,,Sage,base,,,Healer,S,Sage,,A,A,B,2.8,2.94,3.38,40,inherited_hero_modes
+25,4,Captain Boar,,Captain Boar,base,,,Tank,S,Captain Boar,,B,SS,C,2.7,2.84,3.26,41,inherited_hero_modes
+33,85,Cleo,,Cleo,base,,,Healer,S,Cleo,,B,SS,C,2.7,2.84,3.26,42,inherited_hero_modes
+132,89,Seldin,,Seldin,base,,,Healer,S,Seldin,,A,B,B,2.5,2.62,3.02,43,inherited_hero_modes
+12,6,Ballonas,,Ballonas,base,,,Tank,S,Ballonas,,B,S,C,2.4,2.52,2.9,44,inherited_hero_modes
+30,65,Charon,,Charon,base,,,Ranger,S,Charon,,B,B,S,2.4,2.52,2.9,45,inherited_hero_modes
+59,23,Hanout,,Hanout,base,,,Assault,S,Hanout,,B,S,C,2.4,2.52,2.9,46,inherited_hero_modes
+111,88,Perma,,Perma,base,,,Healer,S,Perma,,B,S,C,2.4,2.52,2.9,47,inherited_hero_modes
+114,5,Poseidon,,Poseidon,base,,,Tank,S,Poseidon,,B,S,C,2.4,2.52,2.9,48,inherited_hero_modes
+129,87,Sachi,,Sachi,base,,,Healer,S,Sachi,,B,S,C,2.4,2.52,2.9,49,inherited_hero_modes
+2,103,Ai,아이,Ai,base,,,Mage,SS,Ai (Grand Chase for kakao),kid,B,B,B,2.0,2.4,2.76,50,inherited_hero_modes
+3,103,Ai,아이,Ai,former,T,T,Tank,SS,Ai (Grand Chase for Kakao)/Former Hero,Child (T),B,B,B,2.0,2.4,2.76,51,inherited_hero_modes
+9,98,Asin,아신,Asin,base,,,Tank,SS,Asin (Grand Chase for kakao),Asin,B,B,B,2.0,2.4,2.76,52,inherited_hero_modes
+10,98,Asin,아신,Asin,former,T,T,Tank,SS,Asin (Grand Chase for Kakao)/Former Hero,Asin (T),B,B,B,2.0,2.4,2.76,53,inherited_hero_modes
+15,112,Bastet,바스테트,Bastet,base,,,Ranger,SS,Bastet (Grand Chase for Kakao),bastet,B,B,B,2.0,2.4,2.76,54,inherited_hero_modes
+23,102,Callisto,칼리스토,Callisto,base,,,Assault,SS,Callisto (Grand Chase for kakao),Callisto,B,B,B,2.0,2.4,2.76,55,inherited_hero_modes
+24,102,Callisto,칼리스토,Callisto,former,T,T,Tank,SS,Callisto (Grand Chase for Kakao)/Former Hero,Callisto (T),B,B,B,2.0,2.4,2.76,56,inherited_hero_modes
+31,49,Cindy,신디,Cindy,base,,,Healer,SS,Cindy (Grand Chase for kakao),Cindy,B,B,B,2.0,2.4,2.76,57,inherited_hero_modes
+32,49,Cindy,신디,Cindy,former,T,T,Mage,SS,Cindy (Grand Chase for Kakao)/Former Hero,Cindy (T),B,B,B,2.0,2.4,2.76,58,inherited_hero_modes
+35,108,Decanee,데카네,Decane,base,,,Ranger,SS,Decane (Grand Chase for kakao),Decane,B,B,B,2.0,2.4,2.76,59,inherited_hero_modes
+36,108,Decanee,데카네,Decane,former,T,T,Assault,SS,Decane (Grand Chase for Kakao)/Former Hero,Decane (T),B,B,B,2.0,2.4,2.76,60,inherited_hero_modes
+50,105,Europa,유로파,Europa,base,,,Assault,SS,Europa (Grand Chase for kakao),europa,B,B,B,2.0,2.4,2.76,61,inherited_hero_modes
+51,105,Europa,유로파,Europa,former,T,T,Assault,SS,Europa (Grand Chase for kakao)/former hero,Europa (T),B,B,B,2.0,2.4,2.76,62,inherited_hero_modes
+55,52,Gaian,가이안,Gaian,base,X,X,Mage,SS,Gaian (Grand Chase for Kakao)/SS grade,Gaian (X),B,B,B,2.0,2.4,2.76,63,inherited_hero_modes
+56,114,Ganymede,가니메데,Ganymede,base,,,Mage,SS,Ganymede (Grand Chase for kakao),Ganymede,B,B,B,2.0,2.4,2.76,64,inherited_hero_modes
+57,114,Ganymede,가니메데,Ganymede,former,T,T,Mage,SS,Ganymede (Grand Chase for Kakao)/Former Hero,Ganymede (T),B,B,B,2.0,2.4,2.76,65,inherited_hero_modes
+60,101,Harpe,하르페,Harpe,base,,,Mage,SS,Harpe (Grand Chase for kakao),Harpe,B,B,B,2.0,2.4,2.76,66,inherited_hero_modes
+61,101,Harpe,하르페,Harpe,former,T,T,Tank,SS,Harpe (Grand Chase for kakao)/former hero,Harpe (T),B,B,B,2.0,2.4,2.76,67,inherited_hero_modes
+65,109,Io,이오,Io,base,,,Ranger,SS,Io (Grand Chase for kakao),io,B,B,B,2.0,2.4,2.76,68,inherited_hero_modes
+66,109,Io,이오,Io,former,T,T,Healer,SS,Io (Grand Chase for kakao)/former hero,Io (T),B,B,B,2.0,2.4,2.76,69,inherited_hero_modes
+71,107,Lapis,라피스,Lapis,base,,,Ranger,SS,Lapis (Grand Chase for kakao),Lapis,B,B,B,2.0,2.4,2.76,70,inherited_hero_modes
+72,107,Lapis,라피스,Lapis,former,T,T,Assault,SS,Lapis (Grand Chase for kakao)/former hero,Lapis (T),B,B,B,2.0,2.4,2.76,71,inherited_hero_modes
+73,104,Lars,라스,Lars,base,,,Assault,SS,Lars (Grand Chase for kakao),Lars,B,B,B,2.0,2.4,2.76,72,inherited_hero_modes
+74,104,Lars,라스,Lars,former,T,T,Assault,SS,Lars (Grand Chase for kakao)/former hero,Lars (T),B,B,B,2.0,2.4,2.76,73,inherited_hero_modes
+87,111,Maiden,메이덴,Maiden,base,,,Ranger,SS,Maiden (Grand Chase for Kakao),Maiden,B,B,B,2.0,2.4,2.76,74,inherited_hero_modes
+88,111,Maiden,메이덴,Maiden,former,T,T,Healer,SS,Maiden (Grand Chase for Kakao)/Former Hero,Maiden (T),B,B,B,2.0,2.4,2.76,75,inherited_hero_modes
+95,120,Metatron,메타트론,Metatron,base,,,Mage,SS,Metatron (Grand Chase for Kakao),metatron,B,B,B,2.0,2.4,2.76,76,inherited_hero_modes
+96,116,Miriel,미리엘,Miriel,base,,,Ranger,SS,Miriel (Grand Chase for Kakao),Miriel,B,B,B,2.0,2.4,2.76,77,inherited_hero_modes
+97,100,Mist,미스트,Mist,base,,,Tank,SS,Mist (Grand Chase for kakao),mist,B,B,B,2.0,2.4,2.76,78,inherited_hero_modes
+98,100,Mist,미스트,Mist,former,T,T,Tank,SS,Mist (Grand Chase for Kakao)/Former Hero,Mist (T),B,B,B,2.0,2.4,2.76,79,inherited_hero_modes
+115,110,Ragna,라그나,Ragna,base,,,Ranger,SS,Ragna (Grand Chase for kakao),Ragnar,B,B,B,2.0,2.4,2.76,80,inherited_hero_modes
+116,110,Ragna,라그나,Ragna,former,T,T,Healer,SS,Ragna (Grand Chase for Kakao)/Former Hero,Ragnar (T),B,B,B,2.0,2.4,2.76,81,inherited_hero_modes
+137,106,Sol,솔,Sol,base,,,Assault,SS,Sol (Grand Chase for kakao),brush,B,B,B,2.0,2.4,2.76,82,inherited_hero_modes
+143,99,Tia,티아,Tia,base,,,Tank,SS,Tia (Grand Chase for kakao),Tia,B,B,B,2.0,2.4,2.76,83,inherited_hero_modes
+144,99,Tia,티아,Tia,former,T,T,Tank,SS,Tia (Grand Chase for Kakao)/Former Hero,Tia (T),B,B,B,2.0,2.4,2.76,84,inherited_hero_modes
+146,115,Uno,우노,Uno,base,,,Unknown,SS,Uno,,B,B,B,2.0,2.4,2.76,85,inherited_hero_modes
+147,115,Uno,우노,Uno,special,S,S,Ranger,SS,Uno (Grand Chase for Kakao)/Special Hero,Uno (S),B,B,B,2.0,2.4,2.76,86,inherited_hero_modes
+148,118,Urara,우라라,Urara,base,,,Healer,SS,Urara (Grand Chase for Kakao),Urara,B,B,B,2.0,2.4,2.76,87,inherited_hero_modes
+151,113,Veigas,베이가스,Veigas,base,,,Mage,SS,Veigas (Grand Chase for kakao),Vegas,B,B,B,2.0,2.4,2.76,88,inherited_hero_modes
+152,113,Veigas,베이가스,Vegas,former,T,T,Mage,SS,Vegas (Grand Chase for Kakao)/Former Hero,Vegas (T),B,B,B,2.0,2.4,2.76,89,inherited_hero_modes
+153,119,Vice,바이스,Vice,base,,,Mage,SS,Vice (Grand Chase for kakao),vise,B,B,B,2.0,2.4,2.76,90,inherited_hero_modes
+155,117,Young Lee,이영,Young Lee,base,,,Ranger,SS,Young Lee (Grand Chase for Kakao),Young Lee,B,B,B,2.0,2.4,2.76,91,inherited_hero_modes
+156,97,Zero,제로,Zero,base,,,Tank,SS,Zero (Grand Chase for kakao),Zero,B,B,B,2.0,2.4,2.76,92,inherited_hero_modes
+157,97,Zero,제로,Zero,former,T,T,Tank,SS,Zero (Grand Chase for Kakao)/Former Hero,Zero (T),B,B,B,2.0,2.4,2.76,93,inherited_hero_modes
+99,91,Nachoel,,Nachoel,base,,,Healer,S,Nachoel,,B,A,C,2.1,2.21,2.54,94,inherited_hero_modes
+102,66,Nea,,Nea,base,,,Ranger,S,Nea,,B,C,S,2.1,2.21,2.54,95,inherited_hero_modes
+1,53,Agios,,Agios,base,,,Mage,S,Agios,,B,B,B,2.0,2.1,2.42,96,inherited_hero_modes
+13,29,Balzac,,Balzac,base,,,Assault,S,Balzac,,B,B,B,2.0,2.1,2.42,97,inherited_hero_modes
+17,72,Bergamot,,Bergamot,base,,,Ranger,S,Bergamot,,B,B,B,2.0,2.1,2.42,98,inherited_hero_modes
+18,54,Berry,,Berry,base,,,Mage,S,Berry,,B,B,B,2.0,2.1,2.42,99,inherited_hero_modes
+22,31,Callisa,,Callisa,base,,,Assault,S,Callisa,,B,B,B,2.0,2.1,2.42,100,inherited_hero_modes
+28,69,Carnero,,Carnero,base,,,Ranger,S,Carnero,,B,B,B,2.0,2.1,2.42,101,inherited_hero_modes
+29,28,Charlotte,,Charlotte,base,,,Assault,S,Charlotte,,B,B,B,2.0,2.1,2.42,102,inherited_hero_modes
+42,25,Duchi,,Duchi,base,,,Assault,S,Duchi,,B,B,B,2.0,2.1,2.42,103,inherited_hero_modes
+52,74,Fabien,,Fabien,base,,,Ranger,S,Fabien,,B,B,B,2.0,2.1,2.42,104,inherited_hero_modes
+53,24,Fennel,,Fennel,base,,,Assault,S,Fennel,,B,B,B,2.0,2.1,2.42,105,inherited_hero_modes
+62,8,Hekar,,Hekar,base,,,Tank,S,Hekar,,B,B,B,2.0,2.1,2.42,106,inherited_hero_modes
+70,26,Kyle,,Kyle,base,,,Assault,S,Kyle,,B,B,B,2.0,2.1,2.42,107,inherited_hero_modes
+85,92,Lulu,,Lulu,base,,,Healer,S,Lulu,,B,B,B,2.0,2.1,2.42,108,inherited_hero_modes
+89,90,Mamin,,Mamin,base,,,Healer,S,Mamin,,B,B,B,2.0,2.1,2.42,109,inherited_hero_modes
+93,46,Marjoram,,Marjoram,base,,,Mage,S,Marjoram,,B,B,B,2.0,2.1,2.42,110,inherited_hero_modes
+94,51,Mecha Rocco,,Mecha Rocco,base,,,Mage,S,Mecha Rocco,,B,B,B,2.0,2.1,2.42,111,inherited_hero_modes
+100,73,Narsea,,Narsea,base,,,Ranger,S,Narsea,,B,B,B,2.0,2.1,2.42,112,inherited_hero_modes
+103,67,Negia,,Negia,base,,,Ranger,S,Negia,,B,B,B,2.0,2.1,2.42,113,inherited_hero_modes
+106,48,Nymphyr,,Nymphyr,base,,,Mage,S,Nymphyr,,B,B,B,2.0,2.1,2.42,114,inherited_hero_modes
+108,7,Osiris,,Osiris,base,,,Tank,S,Osiris,,B,B,B,2.0,2.1,2.42,115,inherited_hero_modes
+112,9,Ponya,,Ponya,base,,,Tank,S,Ponya,,B,B,B,2.0,2.1,2.42,116,inherited_hero_modes
+124,68,Rose,,Rose,base,,,Ranger,S,Rose,,B,B,B,2.0,2.1,2.42,117,inherited_hero_modes
+131,27,Sai,,Sai,base,,,Assault,S,Sai,,B,B,B,2.0,2.1,2.42,118,inherited_hero_modes
+133,70,Shasha,,Shasha,base,,,Ranger,S,Shasha,,B,B,B,2.0,2.1,2.42,119,inherited_hero_modes
+136,71,Sofia,,Sofia,base,,,Ranger,S,Sofia,,B,B,B,2.0,2.1,2.42,120,inherited_hero_modes
+140,30,Tacoel,,Tacoel,base,,,Assault,S,Tacoel,,B,B,B,2.0,2.1,2.42,121,inherited_hero_modes
+142,32,Tevez,,Tevez,base,,,Assault,S,Tevez,,B,B,B,2.0,2.1,2.42,122,inherited_hero_modes
+145,50,Turmeric,,Turmeric,base,,,Mage,S,Turmeric,,B,B,B,2.0,2.1,2.42,123,inherited_hero_modes
+150,33,Urea,,Urea,base,,,Assault,S,Urea,,B,B,B,2.0,2.1,2.42,124,inherited_hero_modes
+154,47,Viola,,Viola,base,,,Mage,S,Viola,,B,B,B,2.0,2.1,2.42,125,inherited_hero_modes
+16,34,Belile,,Belile,base,,,Assault,S,Belile,,B,B,C,1.8,1.89,2.17,126,inherited_hero_modes
+21,36,Briel,,Briel,base,,,Assault,S,Briel,,B,B,C,1.8,1.89,2.17,127,inherited_hero_modes
+39,93,Dolly,,Dolly,base,,,Healer,S,Dolly,,B,B,C,1.8,1.89,2.17,128,inherited_hero_modes
+41,13,Dr. Molly,,Dr. Molly,base,,,Tank,S,Dr. Molly,,B,B,C,1.8,1.89,2.17,129,inherited_hero_modes
+43,12,Dullahan,,Dullahan,base,,,Tank,S,Dullahan,,B,B,C,1.8,1.89,2.17,130,inherited_hero_modes
+54,56,Flaune,,Flaune,base,,,Mage,S,Flaune,,B,B,C,1.8,1.89,2.17,131,inherited_hero_modes
+64,35,Husky,,Husky,base,,,Assault,S,Husky,,B,B,C,1.8,1.89,2.17,132,inherited_hero_modes
+86,75,Lydia,,Lydia,base,,,Ranger,S,Lydia,,B,B,C,1.8,1.89,2.17,133,inherited_hero_modes
+90,94,Mandragora,,Mandragora,base,,,Healer,S,Mandragora,,B,B,C,1.8,1.89,2.17,134,inherited_hero_modes
+121,11,Rocco,,Rocco,base,,,Tank,S,Rocco,,B,B,C,1.8,1.89,2.17,135,inherited_hero_modes
+138,10,Stavrogin,,Stavrogin,base,,,Tank,S,Stavrogin,,B,B,C,1.8,1.89,2.17,136,inherited_hero_modes
+141,55,Tarragon,,Tarragon,base,,,Mage,S,Tarragon,,B,B,C,1.8,1.89,2.17,137,inherited_hero_modes
+40,57,Dr. Merken,,Dr. Merken,base,,,Mage,S,Dr. Merken,,B,C,C,1.5,1.58,1.81,138,inherited_hero_modes
+58,96,Hanaru,,Hanaru,base,,,Healer,S,Hanaru,,B,C,C,1.5,1.58,1.81,139,inherited_hero_modes
+78,76,Lilia,,Lilia,base,,,Ranger,S,Lilia,,B,C,C,1.5,1.58,1.81,140,inherited_hero_modes
+109,95,Padre Ram,,Padre Ram,base,,,Healer,S,Padre Ram,,B,C,C,1.5,1.58,1.81,141,inherited_hero_modes
+14,59,Baron Dmitri,,Baron Dmitri,base,,,Mage,S,Baron Dmitri,,C,C,C,1.0,1.05,1.21,142,inherited_hero_modes
+19,81,Big Al,,Big Al,base,,,Ranger,S,Big Al,,C,C,C,1.0,1.05,1.21,143,inherited_hero_modes
+20,14,Big Imp,,Big Imp,base,,,Tank,S,Big Imp,,C,C,C,1.0,1.05,1.21,144,inherited_hero_modes
+26,77,Captain Claw,,Captain Claw,base,,,Ranger,S,Captain Claw,,C,C,C,1.0,1.05,1.21,145,inherited_hero_modes
+27,16,Carbon,,Carbon,base,,,Tank,S,Carbon,,C,C,C,1.0,1.05,1.21,146,inherited_hero_modes
+34,58,Coco,,Coco,base,,,Mage,S,Coco,,C,C,C,1.0,1.05,1.21,147,inherited_hero_modes
+49,60,Erednay,,Erednay,base,,,Mage,S,Erednay,,C,C,C,1.0,1.05,1.21,148,inherited_hero_modes
+63,79,Henry,,Henry,base,,,Ranger,S,Henry,,C,C,C,1.0,1.05,1.21,149,inherited_hero_modes
+69,37,Kaiga,,Kaiga,base,,,Assault,S,Kaiga,,C,C,C,1.0,1.05,1.21,150,inherited_hero_modes
+101,15,Navarus,,Navarus,base,,,Tank,S,Navarus,,C,C,C,1.0,1.05,1.21,151,inherited_hero_modes
+105,80,Nicholas,,Nicholas,base,,,Ranger,S,Nicholas,,C,C,C,1.0,1.05,1.21,152,inherited_hero_modes
+110,38,Pepe,,Pepe,base,,,Assault,S,Pepe,,C,C,C,1.0,1.05,1.21,153,inherited_hero_modes
+113,39,Porch,,Porch,base,,,Assault,S,Porch,,C,C,C,1.0,1.05,1.21,154,inherited_hero_modes
+117,62,Rares,,Rares,base,,,Mage,S,Rares,,C,C,C,1.0,1.05,1.21,155,inherited_hero_modes
+139,78,Swen,,Swen,base,,,Ranger,S,Swen,,C,C,C,1.0,1.05,1.21,156,inherited_hero_modes
+149,61,Urca,,Urca,base,,,Mage,S,Urca,,C,C,C,1.0,1.05,1.21,157,inherited_hero_modes

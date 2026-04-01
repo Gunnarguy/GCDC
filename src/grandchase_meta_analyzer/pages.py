@@ -317,7 +317,8 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
                     hv.variant_id,
                     h.name_en,
                     h.name_ko,
-                    h.role,
+                    hv.variant_role AS role,
+                    hv.variant_rarity AS rarity,
                     hv.variant_name_en,
                     hv.variant_kind,
                     hv.variant_suffix,
@@ -327,6 +328,49 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
                 FROM hero_variants hv
                 JOIN heroes h ON h.hero_id = hv.hero_id
                 ORDER BY h.name_en, hv.variant_kind, hv.variant_name_en
+                """,
+            )
+        )
+
+        variant_leaderboard_df = _apply_variant_display_columns(
+            _read_sql(
+                connection,
+                """
+                WITH mode_pivot AS (
+                    SELECT
+                        hero_id,
+                        MAX(CASE WHEN mode = 'adventure' THEN tier_letter END) AS adventure_tier,
+                        MAX(CASE WHEN mode = 'battle' THEN tier_letter END) AS battle_tier,
+                        MAX(CASE WHEN mode = 'boss' THEN tier_letter END) AS boss_tier
+                    FROM hero_modes
+                    GROUP BY hero_id
+                )
+                SELECT
+                    hv.variant_id,
+                    hv.hero_id,
+                    h.name_en,
+                    COALESCE(hv.name_ko, h.name_ko) AS name_ko,
+                    hv.variant_name_en,
+                    hv.variant_kind,
+                    hv.variant_suffix,
+                    hv.availability_marker,
+                    hv.variant_role AS role,
+                    hv.variant_rarity AS rarity,
+                    hv.source_title AS variant_title,
+                    hv.note_excerpt,
+                    mp.adventure_tier,
+                    mp.battle_tier,
+                    mp.boss_tier,
+                    vms.base_score,
+                    vms.rarity_adjusted,
+                    vms.final_meta_score,
+                    vms.meta_rank,
+                    vms.score_basis
+                FROM hero_variants hv
+                JOIN heroes h ON h.hero_id = hv.hero_id
+                LEFT JOIN mode_pivot mp ON mp.hero_id = hv.hero_id
+                LEFT JOIN variant_meta_scores vms ON vms.variant_id = hv.variant_id
+                ORDER BY vms.meta_rank, h.name_en, hv.variant_kind, hv.variant_name_en
                 """,
             )
         )
@@ -408,6 +452,66 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             )
         )
 
+        system_references_df = _read_sql(
+            connection,
+            """
+            SELECT
+                source,
+                reference_key,
+                title,
+                section_path,
+                content,
+                source_page,
+                game_era,
+                is_legacy_system,
+                trust_tier
+            FROM game_system_references
+            ORDER BY is_legacy_system, title, section_path
+            """,
+        )
+        system_references_df["content_preview"] = _preview_series(
+            system_references_df["content"], 320
+        )
+
+        release_history_df = _read_sql(
+            connection,
+            """
+            SELECT
+                source,
+                release_order_label,
+                release_order_numeric,
+                release_year,
+                hero_name_raw,
+                release_date_text,
+                release_date_iso,
+                release_batch_note,
+                source_page,
+                trust_tier
+            FROM hero_release_history
+            ORDER BY release_year DESC, release_order_numeric DESC, hero_name_raw
+            """,
+        )
+
+        system_reference_values_df = _read_sql(
+            connection,
+            """
+            SELECT
+                source,
+                reference_key,
+                title,
+                row_label,
+                column_label,
+                value_text,
+                numeric_value,
+                source_page,
+                game_era,
+                is_legacy_system,
+                trust_tier
+            FROM system_reference_values
+            ORDER BY reference_key, row_label, column_label
+            """,
+        )
+
     patch_blocks_df = (
         patch_entries_df.drop_duplicates(subset=["patch_block_key"]).copy()
         if not patch_entries_df.empty
@@ -421,17 +525,24 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
     )
 
     top_heroes_df = (
-        heroes_df[
-            ["meta_rank", "name_en", "name_ko", "role", "rarity", "final_meta_score"]
+        variant_leaderboard_df[
+            [
+                "meta_rank",
+                "variant_label",
+                "name_en",
+                "role",
+                "rarity",
+                "final_meta_score",
+            ]
         ]
         .head(15)
         .copy()
     )
 
     role_summary_df = (
-        heroes_df.groupby("role", dropna=False)
+        variant_leaderboard_df.groupby("role", dropna=False)
         .agg(
-            hero_count=("hero_id", "count"),
+            unit_count=("variant_id", "count"),
             avg_meta_score=("final_meta_score", "mean"),
             best_meta_score=("final_meta_score", "max"),
         )
@@ -459,7 +570,14 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
         )
         .reset_index()
         .merge(patch_counts_by_hero_df, on="name_en", how="left")
-        .fillna({"patch_blocks": 0, "patch_entries": 0})
+        .assign(
+            patch_blocks=lambda frame: pd.to_numeric(
+                frame["patch_blocks"], errors="coerce"
+            ).fillna(0),
+            patch_entries=lambda frame: pd.to_numeric(
+                frame["patch_entries"], errors="coerce"
+            ).fillna(0),
+        )
         .sort_values(["section_blocks", "variants"], ascending=[False, False])
         .reset_index(drop=True)
         .head(20)
@@ -481,10 +599,14 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             "section_count": int(len(sections_df.index)),
             "skill_count": int(len(skills_df.index)),
             "feature_count": int(len(features_df.index)),
+            "system_reference_count": int(len(system_references_df.index)),
+            "system_reference_value_count": int(len(system_reference_values_df.index)),
+            "release_history_count": int(len(release_history_df.index)),
             "patch_block_count": int(len(patch_blocks_df.index)),
             "patch_entry_count": int(len(patch_entries_df.index)),
         },
         "top_heroes": _to_records(top_heroes_df),
+        "variant_leaderboard": _to_records(variant_leaderboard_df),
         "role_summary": _to_records(role_summary_df),
         "variant_mix": _to_records(variant_mix_df),
         "section_coverage": _to_records(section_coverage_df),
@@ -494,6 +616,9 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
         "sections": _to_records(sections_df),
         "skills": _to_records(skills_df),
         "features": _to_records(features_df),
+        "system_references": _to_records(system_references_df),
+        "system_reference_values": _to_records(system_reference_values_df),
+        "release_history": _to_records(release_history_df),
         "patches": _to_records(patch_entries_df),
     }
 
@@ -523,6 +648,11 @@ def export_pages_site(
         "section_count": payload["summary"]["section_count"],
         "skill_count": payload["summary"]["skill_count"],
         "feature_count": payload["summary"]["feature_count"],
+        "system_reference_count": payload["summary"]["system_reference_count"],
+        "system_reference_value_count": payload["summary"][
+            "system_reference_value_count"
+        ],
+        "release_history_count": payload["summary"]["release_history_count"],
         "patch_block_count": payload["summary"]["patch_block_count"],
         "patch_entry_count": payload["summary"]["patch_entry_count"],
     }

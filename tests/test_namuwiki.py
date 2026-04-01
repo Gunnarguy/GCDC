@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 
 from grandchase_meta_analyzer.scrapers.namuwiki import (
+    _extract_release_history,
+    _extract_system_references,
     _extract_variant_page_features,
     _extract_variant_page_sections,
     _extract_variant_page_skills,
@@ -154,3 +156,77 @@ def test_extract_source_notes_collects_legend_and_variant_explanations() -> None
     assert "legend" in notes_by_key
     assert "former_hero" in notes_by_key
     assert "special_hero" in notes_by_key
+
+
+def test_extract_system_references_collects_global_growth_sections() -> None:
+    html = """
+    <html>
+      <body>
+        <h2>2. growth stage</h2>
+        <div>The game simplified multiple progression systems.</div>
+        <h3>2.4. chaser</h3>
+        <div>Chaser opens a purple border and grants a gauge.</div>
+        <h4>2.7.2. liking</h4>
+        <div>Liking grants profile rewards and stat gains.</div>
+        <h4>2.7.3. Destiny</h4>
+        <div>Thread of Fate raises bond level and basic abilities.</div>
+      </body>
+    </html>
+    """
+    soup = BeautifulSoup(html, "lxml")
+
+    rows = _extract_system_references(soup, "https://example.com/namu")
+    rows_by_key = {row["reference_key"]: row for row in rows}
+
+    assert "growth_stage" in rows_by_key
+    assert rows_by_key["growth_stage"]["title"] == "Growth Stage"
+    assert rows_by_key["chaser_system"]["section_path"] == "growth stage > chaser"
+    assert (
+        rows_by_key["liking"]["content"]
+        == "Liking grants profile rewards and stat gains."
+    )
+    assert rows_by_key["destiny"]["trust_tier"] == "community_wiki"
+
+
+def test_extract_release_history_collects_release_rows_and_dates() -> None:
+    html = """
+    <html>
+      <body>
+        <h2>4. release date</h2>
+        <div>
+          <table>
+            <tr>
+              <th>order of release</th>
+              <th>name</th>
+              <th>release date</th>
+            </tr>
+            <tr>
+              <td>2024</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>62nd</td>
+              <td>Elesis (S)</td>
+              <td>January 23</td>
+            </tr>
+            <tr>
+              <td>63rd</td>
+              <td>Bastet</td>
+              <td>February 6</td>
+            </tr>
+          </table>
+        </div>
+      </body>
+    </html>
+    """
+    soup = BeautifulSoup(html, "lxml")
+
+    rows = _extract_release_history(soup, html, "https://example.com/namu")
+
+    assert len(rows) == 2
+    assert rows[0]["release_year"] == "2024"
+    assert rows[0]["release_order_label"] == "62nd"
+    assert rows[0]["hero_name_raw"] == "Elesis (S)"
+    assert rows[0]["release_date_iso"] == "2024-01-23"
+    assert rows[1]["release_order_numeric"] == "63"

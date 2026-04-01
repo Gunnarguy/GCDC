@@ -1,9 +1,11 @@
 {
   "sources": {
-    "strategywiki": "https://strategywiki.org/wiki/Grand_Chase_Dimensional_Chaser/Heroes",
+    "strategywiki_heroes": "https://strategywiki.org/wiki/Grand_Chase_Dimensional_Chaser/Heroes",
+    "strategywiki_hero_growth": "https://strategywiki.org/wiki/Grand_Chase_Dimensional_Chaser/Hero_Growth",
+    "strategywiki_material": "https://strategywiki.org/wiki/Grand_Chase_Dimensional_Chaser/Material",
     "namuwiki_ss": "https://en.namu.wiki/w/%EA%B7%B8%EB%9E%9C%EB%93%9C%EC%B2%B4%EC%9D%B4%EC%8A%A4(%EB%AA%A8%EB%B0%94%EC%9D%BC)/%EC%98%81%EC%9B%85/SS%EB%93%B1%EA%B8%89",
-    "fandom_chaser": "https://grandchase.fandom.com/wiki/Chaser_System",
-    "fandom_skills": "https://grandchase.fandom.com/wiki/Skill_Tree"
+    "fandom_chaser": "https://grandchase.fandom.com/api.php?action=parse&page=Chaser_System&format=json",
+    "fandom_skills": "https://grandchase.fandom.com/api.php?action=parse&page=Skill_Tree&format=json"
   },
   "scraping": {
     "request_timeout_seconds": 20,

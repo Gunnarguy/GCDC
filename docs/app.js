@@ -26,6 +26,13 @@ function cacheElements() {
     "#coverageLeadersTable",
   );
   elements.patchCoverageTable = document.querySelector("#patchCoverageTable");
+  elements.systemReferences = document.querySelector("#systemReferences");
+  elements.releaseTimelineTable = document.querySelector(
+    "#releaseTimelineTable",
+  );
+  elements.systemReferenceValuesTable = document.querySelector(
+    "#systemReferenceValuesTable",
+  );
 
   elements.searchHero = document.querySelector("#searchHero");
   elements.searchText = document.querySelector("#searchText");
@@ -242,7 +249,7 @@ function renderOverview() {
     {
       label: "Variants",
       value: summary.variant_count,
-      meta: "base, former, and special pages",
+      meta: "ranked base, former, and special units",
     },
     {
       label: "Sections",
@@ -256,6 +263,21 @@ function renderOverview() {
       meta: "system availability markers",
     },
     {
+      label: "System Refs",
+      value: summary.system_reference_count,
+      meta: "global growth and system notes",
+    },
+    {
+      label: "Legacy Cells",
+      value: summary.system_reference_value_count,
+      meta: "flattened Hero Growth table values",
+    },
+    {
+      label: "Release Rows",
+      value: summary.release_history_count,
+      meta: "parsed hero release chronology",
+    },
+    {
       label: "Patch Entries",
       value: summary.patch_entry_count,
       meta: `${formatNumber(summary.patch_block_count)} captured blocks with dated balance history`,
@@ -264,7 +286,7 @@ function renderOverview() {
 
   renderTable(elements.topHeroesTable, state.payload.top_heroes, [
     ["meta_rank", "Rank"],
-    ["name_en", "Hero"],
+    ["variant_label", "Unit"],
     ["role", "Role"],
     ["rarity", "Rarity"],
     ["final_meta_score", "Meta Score"],
@@ -272,7 +294,7 @@ function renderOverview() {
 
   renderTable(elements.roleSummaryTable, state.payload.role_summary, [
     ["role", "Role"],
-    ["hero_count", "Heroes"],
+    ["unit_count", "Units"],
     ["avg_meta_score", "Avg Score"],
     ["best_meta_score", "Best Score"],
   ]);
@@ -307,6 +329,36 @@ function renderOverview() {
       ["latest_patch_type", "Latest Type"],
     ],
     "No parsed balance history was exported.",
+  );
+
+  renderReferenceEntries(
+    elements.systemReferences,
+    state.payload.system_references,
+    "No global system reference rows were exported.",
+  );
+
+  renderTable(
+    elements.releaseTimelineTable,
+    state.payload.release_history.slice(0, 25),
+    [
+      ["release_year", "Year"],
+      ["release_order_label", "Order"],
+      ["hero_name_raw", "Hero"],
+      ["release_date_text", "Date"],
+    ],
+    "No release timeline rows were exported.",
+  );
+
+  renderTable(
+    elements.systemReferenceValuesTable,
+    state.payload.system_reference_values.slice(0, 24),
+    [
+      ["title", "Table"],
+      ["row_label", "Row"],
+      ["column_label", "Column"],
+      ["value_text", "Value"],
+    ],
+    "No structured legacy growth-table values were exported.",
   );
 }
 
@@ -450,6 +502,12 @@ function renderHero() {
   const heroSections = state.payload.sections.filter(
     (row) => row.name_en === heroName,
   );
+  const heroVariants = state.payload.variants.filter(
+    (row) => row.name_en === heroName,
+  );
+  const heroVariantScores = state.payload.variant_leaderboard.filter(
+    (row) => row.name_en === heroName,
+  );
   const heroSkills = state.payload.skills.filter(
     (row) => row.name_en === heroName,
   );
@@ -461,6 +519,19 @@ function renderHero() {
   );
   const heroRecord =
     state.payload.heroes.find((row) => row.name_en === heroName) || {};
+  const selectedVariantRecord = selectedVariantTitle
+    ? heroVariants.find((row) => row.variant_title === selectedVariantTitle) ||
+      {}
+    : heroVariants.find((row) => row.variant_kind === "base") ||
+      heroVariants[0] ||
+      {};
+  const selectedVariantScoreRecord = selectedVariantTitle
+    ? heroVariantScores.find(
+        (row) => row.variant_title === selectedVariantTitle,
+      ) || {}
+    : heroVariantScores.find((row) => row.variant_kind === "base") ||
+      heroVariantScores[0] ||
+      {};
 
   const scopedSections = selectedVariantTitle
     ? heroSections.filter((row) => row.variant_title === selectedVariantTitle)
@@ -478,7 +549,7 @@ function renderHero() {
     : heroPatchEntries;
 
   const variantCount = dedupeBy(
-    heroSections,
+    heroVariants,
     (row) => row.variant_title,
   ).length;
   const latestPatchDate = heroPatchEntries[0]?.patch_date || "-";
@@ -494,35 +565,47 @@ function renderHero() {
     { label: "Hero", value: heroName, meta: currentVariantLabel },
     {
       label: "Role",
-      value: heroRecord.role || "-",
-      meta: heroRecord.rarity ? `Rarity ${heroRecord.rarity}` : "role metadata",
+      value: selectedVariantRecord.role || heroRecord.role || "-",
+      meta:
+        selectedVariantRecord.rarity || heroRecord.rarity
+          ? `Rarity ${selectedVariantRecord.rarity || heroRecord.rarity}`
+          : "role metadata",
     },
     {
       label: "Meta Rank",
-      value: heroRecord.meta_rank || "-",
+      value:
+        selectedVariantScoreRecord.meta_rank || heroRecord.meta_rank || "-",
       meta: "lower is stronger",
     },
     {
       label: "Meta Score",
-      value: heroRecord.final_meta_score || "-",
+      value:
+        selectedVariantScoreRecord.final_meta_score ||
+        heroRecord.final_meta_score ||
+        "-",
       meta: "exported leaderboard score",
     },
     {
       label: "Adventure",
-      value: heroRecord.adventure_tier || "-",
+      value:
+        selectedVariantScoreRecord.adventure_tier ||
+        heroRecord.adventure_tier ||
+        "-",
       meta: "tier snapshot",
     },
     {
       label: "Battle",
-      value: heroRecord.battle_tier || "-",
+      value:
+        selectedVariantScoreRecord.battle_tier || heroRecord.battle_tier || "-",
       meta: "tier snapshot",
     },
     {
       label: "Boss",
-      value: heroRecord.boss_tier || "-",
+      value:
+        selectedVariantScoreRecord.boss_tier || heroRecord.boss_tier || "-",
       meta: "tier snapshot",
     },
-    { label: "Variants", value: variantCount, meta: "captured pages" },
+    { label: "Variants", value: variantCount, meta: "ranked unit entries" },
     {
       label: "Sections",
       value: scopedSections.length,
@@ -786,6 +869,37 @@ function renderSectionEntries(container, rows, emptyText, options = {}) {
   `;
 }
 
+function renderReferenceEntries(container, rows, emptyText, options = {}) {
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
+    return;
+  }
+
+  const highlightTerms = options.highlightTerms || [];
+
+  container.innerHTML = `
+    <div class="section-list">
+      ${rows
+        .map(
+          (row, index) => `
+            <details class="section-entry"${index < 2 ? " open" : ""}>
+              <summary>
+                ${highlightText(`${row.title} · ${formatReferenceMeta(row)}`, highlightTerms)}
+              </summary>
+              <div class="section-body">
+                <p class="section-path">${highlightText(row.section_path || "", highlightTerms)}</p>
+                <p class="section-preview">${highlightText(row.content_preview || "", highlightTerms)}</p>
+                <p class="section-content">${highlightText(row.content || "", highlightTerms)}</p>
+                ${renderSourceLink(row.source_page)}
+              </div>
+            </details>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function renderSourceLink(sourcePage) {
   if (!sourcePage) {
     return "";
@@ -834,6 +948,21 @@ function formatLabel(value) {
 
 function formatFeatureKeyLabel(value) {
   return formatLabel(value).replaceAll("  ", " ");
+}
+
+function formatReferenceMeta(row) {
+  const eraLabel = String(row.game_era || "")
+    .replace(/_reference$/i, "")
+    .replaceAll("_", " ")
+    .trim();
+  const parts = [formatLabel(eraLabel || "reference")];
+  if (Number(row.is_legacy_system) === 1) {
+    parts.push("Legacy");
+  }
+  if (row.trust_tier) {
+    parts.push(formatLabel(String(row.trust_tier)));
+  }
+  return parts.join(" · ");
 }
 
 function formatHeroVariantHeading(heroName, variantLabel) {

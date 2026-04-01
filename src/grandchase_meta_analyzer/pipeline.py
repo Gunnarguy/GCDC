@@ -57,6 +57,39 @@ def run_scrape(settings: RuntimeSettings, source: str | None = None) -> dict[str
             "strategywiki_heroes.csv",
             ["name_en", "role", "adventure", "battle", "boss", "source"],
         )
+        results["strategywiki_reference_notes"] = _run_scrape_step(
+            "strategywiki_reference_notes",
+            lambda: strategywiki.scrape_reference_notes(settings),
+            "strategywiki_reference_notes.csv",
+            [
+                "source",
+                "reference_key",
+                "title",
+                "section_path",
+                "content",
+                "source_page",
+                "game_era",
+                "is_legacy_system",
+                "trust_tier",
+            ],
+        )
+        results["strategywiki_hero_growth_values"] = _run_scrape_step(
+            "strategywiki_hero_growth_values",
+            lambda: strategywiki.scrape_hero_growth_values(settings),
+            "strategywiki_hero_growth_values.csv",
+            [
+                "source",
+                "reference_key",
+                "title",
+                "row_label",
+                "column_label",
+                "value_text",
+                "source_page",
+                "game_era",
+                "is_legacy_system",
+                "trust_tier",
+            ],
+        )
 
     if source in {None, "namuwiki"}:
         try:
@@ -91,6 +124,41 @@ def run_scrape(settings: RuntimeSettings, source: str | None = None) -> dict[str
             lambda: namuwiki.scrape_notes(settings),
             "namuwiki_notes.csv",
             ["source", "note_key", "title", "content", "source_page"],
+        )
+
+        results["namuwiki_system_references"] = _run_scrape_step(
+            "namuwiki_system_references",
+            lambda: namuwiki.scrape_system_references(settings),
+            "namuwiki_system_references.csv",
+            [
+                "source",
+                "reference_key",
+                "title",
+                "section_path",
+                "content",
+                "source_page",
+                "game_era",
+                "is_legacy_system",
+                "trust_tier",
+            ],
+        )
+
+        results["namuwiki_release_history"] = _run_scrape_step(
+            "namuwiki_release_history",
+            lambda: namuwiki.scrape_release_history(settings),
+            "namuwiki_release_history.csv",
+            [
+                "source",
+                "release_order_label",
+                "release_order_numeric",
+                "release_year",
+                "hero_name_raw",
+                "release_date_text",
+                "release_date_iso",
+                "release_batch_note",
+                "source_page",
+                "trust_tier",
+            ],
         )
 
         try:

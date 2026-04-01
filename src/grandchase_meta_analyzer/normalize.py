@@ -8,14 +8,21 @@ import pandas as pd
 
 from .explorer_skill_details import extract_skill_insight
 from .paths import PROCESSED_DATA_DIR, RAW_DATA_DIR
+from .scrapers.common import normalize_text
 from .settings import RuntimeSettings
 from .storage import read_csv
 
 
 LOGGER = logging.getLogger(__name__)
 RAW_STRATEGYWIKI = RAW_DATA_DIR / "strategywiki_heroes.csv"
+RAW_STRATEGYWIKI_REFERENCE_NOTES = RAW_DATA_DIR / "strategywiki_reference_notes.csv"
+RAW_STRATEGYWIKI_HERO_GROWTH_VALUES = (
+    RAW_DATA_DIR / "strategywiki_hero_growth_values.csv"
+)
 RAW_NAMUWIKI = RAW_DATA_DIR / "namuwiki_heroes.csv"
 RAW_NAMUWIKI_NOTES = RAW_DATA_DIR / "namuwiki_notes.csv"
+RAW_NAMUWIKI_SYSTEM_REFERENCES = RAW_DATA_DIR / "namuwiki_system_references.csv"
+RAW_NAMUWIKI_RELEASE_HISTORY = RAW_DATA_DIR / "namuwiki_release_history.csv"
 RAW_NAMUWIKI_VARIANT_SECTIONS = RAW_DATA_DIR / "namuwiki_variant_sections.csv"
 RAW_NAMUWIKI_VARIANT_SKILLS = RAW_DATA_DIR / "namuwiki_variant_skills.csv"
 RAW_NAMUWIKI_VARIANT_FEATURES = RAW_DATA_DIR / "namuwiki_variant_features.csv"
@@ -41,6 +48,18 @@ FEATURE_LABELS = {
 }
 BRACKETED_PREFIX_PATTERN = re.compile(r"^(?:\[[^\]]+\]\s*)+")
 NUMERIC_VALUE_PATTERN = re.compile(r"-?\d+(?:,\d{3})*(?:\.\d+)?")
+VARIANT_KIND_SORT_ORDER = {"base": 0, "former": 1, "special": 2}
+VARIANT_ROLE_PATTERNS = (
+    (re.compile(r"\b(?:guardian|tank|defen(?:se|sive))\b", re.IGNORECASE), "Tank"),
+    (re.compile(r"\b(?:assault|warrior)\b", re.IGNORECASE), "Assault"),
+    (re.compile(r"\b(?:magic|magical|mage)\b", re.IGNORECASE), "Mage"),
+    (re.compile(r"\b(?:sniper|ranger|archer)\b", re.IGNORECASE), "Ranger"),
+    (re.compile(r"\b(?:healing|healer|support)\b", re.IGNORECASE), "Healer"),
+)
+VARIANT_RARITY_PATTERN = re.compile(
+    r"\b(SS|SR|S|A|B)\s*[- ]?(?:grade|rank)\b",
+    re.IGNORECASE,
+)
 
 
 def resolve_hero_identities(
@@ -116,29 +135,264 @@ def resolve_hero_identities(
     return resolved_df
 
 
-def compute_meta_scores(
-    heroes_df: pd.DataFrame, settings: RuntimeSettings
-) -> pd.DataFrame:
+def _score_components(
+    adventure_tier: str,
+    battle_tier: str,
+    boss_tier: str,
+    rarity: str,
+    settings: RuntimeSettings,
+) -> tuple[float, float, float]:
     tier_scores = settings.scoring["tier_scores"]
     mode_weights = settings.scoring["mode_weights"]
     rarity_multipliers = settings.scoring["rarity_multipliers"]
     chaser_multiplier = float(settings.scoring["chaser_multiplier"])
 
+    adventure_score = tier_scores.get(str(adventure_tier), 2)
+    battle_score = tier_scores.get(str(battle_tier), 2)
+    boss_score = tier_scores.get(str(boss_tier), 2)
+
+    base_score = (
+        mode_weights["adventure"] * adventure_score
+        + mode_weights["battle"] * battle_score
+        + mode_weights["boss"] * boss_score
+    )
+    rarity_adjusted = base_score * rarity_multipliers.get(str(rarity), 1.0)
+    final_meta_score = rarity_adjusted * chaser_multiplier
+    return base_score, rarity_adjusted, final_meta_score
+
+
+def _variant_kind_sort_key(variant_kind: str) -> int:
+    return VARIANT_KIND_SORT_ORDER.get(str(variant_kind).strip(), 99)
+
+
+def _build_variant_outline_lookup(variant_sections_df: pd.DataFrame) -> dict[str, str]:
+    if variant_sections_df.empty or "variant_href" not in variant_sections_df.columns:
+        return {}
+    outline_rows = variant_sections_df[
+        variant_sections_df["heading_title"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .eq("outline")
+    ].copy()
+    if outline_rows.empty:
+        return {}
+    outline_rows = outline_rows.drop_duplicates(subset=["variant_href"])
+    return {
+        str(raw_row["variant_href"]): str(raw_row.get("content", ""))
+        for raw_row in outline_rows.to_dict(orient="records")
+        if str(raw_row.get("variant_href", "")).strip()
+    }
+
+
+def _infer_variant_role(outline_text: str, fallback_role: str) -> str:
+    cleaned = normalize_text(outline_text)
+    for pattern, role in VARIANT_ROLE_PATTERNS:
+        if pattern.search(cleaned):
+            return role
+    return str(fallback_role or "Unknown")
+
+
+def _infer_variant_rarity(outline_text: str, fallback_rarity: str) -> str:
+    match = VARIANT_RARITY_PATTERN.search(normalize_text(outline_text))
+    if match is not None:
+        return match.group(1).upper()
+    return str(fallback_rarity or "SS")
+
+
+def _synthetic_base_variant_href(hero_id: int) -> str:
+    return f"synthetic://hero/{hero_id}/base"
+
+
+def build_variant_profiles(
+    heroes_df: pd.DataFrame,
+    variants_df: pd.DataFrame,
+    variant_sections_df: pd.DataFrame,
+) -> pd.DataFrame:
+    columns = [
+        "hero_id",
+        "name_en",
+        "name_ko",
+        "variant_name_en",
+        "variant_kind",
+        "variant_suffix",
+        "availability_marker",
+        "variant_title",
+        "variant_href",
+        "note_excerpt",
+        "source",
+        "variant_role",
+        "variant_rarity",
+        "adventure_tier",
+        "battle_tier",
+        "boss_tier",
+        "score_basis",
+    ]
+    if heroes_df.empty:
+        return pd.DataFrame(columns=columns)
+
+    hero_rows_by_name = {
+        str(raw_row["name_en"]): raw_row
+        for raw_row in heroes_df.to_dict(orient="records")
+    }
+    outline_by_href = _build_variant_outline_lookup(variant_sections_df)
+    rows: list[dict[str, object]] = []
+    hero_ids_with_base_variant: set[int] = set()
+
+    for raw_row in variants_df.to_dict(orient="records"):
+        name_en = str(raw_row.get("name_en_guess", "")).strip()
+        variant_href = str(raw_row.get("variant_href", "")).strip()
+        if not name_en or name_en not in hero_rows_by_name or not variant_href:
+            continue
+
+        hero_row = hero_rows_by_name[name_en]
+        outline_text = outline_by_href.get(variant_href, "")
+        variant_kind = str(raw_row.get("variant_kind", "base") or "base")
+        variant_rarity = str(raw_row.get("rarity", "") or hero_row.get("rarity", "SS"))
+        rows.append(
+            {
+                "hero_id": int(hero_row["hero_id"]),
+                "name_en": name_en,
+                "name_ko": str(
+                    raw_row.get("name_ko", "") or hero_row.get("name_ko", "")
+                ),
+                "variant_name_en": str(raw_row.get("variant_name_en", "") or name_en),
+                "variant_kind": variant_kind,
+                "variant_suffix": str(raw_row.get("variant_suffix", "")),
+                "availability_marker": str(raw_row.get("availability_marker", "")),
+                "variant_title": str(raw_row.get("variant_title", "") or name_en),
+                "variant_href": variant_href,
+                "note_excerpt": str(raw_row.get("note_excerpt", "")),
+                "source": str(raw_row.get("source", "namuwiki")),
+                "variant_role": _infer_variant_role(
+                    outline_text, str(hero_row.get("role", "Unknown"))
+                ),
+                "variant_rarity": _infer_variant_rarity(outline_text, variant_rarity),
+                "adventure_tier": str(hero_row.get("adventure_tier", "B")),
+                "battle_tier": str(hero_row.get("battle_tier", "B")),
+                "boss_tier": str(hero_row.get("boss_tier", "B")),
+                "score_basis": "inherited_hero_modes",
+            }
+        )
+        if variant_kind == "base":
+            hero_ids_with_base_variant.add(int(hero_row["hero_id"]))
+
+    for hero_row in heroes_df.to_dict(orient="records"):
+        hero_id = int(hero_row["hero_id"])
+        if hero_id in hero_ids_with_base_variant:
+            continue
+        rows.append(
+            {
+                "hero_id": hero_id,
+                "name_en": str(hero_row["name_en"]),
+                "name_ko": str(hero_row.get("name_ko", "")),
+                "variant_name_en": str(hero_row["name_en"]),
+                "variant_kind": "base",
+                "variant_suffix": "",
+                "availability_marker": "",
+                "variant_title": str(hero_row["name_en"]),
+                "variant_href": _synthetic_base_variant_href(hero_id),
+                "note_excerpt": "",
+                "source": "synthetic_base",
+                "variant_role": str(hero_row.get("role", "Unknown")),
+                "variant_rarity": str(hero_row.get("rarity", "SS")),
+                "adventure_tier": str(hero_row.get("adventure_tier", "B")),
+                "battle_tier": str(hero_row.get("battle_tier", "B")),
+                "boss_tier": str(hero_row.get("boss_tier", "B")),
+                "score_basis": "inherited_hero_modes",
+            }
+        )
+
+    variant_profiles_df = pd.DataFrame.from_records(rows)
+    if variant_profiles_df.empty:
+        return pd.DataFrame(columns=columns)
+    variant_profiles_df = variant_profiles_df.drop_duplicates(subset=["variant_href"])
+    variant_profiles_df["variant_sort_order"] = variant_profiles_df["variant_kind"].map(
+        _variant_kind_sort_key
+    )
+    variant_profiles_df = variant_profiles_df.sort_values(
+        ["name_en", "variant_sort_order", "variant_name_en", "variant_title"],
+        ascending=[True, True, True, True],
+        ignore_index=True,
+    )
+    return variant_profiles_df.drop(columns=["variant_sort_order"])
+
+
+def compute_variant_meta_scores(
+    variant_profiles_df: pd.DataFrame,
+    settings: RuntimeSettings,
+) -> pd.DataFrame:
+    if variant_profiles_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "variant_id",
+                "hero_id",
+                "base_score",
+                "rarity_adjusted",
+                "final_meta_score",
+                "meta_rank",
+                "score_basis",
+            ]
+        )
+
+    score_rows: list[dict[str, object]] = []
+    for raw_row in variant_profiles_df.to_dict(orient="records"):
+        base_score, rarity_adjusted, final_meta_score = _score_components(
+            str(raw_row.get("adventure_tier", "B")),
+            str(raw_row.get("battle_tier", "B")),
+            str(raw_row.get("boss_tier", "B")),
+            str(raw_row.get("variant_rarity", "SS")),
+            settings,
+        )
+        score_rows.append(
+            {
+                "variant_id": int(raw_row["variant_id"]),
+                "hero_id": int(raw_row["hero_id"]),
+                "base_score": round(base_score, 2),
+                "rarity_adjusted": round(rarity_adjusted, 2),
+                "final_meta_score": round(final_meta_score, 2),
+                "score_basis": str(raw_row.get("score_basis", "inherited_hero_modes")),
+                "name_en": str(raw_row.get("name_en", "")),
+                "variant_kind": str(raw_row.get("variant_kind", "base")),
+                "variant_title": str(raw_row.get("variant_title", "")),
+            }
+        )
+
+    score_df = pd.DataFrame.from_records(score_rows)
+    score_df["variant_sort_order"] = score_df["variant_kind"].map(
+        _variant_kind_sort_key
+    )
+    score_df = score_df.sort_values(
+        ["final_meta_score", "name_en", "variant_sort_order", "variant_title"],
+        ascending=[False, True, True, True],
+        ignore_index=True,
+    )
+    score_df["meta_rank"] = score_df.index + 1
+    return score_df[
+        [
+            "variant_id",
+            "hero_id",
+            "base_score",
+            "rarity_adjusted",
+            "final_meta_score",
+            "meta_rank",
+            "score_basis",
+        ]
+    ]
+
+
+def compute_meta_scores(
+    heroes_df: pd.DataFrame, settings: RuntimeSettings
+) -> pd.DataFrame:
     score_rows: list[dict[str, object]] = []
     for raw_row in heroes_df.to_dict(orient="records"):
-        adventure_score = tier_scores.get(raw_row["adventure_tier"], 2)
-        battle_score = tier_scores.get(raw_row["battle_tier"], 2)
-        boss_score = tier_scores.get(raw_row["boss_tier"], 2)
-
-        base_score = (
-            mode_weights["adventure"] * adventure_score
-            + mode_weights["battle"] * battle_score
-            + mode_weights["boss"] * boss_score
+        base_score, rarity_adjusted, final_meta_score = _score_components(
+            str(raw_row["adventure_tier"]),
+            str(raw_row["battle_tier"]),
+            str(raw_row["boss_tier"]),
+            str(raw_row["rarity"]),
+            settings,
         )
-        rarity_adjusted = base_score * rarity_multipliers.get(
-            str(raw_row["rarity"]), 1.0
-        )
-        final_meta_score = rarity_adjusted * chaser_multiplier
         score_rows.append(
             {
                 "hero_id": int(raw_row["hero_id"]),
@@ -185,6 +439,23 @@ def _join_or_dash(items: list[str], limit: int = 8) -> str:
 
 def _preview_text(text: str, length: int = 240) -> str:
     return re.sub(r"\s+", " ", text).strip()[:length]
+
+
+def _as_optional_int(value: object) -> int | None:
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return int(float(text))
+    except ValueError:
+        return None
+
+
+def _extract_numeric_value(value: object) -> float | None:
+    match = NUMERIC_VALUE_PATTERN.search(str(value))
+    if match is None:
+        return None
+    return float(match.group(0).replace(",", ""))
 
 
 def _max_numeric_token(values: list[str]) -> str:
@@ -643,6 +914,9 @@ def build_database(
     scores_df: pd.DataFrame,
     variants_df: pd.DataFrame,
     notes_df: pd.DataFrame,
+    system_references_df: pd.DataFrame,
+    system_reference_values_df: pd.DataFrame,
+    release_history_df: pd.DataFrame,
     variant_sections_df: pd.DataFrame,
     variant_skills_df: pd.DataFrame,
     variant_features_df: pd.DataFrame,
@@ -655,18 +929,22 @@ def build_database(
         cursor = connection.cursor()
         cursor.executescript(
             """
-            PRAGMA foreign_keys = ON;
+            PRAGMA foreign_keys = OFF;
 
             DROP TABLE IF EXISTS hero_progression_equipment_stats;
+            DROP TABLE IF EXISTS hero_progression_relationships;
             DROP TABLE IF EXISTS hero_progression_tags;
             DROP TABLE IF EXISTS hero_progression_tracks;
             DROP TABLE IF EXISTS hero_progression_values;
             DROP TABLE IF EXISTS hero_progression_rows;
-            DROP TABLE IF EXISTS hero_progression_relationships;
+            DROP TABLE IF EXISTS hero_release_history;
+            DROP TABLE IF EXISTS system_reference_values;
+            DROP TABLE IF EXISTS game_system_references;
             DROP TABLE IF EXISTS source_notes;
             DROP TABLE IF EXISTS hero_variant_features;
             DROP TABLE IF EXISTS hero_variant_skills;
             DROP TABLE IF EXISTS hero_variant_sections;
+            DROP TABLE IF EXISTS variant_meta_scores;
             DROP TABLE IF EXISTS skill_tags;
             DROP TABLE IF EXISTS skill_snippets;
             DROP TABLE IF EXISTS chaser_traits;
@@ -710,11 +988,25 @@ def build_database(
                 variant_kind TEXT NOT NULL,
                 variant_suffix TEXT,
                 availability_marker TEXT,
+                variant_role TEXT NOT NULL,
+                variant_rarity TEXT NOT NULL,
                 source_title TEXT NOT NULL,
                 source_href TEXT NOT NULL,
                 note_excerpt TEXT,
                 source TEXT NOT NULL,
                 UNIQUE(hero_id, source_href),
+                FOREIGN KEY (hero_id) REFERENCES heroes(hero_id)
+            );
+
+            CREATE TABLE variant_meta_scores (
+                variant_id INTEGER PRIMARY KEY,
+                hero_id INTEGER NOT NULL,
+                base_score REAL NOT NULL,
+                rarity_adjusted REAL NOT NULL,
+                final_meta_score REAL NOT NULL,
+                meta_rank INTEGER NOT NULL,
+                score_basis TEXT NOT NULL,
+                FOREIGN KEY (variant_id) REFERENCES hero_variants(variant_id),
                 FOREIGN KEY (hero_id) REFERENCES heroes(hero_id)
             );
 
@@ -872,8 +1164,52 @@ def build_database(
                 UNIQUE(source, note_key)
             );
 
+            CREATE TABLE game_system_references (
+                reference_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT NOT NULL,
+                reference_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                section_path TEXT NOT NULL,
+                content TEXT NOT NULL,
+                source_page TEXT NOT NULL,
+                game_era TEXT NOT NULL,
+                is_legacy_system INTEGER NOT NULL,
+                trust_tier TEXT NOT NULL,
+                UNIQUE(source, reference_key, section_path)
+            );
+
+            CREATE TABLE hero_release_history (
+                release_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT NOT NULL,
+                release_order_label TEXT NOT NULL,
+                release_order_numeric INTEGER,
+                release_year INTEGER,
+                hero_name_raw TEXT NOT NULL,
+                release_date_text TEXT NOT NULL,
+                release_date_iso TEXT,
+                release_batch_note TEXT NOT NULL,
+                source_page TEXT NOT NULL,
+                trust_tier TEXT NOT NULL
+            );
+
+            CREATE TABLE system_reference_values (
+                reference_value_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT NOT NULL,
+                reference_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                row_label TEXT NOT NULL,
+                column_label TEXT NOT NULL,
+                value_text TEXT NOT NULL,
+                numeric_value REAL,
+                source_page TEXT NOT NULL,
+                game_era TEXT NOT NULL,
+                is_legacy_system INTEGER NOT NULL,
+                trust_tier TEXT NOT NULL
+            );
+
             CREATE INDEX idx_meta_score_rank ON hero_meta_scores(final_meta_score DESC);
             CREATE INDEX idx_hero_variants_hero_id ON hero_variants(hero_id);
+            CREATE INDEX idx_variant_meta_score_rank ON variant_meta_scores(final_meta_score DESC, meta_rank);
             CREATE INDEX idx_hero_variant_sections_variant_id ON hero_variant_sections(variant_id);
             CREATE INDEX idx_hero_variant_skills_variant_id ON hero_variant_skills(variant_id);
             CREATE INDEX idx_progression_rows_hero_stage ON hero_progression_rows(hero_id, stage_order, variant_id);
@@ -881,6 +1217,11 @@ def build_database(
             CREATE INDEX idx_progression_tracks_label ON hero_progression_tracks(track_label, step_index);
             CREATE INDEX idx_progression_relationships_target ON hero_progression_relationships(target_skill_family, relation_type);
             CREATE INDEX idx_progression_equipment_level ON hero_progression_equipment_stats(equipment_level);
+            CREATE INDEX idx_game_system_references_key ON game_system_references(reference_key, game_era);
+            CREATE INDEX idx_release_history_year_order ON hero_release_history(release_year, release_order_numeric);
+            CREATE INDEX idx_system_reference_values_key ON system_reference_values(reference_key, row_label, column_label);
+
+            PRAGMA foreign_keys = ON;
             """
         )
 
@@ -920,30 +1261,36 @@ def build_database(
             score_rows,
         )
 
+        variant_profiles_df = build_variant_profiles(
+            heroes_df,
+            variants_df,
+            variant_sections_df,
+        )
         hero_id_by_name = {
             str(raw_row["name_en"]): int(raw_row["hero_id"])
             for raw_row in heroes_df.to_dict(orient="records")
         }
         variant_rows = [
             (
-                hero_id_by_name[str(raw_row["name_en_guess"])],
-                str(raw_row.get("variant_name_en", raw_row["name_en_guess"])),
+                int(raw_row["hero_id"]),
+                str(raw_row.get("variant_name_en", raw_row["name_en"])),
                 str(raw_row.get("name_ko", "")),
                 str(raw_row.get("variant_kind", "base")),
                 str(raw_row.get("variant_suffix", "")),
                 str(raw_row.get("availability_marker", "")),
-                str(raw_row.get("variant_title", "")),
+                str(raw_row.get("variant_role", "Unknown")),
+                str(raw_row.get("variant_rarity", "SS")),
+                str(raw_row.get("variant_title", raw_row["name_en"])),
                 str(raw_row.get("variant_href", "")),
                 str(raw_row.get("note_excerpt", "")),
                 str(raw_row.get("source", "namuwiki")),
             )
-            for raw_row in variants_df.to_dict(orient="records")
-            if str(raw_row.get("name_en_guess", "")) in hero_id_by_name
-            and str(raw_row.get("variant_href", "")).strip()
+            for raw_row in variant_profiles_df.to_dict(orient="records")
+            if str(raw_row.get("variant_href", "")).strip()
         ]
         if variant_rows:
             cursor.executemany(
-                "INSERT INTO hero_variants (hero_id, variant_name_en, name_ko, variant_kind, variant_suffix, availability_marker, source_title, source_href, note_excerpt, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO hero_variants (hero_id, variant_name_en, name_ko, variant_kind, variant_suffix, availability_marker, variant_role, variant_rarity, source_title, source_href, note_excerpt, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 variant_rows,
             )
 
@@ -953,6 +1300,39 @@ def build_database(
                 "SELECT variant_id, source_href FROM hero_variants"
             )
         }
+
+        variant_score_profiles_df = variant_profiles_df.copy()
+        if not variant_score_profiles_df.empty:
+            variant_score_profiles_df["variant_id"] = variant_score_profiles_df[
+                "variant_href"
+            ].map(variant_id_by_href)
+            variant_score_profiles_df = variant_score_profiles_df[
+                variant_score_profiles_df["variant_id"].notna()
+            ].copy()
+            variant_score_profiles_df["variant_id"] = variant_score_profiles_df[
+                "variant_id"
+            ].astype(int)
+
+        variant_score_rows = [
+            (
+                int(raw_row["variant_id"]),
+                int(raw_row["hero_id"]),
+                float(raw_row["base_score"]),
+                float(raw_row["rarity_adjusted"]),
+                float(raw_row["final_meta_score"]),
+                int(raw_row["meta_rank"]),
+                str(raw_row.get("score_basis", "inherited_hero_modes")),
+            )
+            for raw_row in compute_variant_meta_scores(
+                variant_score_profiles_df,
+                settings,
+            ).to_dict(orient="records")
+        ]
+        if variant_score_rows:
+            cursor.executemany(
+                "INSERT INTO variant_meta_scores (variant_id, hero_id, base_score, rarity_adjusted, final_meta_score, meta_rank, score_basis) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                variant_score_rows,
+            )
 
         if not variant_sections_df.empty:
             variant_section_rows = [
@@ -1068,6 +1448,81 @@ def build_database(
                 note_rows,
             )
 
+        if not system_references_df.empty:
+            system_reference_rows = [
+                (
+                    str(raw_row["source"]),
+                    str(raw_row["reference_key"]),
+                    str(raw_row["title"]),
+                    str(raw_row["section_path"]),
+                    str(raw_row["content"]),
+                    str(raw_row["source_page"]),
+                    str(raw_row.get("game_era", "current_reference")),
+                    (
+                        1
+                        if str(raw_row.get("is_legacy_system", "0")).strip()
+                        in {"1", "true", "True"}
+                        else 0
+                    ),
+                    str(raw_row.get("trust_tier", "community_wiki")),
+                )
+                for raw_row in system_references_df.to_dict(orient="records")
+            ]
+            cursor.executemany(
+                "INSERT INTO game_system_references (source, reference_key, title, section_path, content, source_page, game_era, is_legacy_system, trust_tier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                system_reference_rows,
+            )
+
+        if not system_reference_values_df.empty:
+            system_reference_value_rows = [
+                (
+                    str(raw_row["source"]),
+                    str(raw_row["reference_key"]),
+                    str(raw_row["title"]),
+                    str(raw_row.get("row_label", "")),
+                    str(raw_row.get("column_label", "")),
+                    str(raw_row.get("value_text", "")),
+                    _extract_numeric_value(raw_row.get("value_text", "")),
+                    str(raw_row.get("source_page", "")),
+                    str(raw_row.get("game_era", "legacy_pre_2024")),
+                    (
+                        1
+                        if str(raw_row.get("is_legacy_system", "1")).strip()
+                        in {"1", "true", "True"}
+                        else 0
+                    ),
+                    str(raw_row.get("trust_tier", "community_wiki")),
+                )
+                for raw_row in system_reference_values_df.to_dict(orient="records")
+                if str(raw_row.get("value_text", "")).strip()
+            ]
+            cursor.executemany(
+                "INSERT INTO system_reference_values (source, reference_key, title, row_label, column_label, value_text, numeric_value, source_page, game_era, is_legacy_system, trust_tier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                system_reference_value_rows,
+            )
+
+        if not release_history_df.empty:
+            release_history_rows = [
+                (
+                    str(raw_row["source"]),
+                    str(raw_row.get("release_order_label", "")),
+                    _as_optional_int(raw_row.get("release_order_numeric", "")),
+                    _as_optional_int(raw_row.get("release_year", "")),
+                    str(raw_row.get("hero_name_raw", "")),
+                    str(raw_row.get("release_date_text", "")),
+                    str(raw_row.get("release_date_iso", "")),
+                    str(raw_row.get("release_batch_note", "")),
+                    str(raw_row.get("source_page", "")),
+                    str(raw_row.get("trust_tier", "community_wiki")),
+                )
+                for raw_row in release_history_df.to_dict(orient="records")
+                if str(raw_row.get("hero_name_raw", "")).strip()
+            ]
+            cursor.executemany(
+                "INSERT INTO hero_release_history (source, release_order_label, release_order_numeric, release_year, hero_name_raw, release_date_text, release_date_iso, release_batch_note, source_page, trust_tier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                release_history_rows,
+            )
+
         if not chaser_df.empty:
             trait_rows = [
                 (
@@ -1107,6 +1562,35 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         RAW_STRATEGYWIKI,
         ["name_en", "role", "adventure", "battle", "boss", "source"],
     )
+    strategywiki_reference_notes_df = read_csv(
+        RAW_STRATEGYWIKI_REFERENCE_NOTES,
+        [
+            "source",
+            "reference_key",
+            "title",
+            "section_path",
+            "content",
+            "source_page",
+            "game_era",
+            "is_legacy_system",
+            "trust_tier",
+        ],
+    )
+    strategywiki_hero_growth_values_df = read_csv(
+        RAW_STRATEGYWIKI_HERO_GROWTH_VALUES,
+        [
+            "source",
+            "reference_key",
+            "title",
+            "row_label",
+            "column_label",
+            "value_text",
+            "source_page",
+            "game_era",
+            "is_legacy_system",
+            "trust_tier",
+        ],
+    )
     namuwiki_df = read_csv(
         RAW_NAMUWIKI,
         [
@@ -1126,6 +1610,35 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
     namuwiki_notes_df = read_csv(
         RAW_NAMUWIKI_NOTES,
         ["source", "note_key", "title", "content", "source_page"],
+    )
+    namuwiki_system_references_df = read_csv(
+        RAW_NAMUWIKI_SYSTEM_REFERENCES,
+        [
+            "source",
+            "reference_key",
+            "title",
+            "section_path",
+            "content",
+            "source_page",
+            "game_era",
+            "is_legacy_system",
+            "trust_tier",
+        ],
+    )
+    namuwiki_release_history_df = read_csv(
+        RAW_NAMUWIKI_RELEASE_HISTORY,
+        [
+            "source",
+            "release_order_label",
+            "release_order_numeric",
+            "release_year",
+            "hero_name_raw",
+            "release_date_text",
+            "release_date_iso",
+            "release_batch_note",
+            "source_page",
+            "trust_tier",
+        ],
     )
     variant_sections_df = read_csv(
         RAW_NAMUWIKI_VARIANT_SECTIONS,
@@ -1166,6 +1679,11 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
     )
     skills_df = read_csv(RAW_SKILLS, ["skill_name", "description", "source_page"])
 
+    combined_system_references_df = pd.concat(
+        [namuwiki_system_references_df, strategywiki_reference_notes_df],
+        ignore_index=True,
+    ).fillna("")
+
     heroes_df = resolve_hero_identities(strategy_df, namuwiki_df)
     scores_df = compute_meta_scores(heroes_df, settings)
     build_database(
@@ -1173,6 +1691,9 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         scores_df,
         namuwiki_df,
         namuwiki_notes_df,
+        combined_system_references_df,
+        strategywiki_hero_growth_values_df,
+        namuwiki_release_history_df,
         variant_sections_df,
         variant_skills_df,
         variant_features_df,
@@ -1189,6 +1710,50 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
     LOGGER.info("Wrote leaderboard to %s", leaderboard_path)
 
     with sqlite3.connect(settings.database_path) as connection:
+        variant_leaderboard_df = pd.read_sql_query(
+            """
+            WITH mode_pivot AS (
+                SELECT
+                    hero_id,
+                    MAX(CASE WHEN mode = 'adventure' THEN tier_letter END) AS adventure_tier,
+                    MAX(CASE WHEN mode = 'battle' THEN tier_letter END) AS battle_tier,
+                    MAX(CASE WHEN mode = 'boss' THEN tier_letter END) AS boss_tier
+                FROM hero_modes
+                GROUP BY hero_id
+            )
+            SELECT
+                hv.variant_id,
+                hv.hero_id,
+                h.name_en,
+                COALESCE(hv.name_ko, h.name_ko) AS name_ko,
+                hv.variant_name_en,
+                hv.variant_kind,
+                hv.variant_suffix,
+                hv.availability_marker,
+                hv.variant_role,
+                hv.variant_rarity,
+                hv.source_title AS variant_title,
+                hv.note_excerpt,
+                mp.adventure_tier,
+                mp.battle_tier,
+                mp.boss_tier,
+                vms.base_score,
+                vms.rarity_adjusted,
+                vms.final_meta_score,
+                vms.meta_rank,
+                vms.score_basis
+            FROM hero_variants hv
+            JOIN heroes h ON h.hero_id = hv.hero_id
+            LEFT JOIN mode_pivot mp ON mp.hero_id = hv.hero_id
+            LEFT JOIN variant_meta_scores vms ON vms.variant_id = hv.variant_id
+            ORDER BY vms.meta_rank, h.name_en, hv.variant_kind, hv.variant_name_en
+            """,
+            connection,
+        ).fillna("")
+        variant_leaderboard_path = PROCESSED_DATA_DIR / "variant_leaderboard.csv"
+        variant_leaderboard_df.to_csv(variant_leaderboard_path, index=False)
+        LOGGER.info("Wrote variant leaderboard to %s", variant_leaderboard_path)
+
         progression_counts = {
             table_name: int(
                 connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
@@ -1206,7 +1771,11 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
     return {
         "heroes": int(len(heroes_df.index)),
         "variants": int(len(namuwiki_df.index)),
+        "ranked_variants": int(len(variant_leaderboard_df.index)),
         "notes": int(len(namuwiki_notes_df.index)),
+        "system_references": int(len(combined_system_references_df.index)),
+        "system_reference_values": int(len(strategywiki_hero_growth_values_df.index)),
+        "release_history": int(len(namuwiki_release_history_df.index)),
         "variant_sections": int(len(variant_sections_df.index)),
         "variant_skills": int(len(variant_skills_df.index)),
         "variant_features": int(len(variant_features_df.index)),

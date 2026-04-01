@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from datetime import datetime
 import hashlib
+from io import StringIO
 import logging
 import re
 from urllib.parse import unquote, urljoin
 
+import pandas as pd
 from bs4 import BeautifulSoup, Tag
 
 from ..settings import RuntimeSettings, load_aliases
@@ -48,6 +51,44 @@ FEATURE_PATTERNS = {
             re.IGNORECASE,
         ),
     ),
+}
+SYSTEM_REFERENCE_TRUST_TIER = "community_wiki"
+SYSTEM_REFERENCE_DEFINITIONS = {
+    "growth stage": ("growth_stage", "Growth Stage", "mixed_reference", False),
+    "chaser": ("chaser_system", "Chaser System", "current_reference", False),
+    "ex": ("former_hero", "Former Hero", "current_reference", False),
+    "soul imprint": ("soul_imprint", "Soul Imprint", "current_reference", False),
+    "transcendental awakening": (
+        "transcendental_awakening",
+        "Transcendental Awakening",
+        "current_reference",
+        False,
+    ),
+    "special hero": ("special_hero", "Special Hero", "current_reference", False),
+    "liking": ("liking", "Liking", "current_reference", False),
+    "destiny": ("destiny", "Destiny", "current_reference", False),
+}
+MONTH_NAME_PATTERN = re.compile(
+    r"\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\b",
+    re.IGNORECASE,
+)
+RELEASE_ORDER_PATTERN = re.compile(
+    r"^(?:initial\s+\d+\s+heroes|\d+(?:st|nd|rd|th)(?:\s*[~-]\s*\d+(?:st|nd|rd|th))?)$",
+    re.IGNORECASE,
+)
+WORD_ORDINALS = {
+    "first": 1,
+    "second": 2,
+    "third": 3,
+    "fourth": 4,
+    "fifth": 5,
+    "sixth": 6,
+    "seventh": 7,
+    "eighth": 8,
+    "ninth": 9,
+    "tenth": 10,
+    "eleventh": 11,
+    "twelfth": 12,
 }
 
 
@@ -254,6 +295,261 @@ def _extract_source_notes(soup: BeautifulSoup, url: str) -> list[dict[str, str]]
     return dedupe_rows(notes, ("source", "note_key"))
 
 
+def _classify_system_reference(text: str) -> tuple[str, str, str, bool] | None:
+    cleaned = _strip_heading_prefix(text)
+    lowered = cleaned.lower()
+    return SYSTEM_REFERENCE_DEFINITIONS.get(lowered)
+
+
+def _infer_reference_era(reference_key: str, content: str) -> tuple[str, bool]:
+    lowered = content.lower()
+    if reference_key == "growth_stage" and "deleted" in lowered:
+        return "mixed_reference", False
+    if any(
+        legacy_phrase in lowered
+        for legacy_phrase in (
+            "deleted",
+            "disappeared as the growth stage",
+            "before october 8, 2024",
+        )
+    ):
+        return "legacy_reference", True
+    return "current_reference", False
+
+
+def _find_section_table_after_heading(heading: Tag) -> Tag | None:
+    for element in heading.next_elements:
+        if element is heading:
+            continue
+        if isinstance(element, Tag) and element.name in SECTION_HEADING_TAGS:
+            break
+        if isinstance(element, Tag) and element.name == "table":
+            return element
+    return None
+
+
+def _flatten_header(column: object) -> str:
+    if isinstance(column, tuple):
+        return normalize_text(" ".join(str(part) for part in column if str(part)))
+    return normalize_text(str(column))
+
+
+def _find_release_column(
+    columns: list[str], keywords: tuple[str, ...], default: int
+) -> int:
+    for index, column in enumerate(columns):
+        lowered = column.lower()
+        if any(keyword in lowered for keyword in keywords):
+            return index
+    return default
+
+
+def _extract_release_year(cells: list[str]) -> int | None:
+    populated = [cell for cell in cells if cell]
+    if not populated:
+        return None
+    year_matches = [
+        match.group(1)
+        for cell in populated
+        if (match := re.fullmatch(r"(20\d{2})(?:\[[^\]]+\])?", cell)) is not None
+    ]
+    if len(year_matches) != len(populated):
+        return None
+    if len(set(year_matches)) != 1:
+        return None
+    return int(year_matches[0])
+
+
+def _looks_like_release_date(text: str) -> bool:
+    return bool(MONTH_NAME_PATTERN.search(text))
+
+
+def _parse_release_date_iso(date_text: str, release_year: int | None) -> str:
+    if release_year is None:
+        return ""
+    cleaned = normalize_text(date_text)
+    if not cleaned:
+        return ""
+    cleaned = re.sub(r"(\d+)(st|nd|rd|th)", r"\1", cleaned, flags=re.IGNORECASE)
+    cleaned = cleaned.replace(" of ", " ")
+
+    for fmt in ("%Y %B %d", "%Y %b %d", "%Y %d %B", "%Y %d %b"):
+        try:
+            return (
+                datetime.strptime(f"{release_year} {cleaned}", fmt).date().isoformat()
+            )
+        except ValueError:
+            continue
+    return ""
+
+
+def _release_order_numeric(order_label: str) -> str:
+    lowered = normalize_text(order_label).lower()
+    if lowered.startswith("initial"):
+        return "1"
+    if lowered in WORD_ORDINALS:
+        return str(WORD_ORDINALS[lowered])
+    match = re.search(r"\d+", order_label)
+    return match.group(0) if match else ""
+
+
+def _extract_system_references(soup: BeautifulSoup, url: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    path_by_level: dict[int, str] = {}
+
+    for heading in soup.find_all(list(SECTION_HEADING_TAGS)):
+        heading_title = _strip_heading_prefix(_heading_text(heading))
+        if not heading_title:
+            continue
+
+        heading_level = _heading_level(heading)
+        path_by_level = {
+            level: title
+            for level, title in path_by_level.items()
+            if level < heading_level
+        }
+        path_by_level[heading_level] = heading_title
+
+        reference = _classify_system_reference(heading_title)
+        if reference is None:
+            continue
+
+        content = _collect_content_until_next_heading(heading)
+        if not content:
+            continue
+
+        reference_key, title, game_era, is_legacy_system = reference
+        inferred_era, inferred_legacy = _infer_reference_era(reference_key, content)
+        rows.append(
+            {
+                "source": "namuwiki",
+                "reference_key": reference_key,
+                "title": title,
+                "section_path": " > ".join(
+                    path_by_level[level] for level in sorted(path_by_level)
+                ),
+                "content": content,
+                "source_page": url,
+                "game_era": inferred_era or game_era,
+                "is_legacy_system": (
+                    "1" if (is_legacy_system or inferred_legacy) else "0"
+                ),
+                "trust_tier": SYSTEM_REFERENCE_TRUST_TIER,
+            }
+        )
+
+    return dedupe_rows(rows, ("source", "reference_key", "section_path"))
+
+
+def _extract_release_history(
+    soup: BeautifulSoup, html: str, url: str
+) -> list[dict[str, str]]:
+    release_heading = next(
+        (
+            heading
+            for heading in soup.find_all(list(SECTION_HEADING_TAGS))
+            if _strip_heading_prefix(_heading_text(heading)).lower() == "release date"
+        ),
+        None,
+    )
+    if release_heading is None:
+        return []
+
+    release_table = _find_section_table_after_heading(release_heading)
+    if release_table is None:
+        return []
+
+    try:
+        tables = pd.read_html(StringIO(str(release_table)))
+    except ValueError:
+        LOGGER.warning("NamuWiki release table could not be parsed from %s", url)
+        return []
+    if not tables:
+        return []
+
+    frame = tables[0].fillna("")
+    frame.columns = [_flatten_header(column) for column in frame.columns.tolist()]
+    columns = [str(column) for column in frame.columns.tolist()]
+    order_index = _find_release_column(columns, ("order",), 0)
+    name_index = _find_release_column(columns, ("name", "hero"), 1)
+    date_index = _find_release_column(columns, ("release date", "date"), 2)
+
+    current_year: int | None = None
+    current_order_label = ""
+    current_release_date = ""
+    rows: list[dict[str, str]] = []
+
+    for raw_row in frame.itertuples(index=False):
+        cells = [normalize_text(str(value)) for value in raw_row]
+        if not any(cells):
+            continue
+
+        header_like = " ".join(cells).lower()
+        if "order of release" in header_like and "release date" in header_like:
+            continue
+
+        release_year = _extract_release_year(cells)
+        if release_year is not None:
+            current_year = release_year
+            current_order_label = ""
+            current_release_date = ""
+            continue
+
+        order_label = cells[order_index] if order_index < len(cells) else ""
+        hero_name = cells[name_index] if name_index < len(cells) else ""
+        release_date_text = cells[date_index] if date_index < len(cells) else ""
+        trailing = [
+            cell
+            for index, cell in enumerate(cells)
+            if cell and index not in {order_index, name_index, date_index}
+        ]
+
+        if not hero_name and len(cells) == 2 and _looks_like_release_date(cells[1]):
+            hero_name = cells[0]
+            release_date_text = cells[1]
+            order_label = current_order_label
+        elif (
+            not hero_name
+            and len(cells) == 1
+            and not RELEASE_ORDER_PATTERN.match(cells[0])
+        ):
+            hero_name = cells[0]
+            order_label = current_order_label
+            release_date_text = current_release_date
+
+        if order_label:
+            current_order_label = order_label
+        if release_date_text:
+            current_release_date = release_date_text
+
+        if not hero_name:
+            continue
+
+        effective_order_label = order_label or current_order_label
+        effective_release_date = release_date_text or current_release_date
+        rows.append(
+            {
+                "source": "namuwiki",
+                "release_order_label": effective_order_label,
+                "release_order_numeric": _release_order_numeric(effective_order_label),
+                "release_year": str(current_year or ""),
+                "hero_name_raw": hero_name,
+                "release_date_text": effective_release_date,
+                "release_date_iso": _parse_release_date_iso(
+                    effective_release_date, current_year
+                ),
+                "release_batch_note": " | ".join(trailing),
+                "source_page": url,
+                "trust_tier": SYSTEM_REFERENCE_TRUST_TIER,
+            }
+        )
+
+    return dedupe_rows(
+        rows,
+        ("release_year", "release_order_label", "hero_name_raw", "release_date_text"),
+    )
+
+
 def _absolute_variant_url(settings: RuntimeSettings, href: str) -> str:
     base_url = settings.config["sources"]["namuwiki_ss"]
     return urljoin(base_url, href)
@@ -338,6 +634,14 @@ def _skill_entry_from_heading(
 
 
 def _collect_heading_block_text(heading: Tag) -> str:
+    description = _collect_content_until_next_heading(heading)
+    description = re.sub(
+        r"^(active|passive|chaser)\s+", "", description, flags=re.IGNORECASE
+    )
+    return description.strip()
+
+
+def _collect_content_until_next_heading(heading: Tag) -> str:
     parts: list[str] = []
     for sibling in heading.next_siblings:
         if isinstance(sibling, Tag) and sibling.name in SECTION_HEADING_TAGS:
@@ -349,11 +653,7 @@ def _collect_heading_block_text(heading: Tag) -> str:
         if text:
             parts.append(text)
 
-    description = "\n".join(parts)
-    description = re.sub(
-        r"^(active|passive|chaser)\s+", "", description, flags=re.IGNORECASE
-    )
-    return description.strip()
+    return "\n".join(parts).strip()
 
 
 def _extract_variant_page_sections(
@@ -536,9 +836,7 @@ def scrape_variant_details(
 
 def scrape(settings: RuntimeSettings) -> list[dict[str, str]]:
     alias_map = load_aliases()
-    url = settings.config["sources"]["namuwiki_ss"]
-    html = fetch_html(url, "namuwiki_ss_heroes", settings)
-    soup = BeautifulSoup(html, "lxml")
+    url, _, soup = _load_ss_index_page(settings)
 
     unique_records = _extract_variant_rows(soup, alias_map)
     LOGGER.info(
@@ -548,9 +846,29 @@ def scrape(settings: RuntimeSettings) -> list[dict[str, str]]:
 
 
 def scrape_notes(settings: RuntimeSettings) -> list[dict[str, str]]:
-    url = settings.config["sources"]["namuwiki_ss"]
-    html = fetch_html(url, "namuwiki_ss_heroes", settings)
-    soup = BeautifulSoup(html, "lxml")
+    url, _, soup = _load_ss_index_page(settings)
     notes = _extract_source_notes(soup, url)
     LOGGER.info("NamuWiki scraper extracted %s source notes", len(notes))
     return notes
+
+
+def scrape_system_references(settings: RuntimeSettings) -> list[dict[str, str]]:
+    url, _, soup = _load_ss_index_page(settings)
+    rows = _extract_system_references(soup, url)
+    LOGGER.info("NamuWiki scraper extracted %s system reference rows", len(rows))
+    return rows
+
+
+def scrape_release_history(settings: RuntimeSettings) -> list[dict[str, str]]:
+    url, html, soup = _load_ss_index_page(settings)
+    rows = _extract_release_history(soup, html, url)
+    LOGGER.info("NamuWiki scraper extracted %s release history rows", len(rows))
+    return rows
+
+
+def _load_ss_index_page(
+    settings: RuntimeSettings,
+) -> tuple[str, str, BeautifulSoup]:
+    url = settings.config["sources"]["namuwiki_ss"]
+    html = fetch_html(url, "namuwiki_ss_heroes", settings)
+    return url, html, BeautifulSoup(html, "lxml")

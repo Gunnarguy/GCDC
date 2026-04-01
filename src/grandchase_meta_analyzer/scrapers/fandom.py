@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from io import StringIO
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -31,11 +31,22 @@ def _api_html_from_page_url(
     url: str, snapshot_name: str, settings: RuntimeSettings
 ) -> str:
     parsed = urlparse(url)
-    page_name = parsed.path.removeprefix("/wiki/")
-    api_url = (
-        f"{parsed.scheme}://{parsed.netloc}/api.php"
-        f"?action=parse&page={page_name}&prop=text&formatversion=2&format=json"
-    )
+    if parsed.path.endswith("/api.php"):
+        query = parse_qs(parsed.query)
+        query["action"] = ["parse"]
+        query["prop"] = ["text"]
+        query["formatversion"] = ["2"]
+        query["format"] = ["json"]
+        api_url = (
+            f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+            f"?{urlencode(query, doseq=True)}"
+        )
+    else:
+        page_name = parsed.path.removeprefix("/wiki/")
+        api_url = (
+            f"{parsed.scheme}://{parsed.netloc}/api.php"
+            f"?action=parse&page={page_name}&prop=text&formatversion=2&format=json"
+        )
     payload = json.loads(fetch_html(api_url, snapshot_name, settings))
     return payload["parse"]["text"]
 
