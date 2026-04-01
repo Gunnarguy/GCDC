@@ -41,6 +41,7 @@ PATCH_COLUMNS = [
     "patch_date_iso",
     "patch_change_type",
     "patch_change",
+    "body_text",
     "body_excerpt",
 ]
 
@@ -198,6 +199,7 @@ def _extract_patch_entries_from_sections(frame: pd.DataFrame) -> pd.DataFrame:
                     "patch_date_iso": _parse_patch_date_iso(entry.date),
                     "patch_change_type": _classify_patch_change_type(entry.change),
                     "patch_change": str(entry.change or "").strip(),
+                    "body_text": str(body_text or "").strip(),
                     "body_excerpt": _preview_text(body_text or source_name, 220),
                 }
             )

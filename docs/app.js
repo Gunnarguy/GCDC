@@ -685,7 +685,7 @@ function renderSkillCards(container, rows, emptyText, options = {}) {
               <summary class="skill-summary">
                 <div class="skill-topline">
                   <div class="skill-title-block">
-                    <p class="skill-overline">${highlightText(`${row.name_en} · ${row.variant_label}`, highlightTerms)}</p>
+                    <p class="skill-overline">${highlightText(formatHeroVariantHeading(row.name_en, row.variant_label), highlightTerms)}</p>
                     <h3>${highlightText(row.skill_name, highlightTerms)}</h3>
                   </div>
                   <span class="skill-kind">${escapeHtml(formatLabel(row.skill_type || "type unknown"))}</span>
@@ -724,29 +724,26 @@ function renderPatchTimeline(container, rows, emptyText, options = {}) {
           const openAttribute = expandedByDefault && index < 4 ? " open" : "";
           const patchDate = row.patch_date || "Undated";
           const patchType = row.patch_change_type || "Change";
-          const patchPreview = formatReadablePatchPreview(
-            row.patch_change || "",
-            240,
-          );
           const sourceLabel =
             row.source_name || row.heading_title || "Captured block";
+          const fullBodyText = formatReadableSkillText(row.body_text || "");
 
           return `
             <details class="patch-entry"${openAttribute}>
               <summary class="patch-summary">
                 <div class="patch-topline">
                   <div class="patch-title-block">
-                    <p class="patch-overline">${highlightText(`${row.name_en} · ${row.variant_label}`, highlightTerms)}</p>
+                    <p class="patch-overline">${highlightText(formatHeroVariantHeading(row.name_en, row.variant_label), highlightTerms)}</p>
                     <h3>${highlightText(patchDate, highlightTerms)}</h3>
                   </div>
                   <span class="patch-type-chip patch-type-${patchTypeClassName(patchType)}">${escapeHtml(patchType)}</span>
                 </div>
                 <p class="patch-source">${highlightText(sourceLabel, highlightTerms)}</p>
-                <p class="patch-change-preview">${highlightText(patchPreview, highlightTerms)}</p>
               </summary>
               <div class="patch-body">
-                ${row.body_excerpt ? `<p class="patch-context">${highlightText(row.body_excerpt, highlightTerms)}</p>` : ""}
+                <p class="patch-section-label">Patch Note</p>
                 <p class="patch-change">${highlightText(formatReadablePatchText(row.patch_change || ""), highlightTerms)}</p>
+                ${fullBodyText ? `<p class="patch-section-label">Captured Skill Text</p><p class="patch-body-text">${highlightText(fullBodyText, highlightTerms)}</p>` : ""}
                 ${renderSourceLink(row.source_page)}
               </div>
             </details>
@@ -773,7 +770,7 @@ function renderSectionEntries(container, rows, emptyText, options = {}) {
           (row, index) => `
             <details class="section-entry"${expandedByDefault && index < 2 ? " open" : ""}>
               <summary>
-                ${highlightText(`${row.name_en} · ${row.variant_label} · ${row.heading_title}`, highlightTerms)}
+                ${highlightText(`${formatHeroVariantHeading(row.name_en, row.variant_label)} · ${row.heading_title}`, highlightTerms)}
               </summary>
               <div class="section-body">
                 <p class="section-path">${highlightText(row.section_path, highlightTerms)}</p>
@@ -793,7 +790,7 @@ function renderSourceLink(sourcePage) {
   if (!sourcePage) {
     return "";
   }
-  return `<a class="section-link" href="${escapeAttribute(sourcePage)}" target="_blank" rel="noreferrer">Open source page</a>`;
+  return `<a class="section-link" href="${escapeAttribute(resolveSourceUrl(sourcePage))}" target="_blank" rel="noreferrer">Open source page</a>`;
 }
 
 function formatReadableSkillText(value) {
@@ -819,14 +816,6 @@ function formatReadablePatchText(value) {
     .trim();
 }
 
-function formatReadablePatchPreview(value, maxLength) {
-  const normalized = formatReadablePatchText(value);
-  if (normalized.length <= maxLength) {
-    return normalized;
-  }
-  return `${normalized.slice(0, maxLength).trimEnd()}...`;
-}
-
 function formatReadableSkillPreview(value, maxLength) {
   const normalized = String(value || "")
     .replace(/\n{3,}/g, "\n\n")
@@ -845,6 +834,43 @@ function formatLabel(value) {
 
 function formatFeatureKeyLabel(value) {
   return formatLabel(value).replaceAll("  ", " ");
+}
+
+function formatHeroVariantHeading(heroName, variantLabel) {
+  const hero = String(heroName || "").trim();
+  const variant = String(variantLabel || "").trim();
+  if (!hero) {
+    return variant;
+  }
+  if (!variant) {
+    return hero;
+  }
+
+  const normalizedHero = normalize(hero);
+  const normalizedVariant = normalize(variant);
+  if (
+    normalizedVariant === normalizedHero ||
+    normalizedVariant.startsWith(`${normalizedHero} ·`) ||
+    normalizedVariant.startsWith(`${normalizedHero} -`)
+  ) {
+    return variant;
+  }
+
+  return `${hero} · ${variant}`;
+}
+
+function resolveSourceUrl(sourcePage) {
+  const value = String(sourcePage || "").trim();
+  if (!value) {
+    return value;
+  }
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+  if (value.startsWith("/")) {
+    return `https://en.namu.wiki${value}`;
+  }
+  return value;
 }
 
 function patchTypeClassName(value) {

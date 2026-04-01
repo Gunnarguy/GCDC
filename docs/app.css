@@ -504,33 +504,40 @@ td {
 }
 
 .patch-source,
-.patch-change-preview,
-.patch-context,
+.patch-section-label,
 .patch-change {
   margin: 0.7rem 0 0 0;
   line-height: 1.6;
 }
 
 .patch-source,
-.patch-context {
+.patch-section-label {
   color: #8a6542;
 }
 
-.patch-change-preview {
-  color: var(--muted);
-  white-space: pre-wrap;
+.patch-section-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .patch-body {
   padding: 0 1rem 1rem;
   border-top: 1px solid rgba(23, 50, 77, 0.08);
   background: linear-gradient(180deg,
-      rgba(255, 250, 241, 0.72) 0%,
-      rgba(246, 237, 222, 0.56) 100%);
+        rgba(255, 250, 241, 0.72) 0%,
+    rgba(246, 237, 222, 0.56) 100%);
 }
 
 .patch-change {
   color: var(--ink);
+  white-space: pre-wrap;
+}
+.patch-body-text {
+  margin: 0.7rem 0 0 0;
+  color: var(--ink);
+  line-height: 1.7;
   white-space: pre-wrap;
 }
 .profile-stack {
