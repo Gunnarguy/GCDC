@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import re
 import sqlite3
 
@@ -140,6 +141,61 @@ def apply_styles() -> None:
                 font-size: 0.78rem;
                 font-weight: 700;
                 margin-right: 0.4rem;
+            }
+            .gc-patch-entry {
+                background: rgba(255, 250, 241, 0.92);
+                border: 1px solid #e7d8c1;
+                border-radius: 18px;
+                padding: 0.9rem 1rem;
+                margin-bottom: 0.8rem;
+            }
+            .gc-patch-meta {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 0.55rem;
+                margin-bottom: 0.45rem;
+            }
+            .gc-badge {
+                display: inline-block;
+                padding: 0.18rem 0.55rem;
+                border-radius: 999px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                border: 1px solid transparent;
+            }
+            .gc-badge-buff {
+                background: #d8f3e3;
+                border-color: #9fd0af;
+                color: #1d6a43;
+            }
+            .gc-badge-nerf {
+                background: #fde1df;
+                border-color: #efb1ad;
+                color: #9a3b34;
+            }
+            .gc-badge-hotfix,
+            .gc-badge-fix {
+                background: #deeffc;
+                border-color: #a9cbed;
+                color: #1b5f95;
+            }
+            .gc-badge-remake,
+            .gc-badge-adjustment,
+            .gc-badge-mixed,
+            .gc-badge-change {
+                background: #f3e8d2;
+                border-color: #dcc4a0;
+                color: #785528;
+            }
+            .gc-patch-date {
+                color: #5d4a38;
+                font-weight: 700;
+            }
+            .gc-patch-change {
+                margin: 0;
+                color: #203040;
+                line-height: 1.5;
             }
         </style>
         """,
@@ -790,6 +846,42 @@ def render_pills(label: str, items: list[str]) -> None:
         return
     pills = " ".join(f"<span class='gc-pill'>{item}</span>" for item in items)
     st.markdown(f"**{label}**<br>{pills}", unsafe_allow_html=True)
+
+
+PATCH_TYPE_BADGE_CLASSES = {
+    "Buff": "gc-badge-buff",
+    "Nerf": "gc-badge-nerf",
+    "Hotfix": "gc-badge-hotfix",
+    "Fix": "gc-badge-fix",
+    "Remake": "gc-badge-remake",
+    "Adjustment": "gc-badge-adjustment",
+    "Mixed": "gc-badge-mixed",
+    "Change": "gc-badge-change",
+}
+
+
+def patch_type_badge_class(change_type: str) -> str:
+    return PATCH_TYPE_BADGE_CLASSES.get(change_type, "gc-badge-change")
+
+
+def render_patch_history_entries(entries: list[object]) -> None:
+    for entry in entries:
+        change_type = str(getattr(entry, "change_type", "Change") or "Change")
+        badge_class = patch_type_badge_class(change_type)
+        date_text = html.escape(str(getattr(entry, "date", "") or "Undated"))
+        change_text = html.escape(str(getattr(entry, "change", "") or ""))
+        st.markdown(
+            (
+                "<div class='gc-patch-entry'>"
+                "<div class='gc-patch-meta'>"
+                f"<span class='gc-badge {badge_class}'>{html.escape(change_type)}</span>"
+                f"<span class='gc-patch-date'>{date_text}</span>"
+                "</div>"
+                f"<p class='gc-patch-change'>{change_text}</p>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
 
 
 def normalize_skill_family_name(skill_name: str) -> str:
@@ -2462,18 +2554,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                 if not skill_insight.patch_entries:
                     st.info("No patch history parsed for this skill block.")
                 else:
-                    patch_frame = pd.DataFrame(
-                        [
-                            {"date": entry.date or "Undated", "change": entry.change}
-                            for entry in skill_insight.patch_entries
-                        ]
-                    )
-                    st.dataframe(
-                        patch_frame,
-                        width="stretch",
-                        hide_index=True,
-                        height=320,
-                    )
+                    render_patch_history_entries(skill_insight.patch_entries)
 
             with raw_tab:
                 st.write(str(selected_skill_row["raw_description"]))

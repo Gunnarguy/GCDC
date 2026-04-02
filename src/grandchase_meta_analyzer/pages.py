@@ -9,7 +9,11 @@ from typing import Any
 
 import pandas as pd
 
-from .explorer_skill_details import parse_patch_entries, split_patch_details
+from .explorer_skill_details import (
+    classify_patch_change_type,
+    parse_patch_entries,
+    split_patch_details,
+)
 from .paths import PROJECT_ROOT
 from .settings import RuntimeSettings
 
@@ -121,32 +125,7 @@ def _parse_patch_date_iso(date_text: str) -> str:
 
 
 def _classify_patch_change_type(change: str) -> str:
-    lowered = str(change or "").strip().lower()
-    if not lowered:
-        return "Change"
-
-    has_buff = bool(re.search(r"\bbuff\b", lowered))
-    has_nerf = bool(re.search(r"\bnerf\b", lowered))
-    has_hotfix = bool(re.search(r"\bhot\s*fix\b", lowered))
-    has_fix = bool(re.search(r"\bfix(?:ed)?\b", lowered))
-    has_remake = bool(re.search(r"\b(remake|rework|renewal)\b", lowered))
-    has_adjustment = bool(re.search(r"\b(other|others|adjust|adjustment)\b", lowered))
-
-    if has_buff and has_nerf:
-        return "Mixed"
-    if has_hotfix:
-        return "Hotfix"
-    if has_fix:
-        return "Fix"
-    if has_remake:
-        return "Remake"
-    if has_buff:
-        return "Buff"
-    if has_nerf:
-        return "Nerf"
-    if has_adjustment:
-        return "Adjustment"
-    return "Change"
+    return classify_patch_change_type(change)
 
 
 def _extract_patch_entries_from_sections(frame: pd.DataFrame) -> pd.DataFrame:
@@ -197,7 +176,7 @@ def _extract_patch_entries_from_sections(frame: pd.DataFrame) -> pd.DataFrame:
                     "patch_entry_count_in_block": len(patch_entries),
                     "patch_date": entry.date or "Undated",
                     "patch_date_iso": _parse_patch_date_iso(entry.date),
-                    "patch_change_type": _classify_patch_change_type(entry.change),
+                    "patch_change_type": entry.change_type,
                     "patch_change": str(entry.change or "").strip(),
                     "body_text": str(body_text or "").strip(),
                     "body_excerpt": _preview_text(body_text or source_name, 220),

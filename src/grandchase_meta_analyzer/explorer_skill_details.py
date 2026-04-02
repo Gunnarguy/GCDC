@@ -135,6 +135,7 @@ RELATION_PATTERN_DEFINITIONS = (
 class PatchEntry:
     date: str
     change: str
+    change_type: str = "Change"
 
 
 @dataclass(frozen=True)
@@ -208,6 +209,35 @@ class SkillInsight:
 
 def _normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def classify_patch_change_type(change: str) -> str:
+    lowered = str(change or "").strip().lower()
+    if not lowered:
+        return "Change"
+
+    has_buff = bool(re.search(r"\bbuff\b", lowered))
+    has_nerf = bool(re.search(r"\bnerf\b", lowered))
+    has_hotfix = bool(re.search(r"\bhot\s*fix\b", lowered))
+    has_fix = bool(re.search(r"\bfix(?:ed)?\b", lowered))
+    has_remake = bool(re.search(r"\b(remake|rework|renewal)\b", lowered))
+    has_adjustment = bool(re.search(r"\b(other|others|adjust|adjustment)\b", lowered))
+
+    if has_buff and has_nerf:
+        return "Mixed"
+    if has_hotfix:
+        return "Hotfix"
+    if has_fix:
+        return "Fix"
+    if has_remake:
+        return "Remake"
+    if has_buff:
+        return "Buff"
+    if has_nerf:
+        return "Nerf"
+    if has_adjustment:
+        return "Adjustment"
+    return "Change"
 
 
 def _unique_preserve_order(items: list[str]) -> list[str]:
@@ -510,7 +540,13 @@ def parse_patch_entries(text: str) -> list[PatchEntry]:
 
     matches = list(PATCH_DATE_PATTERN.finditer(normalized))
     if not matches:
-        return [PatchEntry(date="", change=normalized)]
+        return [
+            PatchEntry(
+                date="",
+                change=normalized,
+                change_type=classify_patch_change_type(normalized),
+            )
+        ]
 
     entries: list[PatchEntry] = []
     for index, match in enumerate(matches):
@@ -519,7 +555,13 @@ def parse_patch_entries(text: str) -> list[PatchEntry]:
             matches[index + 1].start() if index + 1 < len(matches) else len(normalized)
         )
         change = normalized[start:end].strip(" :-")
-        entries.append(PatchEntry(date=match.group(0), change=change))
+        entries.append(
+            PatchEntry(
+                date=match.group(0),
+                change=change,
+                change_type=classify_patch_change_type(change),
+            )
+        )
     return entries
 
 

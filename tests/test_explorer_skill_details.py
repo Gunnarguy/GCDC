@@ -1,4 +1,7 @@
-from grandchase_meta_analyzer.explorer_skill_details import extract_skill_insight
+from grandchase_meta_analyzer.explorer_skill_details import (
+    extract_skill_insight,
+    parse_patch_entries,
+)
 
 
 def test_extract_skill_insight_reads_active_skill_metrics_and_patch_history() -> None:
@@ -37,7 +40,18 @@ def test_extract_skill_insight_reads_active_skill_metrics_and_patch_history() ->
     assert insight.progression_tracks == []
     assert len(insight.patch_entries) == 2
     assert insight.patch_entries[0].date == "February 27, 2018"
+    assert insight.patch_entries[0].change_type == "Buff"
     assert "SP consumption 2 → 1" in insight.patch_entries[1].change
+
+
+def test_parse_patch_entries_classifies_patch_change_types() -> None:
+    entries = parse_patch_entries(
+        "February 27, 2018 Buff : Increase shield amount "
+        "January 8, 2019 Nerf : SP consumption 2 → 1 "
+        "March 4, 2025 Hot Fix : Fix trigger condition"
+    )
+
+    assert [entry.change_type for entry in entries] == ["Buff", "Nerf", "Hotfix"]
 
 
 def test_extract_skill_insight_handles_passives_without_cooldown_or_sp() -> None:
