@@ -405,6 +405,9 @@ td {
   white-space: pre-wrap;
 }
 
+.skill-card[open] .skill-description {
+  display: none;
+}
 .skill-body {
   padding: 0 1rem 1rem;
   border-top: 1px solid rgba(23, 50, 77, 0.08);

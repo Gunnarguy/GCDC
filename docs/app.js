@@ -638,7 +638,7 @@ function renderHero() {
     elements.heroSkills,
     scopedSkills,
     "No parsed skill rows were exported for this hero scope.",
-    { expandedByDefault: true },
+    { expandedByDefault: false },
   );
 
   renderPatchTimeline(
@@ -758,9 +758,15 @@ function renderSkillCards(container, rows, emptyText, options = {}) {
             row.description || "",
           );
           const previewText = formatReadableSkillPreview(fullDescription, 320);
-          const sectionTitle = row.section_title
-            ? `<span class="pill">${escapeHtml(row.section_title)}</span>`
-            : "";
+          const normalizedSectionTitle = normalize(row.section_title || "");
+          const normalizedSkillType = normalize(row.skill_type || "");
+          const sectionTitle =
+            row.section_title &&
+            normalizedSectionTitle &&
+            normalizedSectionTitle !== "skill" &&
+            normalizedSectionTitle !== normalizedSkillType
+              ? `<span class="pill">${escapeHtml(row.section_title)}</span>`
+              : "";
           const openAttribute = expandedByDefault && index < 3 ? " open" : "";
 
           return `
@@ -775,7 +781,6 @@ function renderSkillCards(container, rows, emptyText, options = {}) {
                 </div>
                 <div class="skill-meta">
                   <span class="pill">${escapeHtml(formatLabel(row.skill_stage || "stage unknown"))}</span>
-                  <span class="pill">${escapeHtml(formatLabel(row.skill_type || "type unknown"))}</span>
                   ${sectionTitle}
                 </div>
                 <p class="skill-description">${highlightText(previewText, highlightTerms)}</p>
