@@ -62,6 +62,23 @@ function cacheElements() {
   elements.compareSummaryTable = document.querySelector("#compareSummaryTable");
   elements.compareLeftSkills = document.querySelector("#compareLeftSkills");
   elements.compareRightSkills = document.querySelector("#compareRightSkills");
+
+  elements.metaOverviewCards = document.querySelector("#metaOverviewCards");
+  elements.metaPveTable = document.querySelector("#metaPveTable");
+  elements.metaPvpTable = document.querySelector("#metaPvpTable");
+  elements.metaUnitTable = document.querySelector("#metaUnitTable");
+  elements.metaBuildsTable = document.querySelector("#metaBuildsTable");
+  elements.metaContentTeamsTable = document.querySelector(
+    "#metaContentTeamsTable",
+  );
+  elements.metaEquipmentTable = document.querySelector("#metaEquipmentTable");
+  elements.metaContentUsageTable = document.querySelector(
+    "#metaContentUsageTable",
+  );
+  elements.metaReleaseOrderTable = document.querySelector(
+    "#metaReleaseOrderTable",
+  );
+  elements.metaChangelogTable = document.querySelector("#metaChangelogTable");
 }
 
 function bindEvents() {
@@ -105,6 +122,7 @@ async function loadAtlas() {
     renderHero();
     renderCompare();
     renderMeta();
+    renderMetaDatabase();
     setStatus(
       "GitHub Pages atlas is ready. This static version keeps overview, search, and hero dossier access without a server.",
       false,
@@ -360,6 +378,166 @@ function renderOverview() {
     ],
     "No structured legacy growth-table values were exported.",
   );
+}
+
+function renderMetaDatabase() {
+  if (!state.payload) return;
+
+  const s = state.payload.summary;
+  if (elements.metaOverviewCards) {
+    renderCards(elements.metaOverviewCards, [
+      {
+        label: "Units",
+        value: s.meta_unit_count || 0,
+        meta: "community spreadsheet roster",
+      },
+      {
+        label: "Builds",
+        value: s.meta_build_count || 0,
+        meta: "trait and equipment specs",
+      },
+      {
+        label: "Content Teams",
+        value: s.meta_content_team_count || 0,
+        meta: "PvE team compositions",
+      },
+      {
+        label: "Changelog",
+        value: s.meta_changelog_count || 0,
+        meta: "dated spreadsheet updates",
+      },
+    ]);
+  }
+
+  if (elements.metaPveTable) {
+    renderTable(
+      elements.metaPveTable,
+      state.payload.meta_pve_meta || [],
+      [
+        ["tier_rank", "Rank"],
+        ["tier_group", "Attribute Group"],
+        ["hero_name", "Hero"],
+        ["attribute", "Attribute"],
+      ],
+      "No PvE meta data exported.",
+    );
+  }
+
+  if (elements.metaPvpTable) {
+    renderTable(
+      elements.metaPvpTable,
+      state.payload.meta_pvp_meta || [],
+      [
+        ["section", "Type"],
+        ["members", "Team Members"],
+        ["attributes", "Attributes"],
+        ["member_count", "Size"],
+      ],
+      "No PvP meta data exported.",
+    );
+  }
+
+  if (elements.metaUnitTable) {
+    renderTable(
+      elements.metaUnitTable,
+      (state.payload.meta_unit_data || []).slice(0, 50),
+      [
+        ["name", "Name"],
+        ["attribute", "Attribute"],
+        ["unit_class", "Class"],
+        ["job_type", "Job Type"],
+        ["kr_release_date", "KR Release"],
+      ],
+      "No community unit data exported.",
+    );
+  }
+
+  if (elements.metaBuildsTable) {
+    renderTable(
+      elements.metaBuildsTable,
+      (state.payload.meta_builds || []).slice(0, 40),
+      [
+        ["name", "Hero"],
+        ["hero_trait_1", "HT1"],
+        ["hero_trait_2", "HT2"],
+        ["hero_trait_3", "HT3"],
+        ["rune_normal", "Rune"],
+        ["rune_special", "Special"],
+        ["acc_ring", "Ring"],
+      ],
+      "No build data exported.",
+    );
+  }
+
+  if (elements.metaContentTeamsTable) {
+    renderTable(
+      elements.metaContentTeamsTable,
+      (state.payload.meta_content_teams || []).slice(0, 40),
+      [
+        ["content", "Content"],
+        ["phase", "Phase"],
+        ["team_type", "Type"],
+        ["members", "Members"],
+        ["member_count", "Size"],
+      ],
+      "No content team data exported.",
+    );
+  }
+
+  if (elements.metaEquipmentTable) {
+    renderTable(
+      elements.metaEquipmentTable,
+      state.payload.meta_equipment_presets || [],
+      [
+        ["equipment_class", "Class"],
+        ["preset_name", "Preset"],
+        ["set_color", "Set"],
+        ["stat_first_line", "Main Stat"],
+        ["enchant_1", "Enchant 1"],
+        ["enchant_2", "Enchant 2"],
+      ],
+      "No equipment preset data exported.",
+    );
+  }
+
+  if (elements.metaContentUsageTable) {
+    renderTable(
+      elements.metaContentUsageTable,
+      (state.payload.meta_content_usage || []).slice(0, 40),
+      [
+        ["hero_name", "Hero"],
+        ["content_mode", "Content"],
+        ["is_viable", "Viable"],
+      ],
+      "No content usage matrix exported.",
+    );
+  }
+
+  if (elements.metaReleaseOrderTable) {
+    renderTable(
+      elements.metaReleaseOrderTable,
+      state.payload.meta_release_order || [],
+      [
+        ["release_type", "Type"],
+        ["batch", "Batch"],
+        ["hero_name", "Hero"],
+        ["attribute", "Attribute"],
+      ],
+      "No release order data exported.",
+    );
+  }
+
+  if (elements.metaChangelogTable) {
+    renderTable(
+      elements.metaChangelogTable,
+      (state.payload.meta_changelog || []).slice(0, 30),
+      [
+        ["date", "Date"],
+        ["entry", "Change"],
+      ],
+      "No changelog entries exported.",
+    );
+  }
 }
 
 function renderSearch() {

@@ -7,6 +7,7 @@ import sqlite3
 import pandas as pd
 
 from .explorer_skill_details import extract_skill_insight
+from .ingest_spreadsheet import ingest_all as ingest_spreadsheet
 from .paths import PROCESSED_DATA_DIR, RAW_DATA_DIR
 from .scrapers.common import normalize_text
 from .settings import RuntimeSettings
@@ -49,6 +50,58 @@ FEATURE_LABELS = {
 BRACKETED_PREFIX_PATTERN = re.compile(r"^(?:\[[^\]]+\]\s*)+")
 NUMERIC_VALUE_PATTERN = re.compile(r"-?\d+(?:,\d{3})*(?:\.\d+)?")
 VARIANT_KIND_SORT_ORDER = {"base": 0, "former": 1, "special": 2}
+SPREADSHEET_ALIAS_PATTERN = re.compile(r"[^a-z0-9]+")
+SPREADSHEET_VARIANT_ALIAS_FIXUPS = {
+    "ercnard": ("Esnar", "base"),
+    "ercnardt": ("Esnar", "former"),
+}
+SPREADSHEET_ADVENTURE_CONTENT_MODES = {
+    "Raids",
+    "Raid (17)",
+    "GoC",
+    "Chasm",
+    "AoT",
+    "AoT (2)",
+    "AoT (3)",
+    "AoT (4)",
+    "AH (1)",
+    "AH (2)",
+    "AH (3)",
+    "Merc",
+}
+SPREADSHEET_BATTLE_CONTENT_MODES = {"PvP ATK", "PvP DEF", "Arena"}
+SPREADSHEET_BOSS_CONTENT_MODES = {
+    "Berkas",
+    "Void (R)",
+    "Void (G)",
+    "Void (B)",
+    "WB (1)",
+    "WB (2)",
+    "WB (3)",
+    "WB (4)",
+    "WB (5)",
+    "WB (6)",
+    "Boss",
+    "GB",
+    "FC",
+    "FC 2",
+    "FC 3",
+}
+SPREADSHEET_ADVENTURE_TEAM_CONTENTS = {
+    "Raids",
+    "Aernasis Hammer",
+    "Altar of Time",
+    "Hell's Furnace Balance",
+    "Hell's Furnace Life",
+    "Hell's Furnace Retribution",
+}
+SPREADSHEET_BOSS_TEAM_CONTENTS = {
+    "World Boss",
+    "World Boss Season 2",
+    "Guild Boss",
+    "Final Core",
+    "Berkas Lair",
+}
 VARIANT_ROLE_PATTERNS = (
     (re.compile(r"\b(?:guardian|tank|defen(?:se|sive))\b", re.IGNORECASE), "Tank"),
     (re.compile(r"\b(?:assault|warrior)\b", re.IGNORECASE), "Assault"),
@@ -161,6 +214,27 @@ def _score_components(
     return base_score, rarity_adjusted, final_meta_score
 
 
+def _score_components_from_numeric(
+    adventure_score: float,
+    battle_score: float,
+    boss_score: float,
+    rarity: str,
+    settings: RuntimeSettings,
+) -> tuple[float, float, float]:
+    mode_weights = settings.scoring["mode_weights"]
+    rarity_multipliers = settings.scoring["rarity_multipliers"]
+    chaser_multiplier = float(settings.scoring["chaser_multiplier"])
+
+    base_score = (
+        mode_weights["adventure"] * adventure_score
+        + mode_weights["battle"] * battle_score
+        + mode_weights["boss"] * boss_score
+    )
+    rarity_adjusted = base_score * rarity_multipliers.get(str(rarity), 1.0)
+    final_meta_score = rarity_adjusted * chaser_multiplier
+    return base_score, rarity_adjusted, final_meta_score
+
+
 def _variant_kind_sort_key(variant_kind: str) -> int:
     return VARIANT_KIND_SORT_ORDER.get(str(variant_kind).strip(), 99)
 
@@ -204,10 +278,409 @@ def _synthetic_base_variant_href(hero_id: int) -> str:
     return f"synthetic://hero/{hero_id}/base"
 
 
+def _normalize_spreadsheet_alias(value: str) -> str:
+    cleaned = normalize_text(value).lower().strip()
+    return SPREADSHEET_ALIAS_PATTERN.sub("", cleaned)
+
+
+def _parse_spreadsheet_variant_identity(name: str) -> tuple[str, str]:
+    cleaned = str(name).strip()
+    if cleaned.endswith("(T)"):
+        return cleaned[:-3].strip(), "former"
+    if cleaned.endswith("(S)"):
+        return cleaned[:-3].strip(), "special"
+    if cleaned.endswith(" T"):
+        return cleaned[:-2].strip(), "former"
+    if cleaned.endswith(" S"):
+        return cleaned[:-2].strip(), "special"
+    return cleaned, "base"
+
+
+def _build_spreadsheet_variant_alias_map(
+    unit_data_df: pd.DataFrame,
+) -> dict[str, tuple[str, str]]:
+    alias_map: dict[str, tuple[str, str]] = {}
+    if unit_data_df.empty:
+        return alias_map
+
+    for raw_row in unit_data_df.to_dict(orient="records"):
+        base_name, variant_kind = _parse_spreadsheet_variant_identity(
+            str(raw_row.get("name", ""))
+        )
+        if not base_name:
+            continue
+        canonical_key = (base_name, variant_kind)
+        alias_candidates = {
+            str(raw_row.get("name", "")),
+            str(raw_row.get("longname", "")),
+            str(raw_row.get("shortname", "")),
+            str(raw_row.get("keysname", "")),
+            base_name,
+        }
+        if variant_kind == "former":
+            alias_candidates.update(
+                {f"{base_name} T", f"{base_name}(T)", f"{base_name} (T)"}
+            )
+        elif variant_kind == "special":
+            alias_candidates.update(
+                {f"{base_name} S", f"{base_name}(S)", f"{base_name} (S)"}
+            )
+
+        for alias in alias_candidates:
+            normalized_alias = _normalize_spreadsheet_alias(alias)
+            if normalized_alias and normalized_alias not in alias_map:
+                alias_map[normalized_alias] = canonical_key
+
+    alias_map.update(SPREADSHEET_VARIANT_ALIAS_FIXUPS)
+    return alias_map
+
+
+def _resolve_spreadsheet_variant_key(
+    name: str,
+    alias_map: dict[str, tuple[str, str]],
+    valid_variant_keys: set[tuple[str, str]],
+) -> tuple[str, str] | None:
+    normalized_name = _normalize_spreadsheet_alias(name)
+    resolved = alias_map.get(normalized_name)
+    if resolved in valid_variant_keys:
+        return resolved
+
+    parsed = _parse_spreadsheet_variant_identity(str(name))
+    if parsed in valid_variant_keys:
+        return parsed
+    return None
+
+
+def _split_variant_members(value: str) -> list[str]:
+    return [item.strip() for item in str(value).split(",") if item.strip()]
+
+
+def _content_mode_category(mode_name: str) -> str | None:
+    if mode_name in SPREADSHEET_ADVENTURE_CONTENT_MODES:
+        return "adventure"
+    if mode_name in SPREADSHEET_BATTLE_CONTENT_MODES:
+        return "battle"
+    if mode_name in SPREADSHEET_BOSS_CONTENT_MODES:
+        return "boss"
+    return None
+
+
+def _content_label_category(content_label: str) -> str | None:
+    if content_label in SPREADSHEET_ADVENTURE_TEAM_CONTENTS:
+        return "adventure"
+    if content_label in SPREADSHEET_BOSS_TEAM_CONTENTS:
+        return "boss"
+    return None
+
+
+def _legacy_tier_numeric(tier_letter: str, settings: RuntimeSettings) -> float:
+    return float(settings.scoring["tier_scores"].get(str(tier_letter), 2))
+
+
+def _mode_score_to_tier(score: float) -> str:
+    if score >= 4.5:
+        return "SS"
+    if score >= 3.5:
+        return "S"
+    if score >= 2.5:
+        return "A"
+    if score >= 1.5:
+        return "B"
+    return "C"
+
+
+def _signal_to_mode_score(signal: float) -> float:
+    clamped = max(0.0, min(float(signal), 1.0))
+    return 1.0 + (clamped * 4.0)
+
+
+def _build_variant_signal_lookup(
+    variant_profiles_df: pd.DataFrame,
+    spreadsheet_sheets: dict[str, pd.DataFrame],
+    settings: RuntimeSettings,
+) -> dict[tuple[str, str], dict[str, object]]:
+    if variant_profiles_df.empty:
+        return {}
+
+    unit_data_df = spreadsheet_sheets.get("unit_data", pd.DataFrame())
+    if unit_data_df.empty:
+        return {}
+
+    alias_map = _build_spreadsheet_variant_alias_map(unit_data_df)
+    valid_variant_keys = {
+        (str(raw_row.get("name_en", "")), str(raw_row.get("variant_kind", "base")))
+        for raw_row in variant_profiles_df.to_dict(orient="records")
+    }
+    metric_names = [
+        "pve_rank_points",
+        "adventure_usage",
+        "battle_usage",
+        "boss_usage",
+        "adventure_mentions",
+        "battle_mentions",
+        "boss_mentions",
+    ]
+    metrics: dict[tuple[str, str], dict[str, float]] = {
+        key: {metric_name: 0.0 for metric_name in metric_names}
+        for key in valid_variant_keys
+    }
+    evidence: dict[tuple[str, str], dict[str, int]] = {
+        key: {"adventure": 0, "battle": 0, "boss": 0} for key in valid_variant_keys
+    }
+
+    for raw_row in spreadsheet_sheets.get("pve_meta", pd.DataFrame()).to_dict(
+        orient="records"
+    ):
+        variant_key = _resolve_spreadsheet_variant_key(
+            str(raw_row.get("hero_name", "")),
+            alias_map,
+            valid_variant_keys,
+        )
+        if variant_key is None:
+            continue
+        tier_rank = int(raw_row.get("tier_rank", 5) or 5)
+        if str(raw_row.get("meta_type", "PvE")) == "PvE":
+            metrics[variant_key]["pve_rank_points"] = max(
+                metrics[variant_key]["pve_rank_points"],
+                max(1.0, 6.0 - float(tier_rank)),
+            )
+            evidence[variant_key]["adventure"] += 1
+        else:
+            metrics[variant_key]["battle_mentions"] += 0.5
+            evidence[variant_key]["battle"] += 1
+
+    for raw_row in spreadsheet_sheets.get("pvp_meta", pd.DataFrame()).to_dict(
+        orient="records"
+    ):
+        for member_name in _split_variant_members(str(raw_row.get("members", ""))):
+            variant_key = _resolve_spreadsheet_variant_key(
+                member_name,
+                alias_map,
+                valid_variant_keys,
+            )
+            if variant_key is None:
+                continue
+            metrics[variant_key]["battle_mentions"] += 1.0
+            evidence[variant_key]["battle"] += 1
+
+    for raw_row in spreadsheet_sheets.get("content_usage", pd.DataFrame()).to_dict(
+        orient="records"
+    ):
+        variant_key = _resolve_spreadsheet_variant_key(
+            str(raw_row.get("hero_name", "")),
+            alias_map,
+            valid_variant_keys,
+        )
+        if variant_key is None:
+            continue
+        category = _content_mode_category(str(raw_row.get("content_mode", "")))
+        if category is None:
+            continue
+        evidence[variant_key][category] += 1
+        if bool(raw_row.get("is_viable", False)):
+            metrics[variant_key][f"{category}_usage"] += 1.0
+
+    for raw_row in spreadsheet_sheets.get("content_teams", pd.DataFrame()).to_dict(
+        orient="records"
+    ):
+        category = _content_label_category(str(raw_row.get("content", "")))
+        if category is None:
+            continue
+        mention_weight = (
+            0.5 if str(raw_row.get("team_type", "main")) == "off_meta" else 1.0
+        )
+        for member_name in _split_variant_members(str(raw_row.get("members", ""))):
+            variant_key = _resolve_spreadsheet_variant_key(
+                member_name,
+                alias_map,
+                valid_variant_keys,
+            )
+            if variant_key is None:
+                continue
+            metrics[variant_key][f"{category}_mentions"] += mention_weight
+            evidence[variant_key][category] += 1
+
+    maxima = {
+        metric_name: max(
+            (metrics[key][metric_name] for key in valid_variant_keys),
+            default=0.0,
+        )
+        for metric_name in metric_names
+    }
+    variant_weights = settings.scoring.get("variant_signal_weights", {})
+    adventure_weights = variant_weights.get("adventure", {})
+    battle_weights = variant_weights.get("battle", {})
+    boss_weights = variant_weights.get("boss", {})
+    spreadsheet_blend = float(variant_weights.get("spreadsheet_blend", 0.6))
+    legacy_blend = float(variant_weights.get("legacy_blend", 0.4))
+
+    signal_lookup: dict[tuple[str, str], dict[str, object]] = {}
+    for raw_row in variant_profiles_df.to_dict(orient="records"):
+        variant_key = (
+            str(raw_row.get("name_en", "")),
+            str(raw_row.get("variant_kind", "base")),
+        )
+        legacy_scores = {
+            "adventure": _legacy_tier_numeric(
+                str(raw_row.get("adventure_tier", "B")),
+                settings,
+            ),
+            "battle": _legacy_tier_numeric(
+                str(raw_row.get("battle_tier", "B")),
+                settings,
+            ),
+            "boss": _legacy_tier_numeric(
+                str(raw_row.get("boss_tier", "B")),
+                settings,
+            ),
+        }
+        row_signals: dict[str, float | None] = {
+            "adventure": None,
+            "battle": None,
+            "boss": None,
+        }
+
+        if evidence[variant_key]["adventure"] > 0:
+            pve_meta_norm = (
+                metrics[variant_key]["pve_rank_points"] / maxima["pve_rank_points"]
+                if maxima["pve_rank_points"]
+                else 0.0
+            )
+            adventure_usage_norm = (
+                metrics[variant_key]["adventure_usage"] / maxima["adventure_usage"]
+                if maxima["adventure_usage"]
+                else 0.0
+            )
+            adventure_mentions_norm = (
+                metrics[variant_key]["adventure_mentions"]
+                / maxima["adventure_mentions"]
+                if maxima["adventure_mentions"]
+                else 0.0
+            )
+            row_signals["adventure"] = (
+                float(adventure_weights.get("pve_meta", 0.5)) * pve_meta_norm
+                + float(adventure_weights.get("usage", 0.3)) * adventure_usage_norm
+                + float(adventure_weights.get("teams", 0.2)) * adventure_mentions_norm
+            )
+
+        if evidence[variant_key]["battle"] > 0:
+            battle_usage_norm = (
+                metrics[variant_key]["battle_usage"] / maxima["battle_usage"]
+                if maxima["battle_usage"]
+                else 0.0
+            )
+            battle_mentions_norm = (
+                metrics[variant_key]["battle_mentions"] / maxima["battle_mentions"]
+                if maxima["battle_mentions"]
+                else 0.0
+            )
+            row_signals["battle"] = (
+                float(battle_weights.get("usage", 0.45)) * battle_usage_norm
+                + float(battle_weights.get("teams", 0.55)) * battle_mentions_norm
+            )
+
+        if evidence[variant_key]["boss"] > 0:
+            boss_usage_norm = (
+                metrics[variant_key]["boss_usage"] / maxima["boss_usage"]
+                if maxima["boss_usage"]
+                else 0.0
+            )
+            boss_mentions_norm = (
+                metrics[variant_key]["boss_mentions"] / maxima["boss_mentions"]
+                if maxima["boss_mentions"]
+                else 0.0
+            )
+            row_signals["boss"] = (
+                float(boss_weights.get("usage", 0.6)) * boss_usage_norm
+                + float(boss_weights.get("teams", 0.4)) * boss_mentions_norm
+            )
+
+        mode_scores: dict[str, float] = {}
+        mode_tiers: dict[str, str] = {}
+        uses_spreadsheet_signals = False
+        for mode_name in ("adventure", "battle", "boss"):
+            signal = row_signals[mode_name]
+            if signal is None:
+                mode_scores[mode_name] = legacy_scores[mode_name]
+                mode_tiers[mode_name] = _mode_score_to_tier(legacy_scores[mode_name])
+                continue
+            uses_spreadsheet_signals = True
+            spreadsheet_score = _signal_to_mode_score(signal)
+            blended_score = (
+                spreadsheet_blend * spreadsheet_score
+                + legacy_blend * legacy_scores[mode_name]
+            )
+            mode_scores[mode_name] = round(blended_score, 4)
+            mode_tiers[mode_name] = _mode_score_to_tier(blended_score)
+
+        signal_lookup[variant_key] = {
+            "adventure_mode_score": mode_scores["adventure"],
+            "battle_mode_score": mode_scores["battle"],
+            "boss_mode_score": mode_scores["boss"],
+            "adventure_tier": mode_tiers["adventure"],
+            "battle_tier": mode_tiers["battle"],
+            "boss_tier": mode_tiers["boss"],
+            "score_basis": (
+                "spreadsheet_variant_signals"
+                if uses_spreadsheet_signals
+                else str(raw_row.get("score_basis", "inherited_hero_modes"))
+            ),
+        }
+
+    return signal_lookup
+
+
+def _apply_variant_signal_profiles(
+    variant_profiles_df: pd.DataFrame,
+    spreadsheet_sheets: dict[str, pd.DataFrame] | None,
+    settings: RuntimeSettings | None,
+) -> pd.DataFrame:
+    if variant_profiles_df.empty or spreadsheet_sheets is None or settings is None:
+        return variant_profiles_df
+
+    result = variant_profiles_df.copy()
+    result["adventure_mode_score"] = result["adventure_tier"].map(
+        lambda value: _legacy_tier_numeric(str(value), settings)
+    )
+    result["battle_mode_score"] = result["battle_tier"].map(
+        lambda value: _legacy_tier_numeric(str(value), settings)
+    )
+    result["boss_mode_score"] = result["boss_tier"].map(
+        lambda value: _legacy_tier_numeric(str(value), settings)
+    )
+
+    signal_lookup = _build_variant_signal_lookup(result, spreadsheet_sheets, settings)
+    if not signal_lookup:
+        return result
+
+    for index, raw_row in result.iterrows():
+        variant_key = (
+            str(raw_row.get("name_en", "")),
+            str(raw_row.get("variant_kind", "base")),
+        )
+        signal_row = signal_lookup.get(variant_key)
+        if signal_row is None:
+            continue
+        result.at[index, "adventure_mode_score"] = float(
+            str(signal_row["adventure_mode_score"])
+        )
+        result.at[index, "battle_mode_score"] = float(
+            str(signal_row["battle_mode_score"])
+        )
+        result.at[index, "boss_mode_score"] = float(str(signal_row["boss_mode_score"]))
+        result.at[index, "adventure_tier"] = str(signal_row["adventure_tier"])
+        result.at[index, "battle_tier"] = str(signal_row["battle_tier"])
+        result.at[index, "boss_tier"] = str(signal_row["boss_tier"])
+        result.at[index, "score_basis"] = str(signal_row["score_basis"])
+    return result
+
+
 def build_variant_profiles(
     heroes_df: pd.DataFrame,
     variants_df: pd.DataFrame,
     variant_sections_df: pd.DataFrame,
+    settings: RuntimeSettings | None = None,
+    spreadsheet_sheets: dict[str, pd.DataFrame] | None = None,
 ) -> pd.DataFrame:
     columns = [
         "hero_id",
@@ -306,6 +779,11 @@ def build_variant_profiles(
     variant_profiles_df = pd.DataFrame.from_records(rows)
     if variant_profiles_df.empty:
         return pd.DataFrame(columns=columns)
+    variant_profiles_df = _apply_variant_signal_profiles(
+        variant_profiles_df,
+        spreadsheet_sheets,
+        settings,
+    )
     variant_profiles_df = variant_profiles_df.drop_duplicates(subset=["variant_href"])
     variant_profiles_df["variant_sort_order"] = variant_profiles_df["variant_kind"].map(
         _variant_kind_sort_key
@@ -337,13 +815,31 @@ def compute_variant_meta_scores(
 
     score_rows: list[dict[str, object]] = []
     for raw_row in variant_profiles_df.to_dict(orient="records"):
-        base_score, rarity_adjusted, final_meta_score = _score_components(
-            str(raw_row.get("adventure_tier", "B")),
-            str(raw_row.get("battle_tier", "B")),
-            str(raw_row.get("boss_tier", "B")),
-            str(raw_row.get("variant_rarity", "SS")),
-            settings,
-        )
+        if all(
+            raw_row.get(column_name, "") != ""
+            for column_name in (
+                "adventure_mode_score",
+                "battle_mode_score",
+                "boss_mode_score",
+            )
+        ):
+            base_score, rarity_adjusted, final_meta_score = (
+                _score_components_from_numeric(
+                    float(raw_row.get("adventure_mode_score", 2.0)),
+                    float(raw_row.get("battle_mode_score", 2.0)),
+                    float(raw_row.get("boss_mode_score", 2.0)),
+                    str(raw_row.get("variant_rarity", "SS")),
+                    settings,
+                )
+            )
+        else:
+            base_score, rarity_adjusted, final_meta_score = _score_components(
+                str(raw_row.get("adventure_tier", "B")),
+                str(raw_row.get("battle_tier", "B")),
+                str(raw_row.get("boss_tier", "B")),
+                str(raw_row.get("variant_rarity", "SS")),
+                settings,
+            )
         score_rows.append(
             {
                 "variant_id": int(raw_row["variant_id"]),
@@ -909,6 +1405,170 @@ def build_progression_records(
     return records
 
 
+def _populate_spreadsheet_tables(
+    cursor: sqlite3.Cursor,
+    sheets: dict[str, pd.DataFrame],
+) -> None:
+    """Insert parsed spreadsheet DataFrames into the meta_* tables."""
+
+    def _insert(table: str, df: pd.DataFrame) -> int:
+        if df.empty:
+            return 0
+        cols = [c for c in df.columns if not c.endswith("_label")]
+        placeholders = ", ".join("?" for _ in cols)
+        col_list = ", ".join(cols)
+        rows = [
+            tuple(
+                (int(v) if isinstance(v, bool) else v) for v in (row[c] for c in cols)
+            )
+            for _, row in df.iterrows()
+        ]
+        cursor.executemany(
+            f"INSERT INTO {table} ({col_list}) VALUES ({placeholders})",  # noqa: S608
+            rows,
+        )
+        return len(rows)
+
+    counts: dict[str, int] = {}
+
+    # Unit data
+    ud = sheets.get("unit_data", pd.DataFrame())
+    if not ud.empty:
+        keep = [
+            "name",
+            "longname",
+            "shortname",
+            "keysname",
+            "attribute",
+            "color",
+            "unit_class",
+            "job_type",
+            "kr_release_date",
+            "released",
+            "is_pve",
+            "is_pvp",
+            "is_support",
+            "ht1",
+            "hp1",
+            "ht2",
+            "hp2",
+            "ht3",
+            "hp3",
+            "ht4",
+            "hp4",
+            "ht5",
+            "hp5",
+            "ct1",
+            "cp1",
+            "ct2",
+            "cp2",
+            "ct3",
+            "cp3",
+            "ct4",
+            "cp4",
+            "ct5",
+            "cp5",
+            "cs_level",
+            "rn1",
+            "rn2",
+            "artifact",
+            "ac1",
+            "ac2",
+            "ac3",
+            "equip_set",
+            "tc1",
+            "mt1",
+            "tt1",
+            "tt2",
+            "tc2",
+            "mt2",
+            "tt3",
+            "tt4",
+            "si_build_label",
+            "ps",
+            "s1",
+            "s2",
+            "ss",
+            "cs1",
+            "cs2",
+            "si_ps",
+            "si_s1",
+            "si_s2",
+            "si_cs",
+            "descent",
+        ]
+        existing = [c for c in keep if c in ud.columns]
+        # map si_build_label → si_build for DB
+        ud_db = ud[existing].copy()
+        if "si_build_label" in ud_db.columns:
+            ud_db = ud_db.rename(columns={"si_build_label": "si_build"})
+        for bcol in ("released", "is_pve", "is_pvp", "is_support"):
+            if bcol in ud_db.columns:
+                ud_db[bcol] = ud_db[bcol].apply(
+                    lambda v: 1 if v is True else (0 if v is False else None)
+                )
+        counts["meta_unit_data"] = _insert("meta_unit_data", ud_db)
+
+    # Builds
+    counts["meta_builds"] = _insert("meta_builds", sheets.get("builds", pd.DataFrame()))
+
+    # PvE Meta
+    counts["meta_pve_meta"] = _insert(
+        "meta_pve_meta", sheets.get("pve_meta", pd.DataFrame())
+    )
+
+    # PvP Meta
+    counts["meta_pvp_meta"] = _insert(
+        "meta_pvp_meta", sheets.get("pvp_meta", pd.DataFrame())
+    )
+
+    # Content Usage
+    cu = sheets.get("content_usage", pd.DataFrame())
+    if not cu.empty:
+        cu_db = cu.copy()
+        cu_db["is_viable"] = cu_db["is_viable"].apply(lambda v: 1 if v else 0)
+        counts["meta_content_usage"] = _insert("meta_content_usage", cu_db)
+
+    # Content Teams
+    counts["meta_content_teams"] = _insert(
+        "meta_content_teams", sheets.get("content_teams", pd.DataFrame())
+    )
+
+    # Equipment Presets
+    counts["meta_equipment_presets"] = _insert(
+        "meta_equipment_presets", sheets.get("equipment_presets", pd.DataFrame())
+    )
+
+    # Soul Imprint
+    counts["meta_soul_imprint"] = _insert(
+        "meta_soul_imprint", sheets.get("soul_imprint", pd.DataFrame())
+    )
+
+    # Changelog
+    counts["meta_changelog"] = _insert(
+        "meta_changelog", sheets.get("changelog", pd.DataFrame())
+    )
+
+    # Release Order
+    counts["meta_release_order"] = _insert(
+        "meta_release_order", sheets.get("release_order", pd.DataFrame())
+    )
+
+    # Content Keys
+    counts["meta_content_keys"] = _insert(
+        "meta_content_keys", sheets.get("content_keys", pd.DataFrame())
+    )
+
+    # Beginners Guide
+    counts["meta_beginners_guide"] = _insert(
+        "meta_beginners_guide", sheets.get("beginners_guide", pd.DataFrame())
+    )
+
+    for table, n in counts.items():
+        if n:
+            LOGGER.info("Inserted %d rows into %s", n, table)
+
+
 def build_database(
     heroes_df: pd.DataFrame,
     scores_df: pd.DataFrame,
@@ -931,6 +1591,18 @@ def build_database(
             """
             PRAGMA foreign_keys = OFF;
 
+            DROP TABLE IF EXISTS meta_beginners_guide;
+            DROP TABLE IF EXISTS meta_content_keys;
+            DROP TABLE IF EXISTS meta_release_order;
+            DROP TABLE IF EXISTS meta_changelog;
+            DROP TABLE IF EXISTS meta_soul_imprint;
+            DROP TABLE IF EXISTS meta_equipment_presets;
+            DROP TABLE IF EXISTS meta_content_teams;
+            DROP TABLE IF EXISTS meta_content_usage;
+            DROP TABLE IF EXISTS meta_pvp_meta;
+            DROP TABLE IF EXISTS meta_pve_meta;
+            DROP TABLE IF EXISTS meta_builds;
+            DROP TABLE IF EXISTS meta_unit_data;
             DROP TABLE IF EXISTS hero_progression_equipment_stats;
             DROP TABLE IF EXISTS hero_progression_relationships;
             DROP TABLE IF EXISTS hero_progression_tags;
@@ -990,6 +1662,9 @@ def build_database(
                 availability_marker TEXT,
                 variant_role TEXT NOT NULL,
                 variant_rarity TEXT NOT NULL,
+                adventure_tier TEXT NOT NULL,
+                battle_tier TEXT NOT NULL,
+                boss_tier TEXT NOT NULL,
                 source_title TEXT NOT NULL,
                 source_href TEXT NOT NULL,
                 note_excerpt TEXT,
@@ -1207,6 +1882,141 @@ def build_database(
                 trust_tier TEXT NOT NULL
             );
 
+            -- ── Spreadsheet meta tables ──────────────────────────
+
+            CREATE TABLE meta_unit_data (
+                unit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                longname TEXT,
+                shortname TEXT,
+                keysname TEXT,
+                attribute TEXT,
+                color TEXT,
+                unit_class TEXT,
+                job_type TEXT,
+                kr_release_date TEXT,
+                released INTEGER,
+                is_pve INTEGER,
+                is_pvp INTEGER,
+                is_support INTEGER,
+                ht1 TEXT, hp1 TEXT, ht2 TEXT, hp2 TEXT, ht3 TEXT, hp3 TEXT,
+                ht4 TEXT, hp4 TEXT, ht5 TEXT, hp5 TEXT,
+                ct1 TEXT, cp1 TEXT, ct2 TEXT, cp2 TEXT, ct3 TEXT, cp3 TEXT,
+                ct4 TEXT, cp4 TEXT, ct5 TEXT, cp5 TEXT,
+                cs_level TEXT,
+                rn1 TEXT, rn2 TEXT, artifact TEXT,
+                ac1 TEXT, ac2 TEXT, ac3 TEXT, equip_set TEXT,
+                tc1 TEXT, mt1 TEXT, tt1 TEXT, tt2 TEXT,
+                tc2 TEXT, mt2 TEXT, tt3 TEXT, tt4 TEXT,
+                si_build TEXT,
+                ps TEXT, s1 TEXT, s2 TEXT, ss TEXT,
+                cs1 TEXT, cs2 TEXT,
+                si_ps TEXT, si_s1 TEXT, si_s2 TEXT, si_cs TEXT,
+                descent TEXT
+            );
+
+            CREATE TABLE meta_builds (
+                build_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                header_name TEXT,
+                attribute TEXT,
+                unit_class TEXT,
+                content_tag TEXT,
+                hero_trait_1 TEXT, hero_trait_2 TEXT, hero_trait_3 TEXT,
+                hero_trait_4 TEXT, hero_trait_5 TEXT,
+                chaser_trait_1 TEXT, chaser_trait_2 TEXT, chaser_trait_3 TEXT,
+                chaser_trait_4 TEXT, chaser_trait_5 TEXT,
+                cs_level TEXT,
+                rune_normal TEXT, rune_special TEXT,
+                acc_ring TEXT, acc_necklace TEXT, acc_earring TEXT,
+                trans_main_mode TEXT, trans_main_t3 TEXT, trans_main_t6 TEXT
+            );
+
+            CREATE TABLE meta_pve_meta (
+                pve_meta_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                meta_type TEXT NOT NULL,
+                tier_group TEXT,
+                tier_rank INTEGER,
+                hero_name TEXT NOT NULL,
+                attribute TEXT
+            );
+
+            CREATE TABLE meta_pvp_meta (
+                pvp_meta_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                section TEXT NOT NULL,
+                team_variant INTEGER,
+                members TEXT NOT NULL,
+                attributes TEXT,
+                member_count INTEGER
+            );
+
+            CREATE TABLE meta_content_usage (
+                usage_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hero_name TEXT NOT NULL,
+                content_mode TEXT NOT NULL,
+                is_viable INTEGER NOT NULL
+            );
+
+            CREATE TABLE meta_content_teams (
+                team_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                content TEXT NOT NULL,
+                phase TEXT,
+                team_type TEXT,
+                members TEXT NOT NULL,
+                attributes TEXT,
+                member_count INTEGER,
+                notes TEXT
+            );
+
+            CREATE TABLE meta_equipment_presets (
+                preset_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                equipment_class TEXT,
+                preset_name TEXT NOT NULL,
+                set_color TEXT,
+                stat_first_line TEXT,
+                weapon_second_line TEXT,
+                supp_weapon_second_line TEXT,
+                armor_second_line TEXT,
+                enchant_1 TEXT,
+                enchant_2 TEXT,
+                enchant_3 TEXT
+            );
+
+            CREATE TABLE meta_soul_imprint (
+                si_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hero_name TEXT NOT NULL,
+                column_index INTEGER
+            );
+
+            CREATE TABLE meta_changelog (
+                changelog_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                entry TEXT NOT NULL
+            );
+
+            CREATE TABLE meta_release_order (
+                release_order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                release_type TEXT NOT NULL,
+                batch TEXT,
+                attribute TEXT,
+                hero_name TEXT NOT NULL
+            );
+
+            CREATE TABLE meta_content_keys (
+                key_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                content TEXT NOT NULL,
+                team_key TEXT,
+                team_members TEXT
+            );
+
+            CREATE TABLE meta_beginners_guide (
+                guide_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic TEXT,
+                content TEXT NOT NULL
+            );
+
+            -- ── Indexes ──────────────────────────────────────────
+
             CREATE INDEX idx_meta_score_rank ON hero_meta_scores(final_meta_score DESC);
             CREATE INDEX idx_hero_variants_hero_id ON hero_variants(hero_id);
             CREATE INDEX idx_variant_meta_score_rank ON variant_meta_scores(final_meta_score DESC, meta_rank);
@@ -1220,6 +2030,12 @@ def build_database(
             CREATE INDEX idx_game_system_references_key ON game_system_references(reference_key, game_era);
             CREATE INDEX idx_release_history_year_order ON hero_release_history(release_year, release_order_numeric);
             CREATE INDEX idx_system_reference_values_key ON system_reference_values(reference_key, row_label, column_label);
+            CREATE INDEX idx_meta_unit_data_name ON meta_unit_data(name);
+            CREATE INDEX idx_meta_unit_data_attr ON meta_unit_data(attribute);
+            CREATE INDEX idx_meta_builds_name ON meta_builds(name);
+            CREATE INDEX idx_meta_content_usage_hero ON meta_content_usage(hero_name);
+            CREATE INDEX idx_meta_content_teams_content ON meta_content_teams(content);
+            CREATE INDEX idx_meta_changelog_date ON meta_changelog(date);
 
             PRAGMA foreign_keys = ON;
             """
@@ -1261,10 +2077,14 @@ def build_database(
             score_rows,
         )
 
+        sheets = ingest_spreadsheet()
+
         variant_profiles_df = build_variant_profiles(
             heroes_df,
             variants_df,
             variant_sections_df,
+            settings=settings,
+            spreadsheet_sheets=sheets,
         )
         hero_id_by_name = {
             str(raw_row["name_en"]): int(raw_row["hero_id"])
@@ -1280,6 +2100,9 @@ def build_database(
                 str(raw_row.get("availability_marker", "")),
                 str(raw_row.get("variant_role", "Unknown")),
                 str(raw_row.get("variant_rarity", "SS")),
+                str(raw_row.get("adventure_tier", "B")),
+                str(raw_row.get("battle_tier", "B")),
+                str(raw_row.get("boss_tier", "B")),
                 str(raw_row.get("variant_title", raw_row["name_en"])),
                 str(raw_row.get("variant_href", "")),
                 str(raw_row.get("note_excerpt", "")),
@@ -1290,7 +2113,7 @@ def build_database(
         ]
         if variant_rows:
             cursor.executemany(
-                "INSERT INTO hero_variants (hero_id, variant_name_en, name_ko, variant_kind, variant_suffix, availability_marker, variant_role, variant_rarity, source_title, source_href, note_excerpt, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO hero_variants (hero_id, variant_name_en, name_ko, variant_kind, variant_suffix, availability_marker, variant_role, variant_rarity, adventure_tier, battle_tier, boss_tier, source_title, source_href, note_excerpt, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 variant_rows,
             )
 
@@ -1552,6 +2375,7 @@ def build_database(
                 "INSERT INTO skill_snippets (skill_id, skill_name, description, source_page) VALUES (?, ?, ?, ?)",
                 skill_rows,
             )
+        _populate_spreadsheet_tables(cursor, sheets)
 
         connection.commit()
     LOGGER.info("Built SQLite database at %s", settings.database_path)
@@ -1712,15 +2536,6 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
     with sqlite3.connect(settings.database_path) as connection:
         variant_leaderboard_df = pd.read_sql_query(
             """
-            WITH mode_pivot AS (
-                SELECT
-                    hero_id,
-                    MAX(CASE WHEN mode = 'adventure' THEN tier_letter END) AS adventure_tier,
-                    MAX(CASE WHEN mode = 'battle' THEN tier_letter END) AS battle_tier,
-                    MAX(CASE WHEN mode = 'boss' THEN tier_letter END) AS boss_tier
-                FROM hero_modes
-                GROUP BY hero_id
-            )
             SELECT
                 hv.variant_id,
                 hv.hero_id,
@@ -1734,9 +2549,9 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
                 hv.variant_rarity,
                 hv.source_title AS variant_title,
                 hv.note_excerpt,
-                mp.adventure_tier,
-                mp.battle_tier,
-                mp.boss_tier,
+                hv.adventure_tier,
+                hv.battle_tier,
+                hv.boss_tier,
                 vms.base_score,
                 vms.rarity_adjusted,
                 vms.final_meta_score,
@@ -1744,7 +2559,6 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
                 vms.score_basis
             FROM hero_variants hv
             JOIN heroes h ON h.hero_id = hv.hero_id
-            LEFT JOIN mode_pivot mp ON mp.hero_id = hv.hero_id
             LEFT JOIN variant_meta_scores vms ON vms.variant_id = hv.variant_id
             ORDER BY vms.meta_rank, h.name_en, hv.variant_kind, hv.variant_name_en
             """,
@@ -1765,6 +2579,26 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
                 "hero_progression_tags",
                 "hero_progression_relationships",
                 "hero_progression_equipment_stats",
+            )
+        }
+
+        spreadsheet_counts = {
+            table_name: int(
+                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+            )
+            for table_name in (
+                "meta_unit_data",
+                "meta_builds",
+                "meta_pve_meta",
+                "meta_pvp_meta",
+                "meta_content_usage",
+                "meta_content_teams",
+                "meta_equipment_presets",
+                "meta_soul_imprint",
+                "meta_changelog",
+                "meta_release_order",
+                "meta_content_keys",
+                "meta_beginners_guide",
             )
         }
 
@@ -1789,4 +2623,5 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         "equipment_stats": progression_counts["hero_progression_equipment_stats"],
         "traits": int(len(chaser_df.index)),
         "skills": int(len(skills_df.index)),
+        **spreadsheet_counts,
     }

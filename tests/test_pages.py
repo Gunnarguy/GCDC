@@ -78,6 +78,10 @@ def test_extract_patch_entries_from_sections_reads_dated_blocks() -> None:
     )
 
 
+def test_variant_kind_label_uses_job_change_wording() -> None:
+    assert pages_module._format_variant_kind_label("former", "T") == "Job Change (T)"
+
+
 def test_summarize_patch_coverage_counts_entries_and_blocks() -> None:
     patch_entries_df = pd.DataFrame(
         [
@@ -159,6 +163,9 @@ def test_build_pages_payload_includes_system_references_and_release_history(
                 availability_marker TEXT,
                 variant_role TEXT,
                 variant_rarity TEXT,
+                adventure_tier TEXT,
+                battle_tier TEXT,
+                boss_tier TEXT,
                 source_title TEXT,
                 source_href TEXT,
                 note_excerpt TEXT,
@@ -251,7 +258,7 @@ def test_build_pages_payload_includes_system_references_and_release_history(
         )
         connection.execute("INSERT INTO hero_meta_scores VALUES (1, 4.5, 5.4, 6.21, 1)")
         connection.executemany(
-            "INSERT INTO hero_variants VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO hero_variants VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 (
                     10,
@@ -263,6 +270,9 @@ def test_build_pages_payload_includes_system_references_and_release_history(
                     "",
                     "Assault",
                     "SS",
+                    "SS",
+                    "S",
+                    "S",
                     "Elesis (Grand Chase for kakao)",
                     "/w/elesis",
                     "",
@@ -278,6 +288,9 @@ def test_build_pages_payload_includes_system_references_and_release_history(
                     "S",
                     "Assault",
                     "SS",
+                    "SS",
+                    "S",
+                    "S",
                     "Elesis (Grand Chase for kakao)/special hero",
                     "/w/elesis-s",
                     "",

@@ -32,6 +32,7 @@
       <button class="view-tab" data-view="search">Search</button>
       <button class="view-tab" data-view="hero">Hero Dossier</button>
       <button class="view-tab" data-view="compare">Compare</button>
+      <button class="view-tab" data-view="meta">Meta Database</button>
     </nav>
 
     <main class="page-shell">
@@ -124,7 +125,7 @@
             </div>
             <div id="systemReferences"></div>
           </section>
-        
+
           <section class="panel">
             <div class="panel-header">
               <div>
@@ -139,7 +140,7 @@
             <div id="releaseTimelineTable"></div>
           </section>
         </div>
-        
+
         <section class="panel">
           <div class="panel-header">
             <div>
@@ -152,6 +153,138 @@
             </p>
           </div>
           <div id="systemReferenceValuesTable"></div>
+        </section>
+      </section>
+
+      <section class="view-panel is-hidden" id="view-meta">
+        <div class="card-grid" id="metaOverviewCards"></div>
+      
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">PvE Tier List</p>
+                <h2>PvE Meta</h2>
+              </div>
+              <p class="panel-copy">
+                Community-curated PvE tier rankings by attribute group.
+              </p>
+            </div>
+            <div id="metaPveTable"></div>
+          </section>
+      
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">PvP Compositions</p>
+                <h2>PvP Meta</h2>
+              </div>
+              <p class="panel-copy">
+                Attack and defense team compositions for PvP.
+              </p>
+            </div>
+            <div id="metaPvpTable"></div>
+          </section>
+        </div>
+      
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Unit Roster</p>
+              <h2>Community Unit Database</h2>
+            </div>
+            <p class="panel-copy">
+              Full hero database with attributes, classes, job types, traits,
+              and skill slots from the community spreadsheet.
+            </p>
+          </div>
+          <div id="metaUnitTable"></div>
+        </section>
+      
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Builds</p>
+              <h2>Recommended Builds</h2>
+            </div>
+            <p class="panel-copy">
+              Hero trait, chaser trait, rune, accessory, and transcendence build
+              specs.
+            </p>
+          </div>
+          <div id="metaBuildsTable"></div>
+        </section>
+      
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Team Comps</p>
+                <h2>Content Teams</h2>
+              </div>
+              <p class="panel-copy">
+                Recommended teams for raids, world boss, hell’s furnace, and
+                other PvE content.
+              </p>
+            </div>
+            <div id="metaContentTeamsTable"></div>
+          </section>
+      
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Gear</p>
+                <h2>Equipment Presets</h2>
+              </div>
+              <p class="panel-copy">
+                Equipment set definitions by class with stat lines and enchant
+                specs.
+              </p>
+            </div>
+            <div id="metaEquipmentTable"></div>
+          </section>
+        </div>
+      
+        <div class="panel-grid two-up">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Hero Usage</p>
+                <h2>Content Viability Matrix</h2>
+              </div>
+              <p class="panel-copy">
+                Which heroes are viable for each game mode.
+              </p>
+            </div>
+            <div id="metaContentUsageTable"></div>
+          </section>
+      
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Release Batches</p>
+                <h2>Release Order</h2>
+              </div>
+              <p class="panel-copy">
+                Soul Imprint, Job Change, Special, and Spirit release batch
+                order.
+              </p>
+            </div>
+            <div id="metaReleaseOrderTable"></div>
+          </section>
+        </div>
+      
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Update History</p>
+              <h2>Spreadsheet Changelog</h2>
+            </div>
+            <p class="panel-copy">
+              Dated updates from the community meta spreadsheet.
+            </p>
+          </div>
+          <div id="metaChangelogTable"></div>
         </section>
       </section>
 

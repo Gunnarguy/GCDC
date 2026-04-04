@@ -5,6 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import cast
 from typing import Any
 
 import pandas as pd
@@ -24,7 +25,7 @@ ATLAS_JSON_PATH = DOCS_DATA_DIR / "atlas.json"
 NOJEKYLL_PATH = DOCS_DIR / ".nojekyll"
 VARIANT_KIND_LABELS = {
     "base": "Base",
-    "former": "Former",
+    "former": "Job Change",
     "special": "Special",
 }
 PATCH_COLUMNS = [
@@ -51,6 +52,21 @@ PATCH_COLUMNS = [
 
 
 def _read_sql(connection: sqlite3.Connection, query: str) -> pd.DataFrame:
+    return pd.read_sql_query(query, connection).fillna("")
+
+
+def _read_sql_optional(
+    connection: sqlite3.Connection,
+    table: str,
+    query: str,
+) -> pd.DataFrame:
+    """Read a SQL query but return an empty DataFrame if the table doesn't exist."""
+    exists = connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+        (table,),
+    ).fetchone()
+    if not exists:
+        return pd.DataFrame()
     return pd.read_sql_query(query, connection).fillna("")
 
 
@@ -103,7 +119,7 @@ def _apply_variant_display_columns(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def _to_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
-    return frame.to_dict(orient="records")
+    return cast(list[dict[str, Any]], frame.to_dict(orient="records"))
 
 
 def _json_default(value: Any) -> Any:
@@ -315,15 +331,6 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             _read_sql(
                 connection,
                 """
-                WITH mode_pivot AS (
-                    SELECT
-                        hero_id,
-                        MAX(CASE WHEN mode = 'adventure' THEN tier_letter END) AS adventure_tier,
-                        MAX(CASE WHEN mode = 'battle' THEN tier_letter END) AS battle_tier,
-                        MAX(CASE WHEN mode = 'boss' THEN tier_letter END) AS boss_tier
-                    FROM hero_modes
-                    GROUP BY hero_id
-                )
                 SELECT
                     hv.variant_id,
                     hv.hero_id,
@@ -337,9 +344,9 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
                     hv.variant_rarity AS rarity,
                     hv.source_title AS variant_title,
                     hv.note_excerpt,
-                    mp.adventure_tier,
-                    mp.battle_tier,
-                    mp.boss_tier,
+                    hv.adventure_tier,
+                    hv.battle_tier,
+                    hv.boss_tier,
                     vms.base_score,
                     vms.rarity_adjusted,
                     vms.final_meta_score,
@@ -347,7 +354,6 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
                     vms.score_basis
                 FROM hero_variants hv
                 JOIN heroes h ON h.hero_id = hv.hero_id
-                LEFT JOIN mode_pivot mp ON mp.hero_id = hv.hero_id
                 LEFT JOIN variant_meta_scores vms ON vms.variant_id = hv.variant_id
                 ORDER BY vms.meta_rank, h.name_en, hv.variant_kind, hv.variant_name_en
                 """,
@@ -491,6 +497,74 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             """,
         )
 
+        # ── Spreadsheet meta tables ──────────────────────────
+        meta_unit_data_df = _read_sql_optional(
+            connection,
+            "meta_unit_data",
+            "SELECT name, longname, attribute, unit_class, job_type, kr_release_date, "
+            "is_pve, is_pvp, is_support, "
+            "ht1, hp1, ht2, hp2, ht3, hp3, ht4, hp4, ht5, hp5, "
+            "ct1, cp1, ct2, cp2, ct3, cp3, ct4, cp4, ct5, cp5, "
+            "cs_level, rn1, rn2, artifact, ac1, ac2, ac3, equip_set, "
+            "tc1, mt1, tt1, tt2, tc2, mt2, tt3, tt4, "
+            "ps, s1, s2, ss, cs1, cs2, si_ps, si_s1, si_s2, si_cs, descent "
+            "FROM meta_unit_data ORDER BY name",
+        )
+        meta_builds_df = _read_sql_optional(
+            connection,
+            "meta_builds",
+            "SELECT name, attribute, unit_class, content_tag, "
+            "hero_trait_1, hero_trait_2, hero_trait_3, hero_trait_4, hero_trait_5, "
+            "chaser_trait_1, chaser_trait_2, chaser_trait_3, chaser_trait_4, chaser_trait_5, "
+            "cs_level, rune_normal, rune_special, "
+            "acc_ring, acc_necklace, acc_earring, "
+            "trans_main_mode, trans_main_t3, trans_main_t6 "
+            "FROM meta_builds ORDER BY name",
+        )
+        meta_pve_meta_df = _read_sql_optional(
+            connection,
+            "meta_pve_meta",
+            "SELECT meta_type, tier_group, tier_rank, hero_name, attribute "
+            "FROM meta_pve_meta ORDER BY tier_rank, tier_group",
+        )
+        meta_pvp_meta_df = _read_sql_optional(
+            connection,
+            "meta_pvp_meta",
+            "SELECT section, team_variant, members, attributes, member_count "
+            "FROM meta_pvp_meta ORDER BY section, team_variant",
+        )
+        meta_content_usage_df = _read_sql_optional(
+            connection,
+            "meta_content_usage",
+            "SELECT hero_name, content_mode, is_viable "
+            "FROM meta_content_usage ORDER BY hero_name, content_mode",
+        )
+        meta_content_teams_df = _read_sql_optional(
+            connection,
+            "meta_content_teams",
+            "SELECT content, phase, team_type, members, attributes, member_count, notes "
+            "FROM meta_content_teams ORDER BY content, phase, team_type",
+        )
+        meta_equipment_presets_df = _read_sql_optional(
+            connection,
+            "meta_equipment_presets",
+            "SELECT equipment_class, preset_name, set_color, "
+            "stat_first_line, weapon_second_line, supp_weapon_second_line, "
+            "armor_second_line, enchant_1, enchant_2, enchant_3 "
+            "FROM meta_equipment_presets ORDER BY equipment_class, preset_name",
+        )
+        meta_changelog_df = _read_sql_optional(
+            connection,
+            "meta_changelog",
+            "SELECT date, entry FROM meta_changelog ORDER BY date DESC",
+        )
+        meta_release_order_df = _read_sql_optional(
+            connection,
+            "meta_release_order",
+            "SELECT release_type, batch, attribute, hero_name "
+            "FROM meta_release_order ORDER BY release_type, batch",
+        )
+
     patch_blocks_df = (
         patch_entries_df.drop_duplicates(subset=["patch_block_key"]).copy()
         if not patch_entries_df.empty
@@ -583,6 +657,10 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
             "release_history_count": int(len(release_history_df.index)),
             "patch_block_count": int(len(patch_blocks_df.index)),
             "patch_entry_count": int(len(patch_entries_df.index)),
+            "meta_unit_count": int(len(meta_unit_data_df.index)),
+            "meta_build_count": int(len(meta_builds_df.index)),
+            "meta_content_team_count": int(len(meta_content_teams_df.index)),
+            "meta_changelog_count": int(len(meta_changelog_df.index)),
         },
         "top_heroes": _to_records(top_heroes_df),
         "variant_leaderboard": _to_records(variant_leaderboard_df),
@@ -599,6 +677,15 @@ def build_pages_payload(database_path: Path) -> dict[str, Any]:
         "system_reference_values": _to_records(system_reference_values_df),
         "release_history": _to_records(release_history_df),
         "patches": _to_records(patch_entries_df),
+        "meta_unit_data": _to_records(meta_unit_data_df),
+        "meta_builds": _to_records(meta_builds_df),
+        "meta_pve_meta": _to_records(meta_pve_meta_df),
+        "meta_pvp_meta": _to_records(meta_pvp_meta_df),
+        "meta_content_usage": _to_records(meta_content_usage_df),
+        "meta_content_teams": _to_records(meta_content_teams_df),
+        "meta_equipment_presets": _to_records(meta_equipment_presets_df),
+        "meta_changelog": _to_records(meta_changelog_df),
+        "meta_release_order": _to_records(meta_release_order_df),
     }
 
 

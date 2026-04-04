@@ -1,0 +1,50 @@
+Class,Preset Name,Set,,,"Additional Stat 🟢
+These are what you reidentify",,,,,"Magic Enchant ⚪🔴🔵
+Color coded to match their material",,
+,,,,,First Line for All Equipment,Weapon Second Line,Supp Weapon Second Line,Armor/Supp Armor Second Line,,,,
+,"Cooldown
+Reduction",🟢,,,Magic Attack,True Damage Chance,Increase Boss DMG,Crit Chance + DMG,,"Magic
+Attack","Skill Cooldown
+Reduction",Skill DMG Increase
+,Crit,🟢,,,Magic Attack,True Damage Chance,Increase Boss DMG,Crit Chance + DMG,,"Magic
+Attack",Crit Chance,Skill DMG Increase
+,PvP,🟣,,,Magic Attack,True Damage Chance,PvP DMG Increase,Crit Chance + DMG,,"Magic
+Attack","Skill Cooldown
+Reduction",Skill DMG Increase
+,"Cooldown
+Reduction",🟢,,,Physical Attack,True Damage Chance,Increase Boss DMG,Crit Chance + DMG,,Physical Attack,"Skill Cooldown
+Reduction",Basic DMG Increase
+,Crit,🟢,,,Physical Attack,True Damage Chance,Increase Boss DMG,Crit Chance + DMG,,Physical Attack,Crit Chance,Basic DMG Increase
+,Attack Speed,🟢,,,Physical Attack,True Damage Chance,Increase Boss DMG,Crit Chance + DMG,,Physical Attack,"Attack Speed
+Increase",Basic DMG Increase
+,PvP,🟣,,,Physical Attack,True Damage Chance,PvP DMG Increase,Crit Chance + DMG,,Physical Attack,Crit Chance,Basic DMG Increase
+,Ulti Spam,"Mix 2 of:          🔵, 🔴, or 🟣",,,Physical Attack,Debuff Duration Increase,Increase Boss DMG,Crit Chance + DMG,,Physical Attack,"2 Special CDR
+2 Skill CDR",Skill DMG Increase
+,Buffing,🟠,,,Physical Attack,Debuff Duration Increase,Increase Boss DMG,Crit Chance + DMG,,Physical Attack,"Skill Cooldown
+Reduction",Skill DMG Increase
+,Sustain,🔴,,,Max Hp,Debuff Duration Increase,PvP DMG Decrease,Crit DMG Defense Chance + Decrease Received Crit DMG,,Max HP,"Skill Cooldown
+Reduction","Any Damage
+Reduction"
+,DPS,🟢,,,Physical Attack,True Damage Chance,Increase Boss DMG,Crit Chance + DMG,,Physical Attack,"Skill Cooldown
+Reduction",Skill DMG Increase
+,PvE,"Mix 2 of:          🔵, 🔴, or 🟣",,,Max Hp,Debuff Duration Increase,Increase Boss DMG,Crit Chance + DMG,,Max HP,"Skill Cooldown
+Reduction",Skill DMG Increase
+,WB,"Mix 2 of:          🔵, 🔴, or 🟣",,,Magic Attack,Debuff Duration Increase,Increase Boss DMG,Crit Chance + DMG,,"Magic
+Attack",Special CDR,Skill DMG Increase
+,Sustain,🔴,,,Max Hp,Debuff Duration Increase,PvP DMG Decrease,Crit DMG Defense Chance + Decrease Received Crit DMG,,Max HP,"Skill Cooldown
+Reduction","Any Damage
+Reduction"
+,Sustain,🔴,,,Max Hp,Debuff Duration Increase,PvP DMG Decrease,Crit DMG Defense Chance + Decrease Received Crit DMG,,Max HP,"Skill Cooldown
+Reduction","Any Damage
+Reduction"
+,,,,,,,,,,,,
+Legend,,,,,,,,,,,,
+🟠,Aura of Passion,
+🔴,Support of Protection,,,,,,,,,,,
+🟢                ,Gaze of Focus,
+🟣,Power of Doom,,,,,,,,"i love yuri so much, bro",,,
+🔵,Ribbon of Life,,,,,,,,,,,
+CDR,"Cooldown
+Reduction",
+DMG,Damage,,,,,,,,,,,
+WB,World Boss,,,,,,,

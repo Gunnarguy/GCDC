@@ -217,6 +217,163 @@ def test_variant_profiles_and_scores_keep_variants_separate() -> None:
     assert scored_df["meta_rank"].tolist() == [1, 2, 3]
 
 
+def test_variant_profiles_use_spreadsheet_signals_for_distinct_variant_scores() -> None:
+    heroes_df = pd.DataFrame(
+        [
+            {
+                "hero_id": 1,
+                "name_en": "Amy",
+                "name_ko": "에이미",
+                "role": "Healer",
+                "rarity": "SS",
+                "adventure_tier": "SS",
+                "battle_tier": "S",
+                "boss_tier": "B",
+                "sources": "strategywiki,namuwiki",
+            }
+        ]
+    )
+    variants_df = pd.DataFrame(
+        [
+            {
+                "name_en_guess": "Amy",
+                "variant_name_en": "Amy",
+                "name_ko": "에이미",
+                "variant_kind": "base",
+                "variant_suffix": "",
+                "availability_marker": "",
+                "variant_title": "Amy (Grand Chase for kakao)",
+                "variant_href": "/w/amy",
+                "note_excerpt": "",
+                "source": "namuwiki",
+                "rarity": "SS",
+            },
+            {
+                "name_en_guess": "Amy",
+                "variant_name_en": "Amy",
+                "name_ko": "에이미",
+                "variant_kind": "former",
+                "variant_suffix": "T",
+                "availability_marker": "T",
+                "variant_title": "Amy (Grand Chase for kakao)/former hero",
+                "variant_href": "/w/amy-t",
+                "note_excerpt": "",
+                "source": "namuwiki",
+                "rarity": "SS",
+            },
+        ]
+    )
+    spreadsheet_sheets = {
+        "unit_data": pd.DataFrame(
+            [
+                {
+                    "name": "Amy",
+                    "longname": "Amy Plie",
+                    "shortname": "Amy",
+                    "keysname": "Amy",
+                },
+                {
+                    "name": "Amy T",
+                    "longname": "Amy (T)",
+                    "shortname": "Amy T",
+                    "keysname": "Amy(T)",
+                },
+            ]
+        ),
+        "pve_meta": pd.DataFrame(
+            [
+                {
+                    "meta_type": "PvE",
+                    "tier_group": "Balance",
+                    "tier_rank": 1,
+                    "hero_name": "Amy",
+                    "attribute": "Balance",
+                },
+                {
+                    "meta_type": "PvE",
+                    "tier_group": "Life",
+                    "tier_rank": 4,
+                    "hero_name": "Amy T",
+                    "attribute": "Life",
+                },
+            ]
+        ),
+        "pvp_meta": pd.DataFrame(
+            [
+                {
+                    "section": "Attack",
+                    "team_variant": 1,
+                    "members": "Amy T, Zero T, Deca T, Vice",
+                    "attributes": "Life, Balance, Balance, Balance",
+                    "member_count": 4,
+                }
+            ]
+        ),
+        "content_usage": pd.DataFrame(
+            [
+                {"hero_name": "Amy", "content_mode": "Raids", "is_viable": True},
+                {"hero_name": "Amy", "content_mode": "AoT", "is_viable": True},
+                {"hero_name": "Amy", "content_mode": "PvP ATK", "is_viable": False},
+                {"hero_name": "Amy T", "content_mode": "Raids", "is_viable": True},
+                {"hero_name": "Amy T", "content_mode": "PvP ATK", "is_viable": True},
+                {"hero_name": "Amy T", "content_mode": "PvP DEF", "is_viable": True},
+            ]
+        ),
+        "content_teams": pd.DataFrame(
+            [
+                {
+                    "content": "Raids",
+                    "phase": "Raid 15",
+                    "team_type": "main",
+                    "members": "Jin, Lass, Vice, Amy",
+                    "attributes": "Balance, Spirit, Balance, Spirit",
+                    "member_count": 4,
+                    "notes": "",
+                },
+                {
+                    "content": "Raids",
+                    "phase": "Raid 14",
+                    "team_type": "main",
+                    "members": "Elesis, Lapis, Werner, Amy T",
+                    "attributes": "Life, Life, Life, Life",
+                    "member_count": 4,
+                    "notes": "",
+                },
+            ]
+        ),
+    }
+
+    profiles_df = build_variant_profiles(
+        heroes_df,
+        variants_df,
+        pd.DataFrame(),
+        settings=load_settings(),
+        spreadsheet_sheets=spreadsheet_sheets,
+    )
+
+    assert set(profiles_df["score_basis"]) == {"spreadsheet_variant_signals"}
+
+    scored_df = compute_variant_meta_scores(
+        profiles_df.assign(variant_id=[10, 11]),
+        load_settings(),
+    ).sort_values("variant_id")
+
+    assert (
+        scored_df.iloc[0]["final_meta_score"] != scored_df.iloc[1]["final_meta_score"]
+    )
+    assert (
+        profiles_df.loc[profiles_df["variant_kind"] == "base", "adventure_tier"].iloc[0]
+        == "SS"
+    )
+    assert profiles_df.loc[profiles_df["variant_kind"] == "former", "battle_tier"].iloc[
+        0
+    ] in {
+        "A",
+        "S",
+        "SS",
+    }
+
+
 def test_build_progression_records_normalizes_skill_ladders_and_equipment() -> None:
     variants_df = pd.DataFrame(
         [

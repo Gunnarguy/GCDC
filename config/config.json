@@ -26,6 +26,23 @@
       "battle": 0.3,
       "boss": 0.2
     },
+    "variant_signal_weights": {
+      "spreadsheet_blend": 0.6,
+      "legacy_blend": 0.4,
+      "adventure": {
+        "pve_meta": 0.5,
+        "usage": 0.3,
+        "teams": 0.2
+      },
+      "battle": {
+        "usage": 0.45,
+        "teams": 0.55
+      },
+      "boss": {
+        "usage": 0.6,
+        "teams": 0.4
+      }
+    },
     "rarity_multipliers": {
       "SS": 1.2,
       "S": 1.05,

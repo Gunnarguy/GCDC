@@ -57,7 +57,7 @@ FEATURE_LABELS = {
 }
 VARIANT_KIND_LABELS = {
     "base": "Base",
-    "former": "Former",
+    "former": "Job Change",
     "special": "Special",
 }
 RELATION_TYPE_LABELS = {
@@ -284,15 +284,6 @@ def load_atlas() -> dict[str, pd.DataFrame]:
 
         variant_leaderboard_df = read_optional_sql(
             """
-            WITH mode_pivot AS (
-                SELECT
-                    hero_id,
-                    MAX(CASE WHEN mode = 'adventure' THEN tier_letter END) AS adventure_tier,
-                    MAX(CASE WHEN mode = 'battle' THEN tier_letter END) AS battle_tier,
-                    MAX(CASE WHEN mode = 'boss' THEN tier_letter END) AS boss_tier
-                FROM hero_modes
-                GROUP BY hero_id
-            )
             SELECT
                 hv.variant_id,
                 hv.hero_id,
@@ -306,9 +297,9 @@ def load_atlas() -> dict[str, pd.DataFrame]:
                 hv.variant_rarity AS rarity,
                 hv.source_title AS variant_title,
                 hv.note_excerpt,
-                mp.adventure_tier,
-                mp.battle_tier,
-                mp.boss_tier,
+                hv.adventure_tier,
+                hv.battle_tier,
+                hv.boss_tier,
                 vms.base_score,
                 vms.rarity_adjusted,
                 vms.final_meta_score,
@@ -316,7 +307,6 @@ def load_atlas() -> dict[str, pd.DataFrame]:
                 vms.score_basis
             FROM hero_variants hv
             JOIN heroes h ON h.hero_id = hv.hero_id
-            LEFT JOIN mode_pivot mp ON mp.hero_id = hv.hero_id
             LEFT JOIN variant_meta_scores vms ON vms.variant_id = hv.variant_id
             ORDER BY vms.meta_rank, h.name_en, hv.variant_kind, hv.variant_name_en
             """,
@@ -720,6 +710,71 @@ def load_atlas() -> dict[str, pd.DataFrame]:
         .sort_values(["section_blocks", "variants"], ascending=[False, False])
         .reset_index(drop=True)
     )
+    # ── Spreadsheet meta data ────────────────────────────
+    meta_unit_data_df = read_optional_sql(
+        "SELECT * FROM meta_unit_data ORDER BY name",
+        ["unit_id", "name", "attribute", "unit_class", "job_type"],
+        {"meta_unit_data"},
+    )
+    meta_builds_df = read_optional_sql(
+        "SELECT * FROM meta_builds ORDER BY name",
+        ["build_id", "name"],
+        {"meta_builds"},
+    )
+    meta_pve_meta_df = read_optional_sql(
+        "SELECT * FROM meta_pve_meta ORDER BY tier_rank, hero_name",
+        [
+            "pve_meta_id",
+            "meta_type",
+            "tier_group",
+            "tier_rank",
+            "hero_name",
+            "attribute",
+        ],
+        {"meta_pve_meta"},
+    )
+    meta_pvp_meta_df = read_optional_sql(
+        "SELECT * FROM meta_pvp_meta ORDER BY section, team_variant",
+        [
+            "pvp_meta_id",
+            "section",
+            "team_variant",
+            "members",
+            "attributes",
+            "member_count",
+        ],
+        {"meta_pvp_meta"},
+    )
+    meta_content_usage_df = read_optional_sql(
+        "SELECT * FROM meta_content_usage ORDER BY hero_name, content_mode",
+        ["usage_id", "hero_name", "content_mode", "is_viable"],
+        {"meta_content_usage"},
+    )
+    meta_content_teams_df = read_optional_sql(
+        "SELECT * FROM meta_content_teams ORDER BY content, phase, team_type",
+        [
+            "team_id",
+            "content",
+            "phase",
+            "team_type",
+            "members",
+            "attributes",
+            "member_count",
+            "notes",
+        ],
+        {"meta_content_teams"},
+    )
+    meta_equipment_presets_df = read_optional_sql(
+        "SELECT * FROM meta_equipment_presets ORDER BY equipment_class, preset_name",
+        ["preset_id", "equipment_class", "preset_name", "set_color"],
+        {"meta_equipment_presets"},
+    )
+    meta_changelog_df = read_optional_sql(
+        "SELECT * FROM meta_changelog ORDER BY date DESC",
+        ["changelog_id", "date", "entry"],
+        {"meta_changelog"},
+    )
+
     return {
         "heroes": heroes_df,
         "variants": variants_df,
@@ -736,6 +791,14 @@ def load_atlas() -> dict[str, pd.DataFrame]:
         "progression_tracks": progression_tracks_df,
         "equipment_stats": equipment_stats_df,
         "progression_relationships": progression_relationships_df,
+        "meta_unit_data": meta_unit_data_df,
+        "meta_builds": meta_builds_df,
+        "meta_pve_meta": meta_pve_meta_df,
+        "meta_pvp_meta": meta_pvp_meta_df,
+        "meta_content_usage": meta_content_usage_df,
+        "meta_content_teams": meta_content_teams_df,
+        "meta_equipment_presets": meta_equipment_presets_df,
+        "meta_changelog": meta_changelog_df,
     }
 
 
@@ -3498,6 +3561,261 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
             )
 
 
+# ── Meta Database page ─────────────────────────────────────────────────
+def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
+    """Community spreadsheet meta data: builds, tiers, content teams, etc."""
+    unit_df = data.get("meta_unit_data", pd.DataFrame())
+    builds_df = data.get("meta_builds", pd.DataFrame())
+    pve_df = data.get("meta_pve_meta", pd.DataFrame())
+    pvp_df = data.get("meta_pvp_meta", pd.DataFrame())
+    usage_df = data.get("meta_content_usage", pd.DataFrame())
+    teams_df = data.get("meta_content_teams", pd.DataFrame())
+    equip_df = data.get("meta_equipment_presets", pd.DataFrame())
+    changelog_df = data.get("meta_changelog", pd.DataFrame())
+
+    st.subheader("Meta Database — Community Spreadsheet")
+    st.caption(
+        "Sourced from the GCDC community meta spreadsheet. "
+        "Includes unit data, recommended builds, tier lists, "
+        "content team comps, equipment presets, and changelog."
+    )
+
+    # Top-line metrics
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Units", len(unit_df))
+    c2.metric("Builds", len(builds_df))
+    c3.metric("PvE Tiers", len(pve_df))
+    c4.metric("Content Teams", len(teams_df))
+    c5.metric("Changelog", len(changelog_df))
+
+    tabs = st.tabs(
+        [
+            "Unit Roster",
+            "Builds",
+            "PvE Tiers",
+            "PvP Meta",
+            "Content Teams",
+            "Content Usage",
+            "Equipment Presets",
+            "Changelog",
+        ]
+    )
+
+    # ── Unit Roster ──
+    with tabs[0]:
+        if unit_df.empty:
+            st.info(
+                "No unit data available. Run the pipeline to ingest spreadsheet data."
+            )
+        else:
+            # Filters
+            fc1, fc2, fc3 = st.columns(3)
+            attrs = sorted(a for a in unit_df["attribute"].dropna().unique() if a)
+            classes = sorted(c for c in unit_df["unit_class"].dropna().unique() if c)
+            job_types = sorted(j for j in unit_df["job_type"].dropna().unique() if j)
+            attr_pick = fc1.multiselect("Attribute", attrs)
+            class_pick = fc2.multiselect("Class", classes)
+            job_pick = fc3.multiselect("Job Type", job_types)
+
+            display = unit_df.copy()
+            if attr_pick:
+                display = display[display["attribute"].isin(attr_pick)]
+            if class_pick:
+                display = display[display["unit_class"].isin(class_pick)]
+            if job_pick:
+                display = display[display["job_type"].isin(job_pick)]
+
+            show_cols = [
+                "name",
+                "attribute",
+                "unit_class",
+                "job_type",
+                "kr_release_date",
+                "is_pve",
+                "is_pvp",
+                "is_support",
+            ]
+            show_cols = [c for c in show_cols if c in display.columns]
+            st.dataframe(display[show_cols], hide_index=True, use_container_width=True)
+            st.caption(f"{len(display)} units shown")
+
+            # Detailed view per hero
+            if not display.empty:
+                pick = st.selectbox(
+                    "Inspect unit",
+                    display["name"].tolist(),
+                    key="unit_inspect",
+                )
+                row = display[display["name"] == pick].iloc[0]
+                detail_c1, detail_c2 = st.columns(2)
+                with detail_c1:
+                    st.markdown("**Hero Traits**")
+                    traits = []
+                    for i in range(1, 6):
+                        t = str(row.get(f"ht{i}", ""))
+                        p = str(row.get(f"hp{i}", ""))
+                        if t:
+                            traits.append(f"{t} ({p})" if p else t)
+                    st.write(" → ".join(traits) if traits else "—")
+
+                    st.markdown("**Chaser Traits**")
+                    ctraits = []
+                    for i in range(1, 6):
+                        t = str(row.get(f"ct{i}", ""))
+                        p = str(row.get(f"cp{i}", ""))
+                        if t:
+                            ctraits.append(f"{t} ({p})" if p else t)
+                    st.write(" → ".join(ctraits) if ctraits else "—")
+
+                with detail_c2:
+                    st.markdown("**Runes**")
+                    st.write(f"{row.get('rn1', '—')} / {row.get('rn2', '—')}")
+                    st.markdown("**Accessories**")
+                    st.write(
+                        f"Ring: {row.get('ac1', '—')} · Necklace: {row.get('ac2', '—')} · Earring: {row.get('ac3', '—')}"
+                    )
+                    st.markdown("**Equipment Set**")
+                    st.write(str(row.get("equip_set", "—")))
+                    st.markdown("**Transcendence**")
+                    tc1 = str(row.get("tc1", ""))
+                    tt1 = str(row.get("tt1", ""))
+                    tt2 = str(row.get("tt2", ""))
+                    if any([tc1, tt1, tt2]):
+                        st.write(f"Main: {tc1} → T3: {tt1}, T6: {tt2}")
+                    else:
+                        st.write("—")
+
+    # ── Builds ──
+    with tabs[1]:
+        if builds_df.empty:
+            st.info("No build data available.")
+        else:
+            build_hero = st.selectbox(
+                "Select hero",
+                sorted(builds_df["name"].unique()),
+                key="build_hero",
+            )
+            hero_builds = builds_df[builds_df["name"] == build_hero]
+            for _, brow in hero_builds.iterrows():
+                tag = str(brow.get("content_tag", ""))
+                label = f"**{build_hero}** ({tag})" if tag else f"**{build_hero}**"
+                st.markdown(label)
+                bc1, bc2, bc3 = st.columns(3)
+                with bc1:
+                    st.markdown("Hero Traits")
+                    ht = [str(brow.get(f"hero_trait_{i}", "")) for i in range(1, 6)]
+                    st.write(" → ".join(t for t in ht if t))
+                with bc2:
+                    st.markdown("Chaser Traits")
+                    ct = [str(brow.get(f"chaser_trait_{i}", "")) for i in range(1, 6)]
+                    st.write(" → ".join(t for t in ct if t))
+                with bc3:
+                    st.markdown("Gear")
+                    st.write(
+                        f"Runes: {brow.get('rune_normal', '—')} / {brow.get('rune_special', '—')}"
+                    )
+                    st.write(
+                        f"Ring: {brow.get('acc_ring', '—')} · Neck: {brow.get('acc_necklace', '—')} · Ear: {brow.get('acc_earring', '—')}"
+                    )
+                st.divider()
+
+    # ── PvE Tiers ──
+    with tabs[2]:
+        if pve_df.empty:
+            st.info("No PvE meta data available.")
+        else:
+            for group in pve_df["tier_group"].unique():
+                group_data = pve_df[pve_df["tier_group"] == group]
+                st.markdown(f"### {group}")
+                for rank in sorted(group_data["tier_rank"].unique()):
+                    rank_heroes = group_data[group_data["tier_rank"] == rank]
+                    names = ", ".join(
+                        f"{r['hero_name']} ({r['attribute']})"
+                        for _, r in rank_heroes.iterrows()
+                    )
+                    st.write(f"**Tier {rank}:** {names}")
+
+    # ── PvP Meta ──
+    with tabs[3]:
+        if pvp_df.empty:
+            st.info("No PvP meta data available.")
+        else:
+            for section in pvp_df["section"].unique():
+                st.markdown(f"### {section}")
+                section_data = pvp_df[pvp_df["section"] == section]
+                for _, row in section_data.iterrows():
+                    members = str(row.get("members", ""))
+                    attrs = str(row.get("attributes", ""))
+                    variant = int(row["team_variant"]) if row.get("team_variant") else 0
+                    label = f"Team {variant}" if variant else "Picks"
+                    st.write(f"**{label}:** {members}")
+                    if attrs:
+                        st.caption(f"Attributes: {attrs}")
+
+    # ── Content Teams ──
+    with tabs[4]:
+        if teams_df.empty:
+            st.info("No content team data available.")
+        else:
+            contents = sorted(teams_df["content"].unique())
+            content_pick = st.selectbox("Content", contents, key="ct_content")
+            ct_data = teams_df[teams_df["content"] == content_pick]
+
+            for phase in ct_data["phase"].unique():
+                if phase:
+                    st.markdown(f"#### {phase}")
+                phase_data = ct_data[ct_data["phase"] == phase]
+                for _, row in phase_data.iterrows():
+                    team_type = str(row.get("team_type", "main"))
+                    emoji = "🟢" if team_type == "main" else "🔵"
+                    members = str(row.get("members", ""))
+                    notes = str(row.get("notes", ""))
+                    label = f"{emoji} **{team_type.title()}:** {members}"
+                    st.write(label)
+                    if notes:
+                        st.caption(notes)
+
+    # ── Content Usage ──
+    with tabs[5]:
+        if usage_df.empty:
+            st.info("No content usage data available.")
+        else:
+            # Pivot: hero × content mode
+            pivot = usage_df.pivot_table(
+                index="hero_name",
+                columns="content_mode",
+                values="is_viable",
+                aggfunc="first",
+            ).fillna("")
+            # Replace 1/0 with visual markers
+            pivot = pivot.replace({1: "✅", 0: "❌", 1.0: "✅", 0.0: "❌"})
+            st.dataframe(pivot, use_container_width=True, height=600)
+            st.caption(f"{len(pivot)} heroes × {len(pivot.columns)} content modes")
+
+    # ── Equipment Presets ──
+    with tabs[6]:
+        if equip_df.empty:
+            st.info("No equipment preset data available.")
+        else:
+            show_equip = [c for c in equip_df.columns if c != "preset_id"]
+            st.dataframe(
+                equip_df[show_equip], hide_index=True, use_container_width=True
+            )
+
+    # ── Changelog ──
+    with tabs[7]:
+        if changelog_df.empty:
+            st.info("No changelog data available.")
+        else:
+            st.dataframe(
+                changelog_df[["date", "entry"]],
+                hide_index=True,
+                use_container_width=True,
+                height=600,
+            )
+            st.caption(f"{len(changelog_df)} entries")
+
+
 def main() -> None:
     apply_styles()
     render_header()
@@ -3519,7 +3837,14 @@ def main() -> None:
         st.caption("Search the captured database without touching raw files.")
         page = st.radio(
             "View",
-            ["Overview", "Search", "Hero Dossier", "Comparisons", "Team Lab"],
+            [
+                "Overview",
+                "Search",
+                "Hero Dossier",
+                "Comparisons",
+                "Team Lab",
+                "Meta Database",
+            ],
             index=0,
         )
 
@@ -3571,6 +3896,8 @@ def main() -> None:
         render_comparisons(data)
     elif page == "Team Lab":
         render_team_lab(data)
+    elif page == "Meta Database":
+        render_meta_database(data)
     else:
         render_dossier(data, focus_hero)
 
