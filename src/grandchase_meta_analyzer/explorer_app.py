@@ -3788,7 +3788,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                 aggfunc="first",
             ).fillna("")
             # Replace 1/0 with visual markers
-            pivot = pivot.replace({1: "✅", 0: "❌", 1.0: "✅", 0.0: "❌"})
+            pivot = pivot.replace({1: "✅", 0: "❌"})
             st.dataframe(pivot, use_container_width=True, height=600)
             st.caption(f"{len(pivot)} heroes × {len(pivot.columns)} content modes")
 
@@ -3857,9 +3857,24 @@ def main() -> None:
         focus_hero = default_hero
 
         if page == "Search":
-            hero_query = st.text_input("Hero filter", value="")
-            text_query = st.text_input("Keyword", value="")
-            section_query = st.text_input("Section filter", value="")
+            hero_query = st.text_input(
+                "Hero filter",
+                value="",
+                placeholder="e.g., Elesis",
+                help="Filter sections by hero name (English or Korean).",
+            )
+            text_query = st.text_input(
+                "Keyword",
+                value="",
+                placeholder="e.g., shield",
+                help="Search within the text content of the captured sections.",
+            )
+            section_query = st.text_input(
+                "Section filter",
+                value="",
+                placeholder="e.g., Chaser",
+                help="Filter by the specific section heading (e.g., 'Chaser', 'Soul Imprint').",
+            )
             kind_filter = st.multiselect(
                 "Variant kinds",
                 available_kinds,
