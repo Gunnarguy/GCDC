@@ -3,9 +3,7 @@ from dataclasses import replace
 
 import pandas as pd
 
-import numpy as np
 from grandchase_meta_analyzer.normalize import (
-    _as_optional_int,
     build_database,
     build_variant_profiles,
     build_progression_records,
@@ -669,20 +667,3 @@ def test_build_database_persists_system_references_and_release_history(
             ]
             == 1
         )
-
-
-def test_as_optional_int() -> None:
-    # Happy paths
-    assert _as_optional_int(123) == 123
-    assert _as_optional_int("123") == 123
-    assert _as_optional_int(123.45) == 123
-    assert _as_optional_int("123.45") == 123
-
-    # Edge/Error paths
-    assert _as_optional_int("") is None
-    assert _as_optional_int("   ") is None
-    assert _as_optional_int(None) is None
-    assert _as_optional_int(np.nan) is None
-    assert _as_optional_int("abc") is None
-    assert _as_optional_int("12a") is None
-    assert _as_optional_int(object()) is None

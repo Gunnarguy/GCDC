@@ -876,15 +876,13 @@ def build_variant_kind_label_map(variants_df: pd.DataFrame) -> dict[str, str]:
     if variants_df.empty:
         return {}
     labels: dict[str, str] = {}
-    for row in (
-        variants_df[["variant_kind", "variant_suffix"]]
-        .drop_duplicates()
-        .itertuples(index=False)
+    for _, row in (
+        variants_df[["variant_kind", "variant_suffix"]].drop_duplicates().iterrows()
     ):
-        kind = str(row.variant_kind)
+        kind = str(row["variant_kind"])
         labels.setdefault(
             kind,
-            format_variant_kind_label(kind, str(row.variant_suffix)),
+            format_variant_kind_label(kind, str(row.get("variant_suffix", ""))),
         )
     return labels
 
@@ -908,8 +906,8 @@ def max_numeric_token(values: list[str]) -> str:
 def render_pills(label: str, items: list[str]) -> None:
     if not items:
         return
-    pills = " ".join(f"<span class='gc-pill'>{html.escape(item)}</span>" for item in items)
-    st.html(f"<b>{html.escape(label)}</b><br>{pills}")
+    pills = " ".join(f"<span class='gc-pill'>{html.escape(str(item))}</span>" for item in items)
+    st.html(f"<b>{html.escape(str(label))}</b><br>{pills}")
 
 
 PATCH_TYPE_BADGE_CLASSES = {
@@ -1416,13 +1414,13 @@ def build_role_family_frame(
     )
 
 
-def build_skill_label(skill_stage: str, skill_type: str, skill_name: str) -> str:
+def build_skill_label(row: pd.Series) -> str:
     return " · ".join(
         part
         for part in (
-            str(skill_stage).replace("_", " ").title(),
-            str(skill_type).title(),
-            str(skill_name),
+            str(row["skill_stage"]).replace("_", " ").title(),
+            str(row["skill_type"]).title(),
+            str(row["skill_name"]),
         )
         if part
     )
@@ -1446,26 +1444,26 @@ def build_skill_mechanics_frame(
 
     insight_by_key: dict[str, object] = {}
     rows: list[dict[str, object]] = []
-    for row in unique_skills.itertuples(index=False):
-        skill_label = build_skill_label(str(row.skill_stage), str(row.skill_type), str(row.skill_name))
-        skill_key = f"{row.variant_title}::{skill_label}"
-        insight = extract_skill_insight(str(row.description))
+    for _, row in unique_skills.iterrows():
+        skill_label = build_skill_label(row)
+        skill_key = f"{row['variant_title']}::{skill_label}"
+        insight = extract_skill_insight(str(row["description"]))
         stage_key = classify_skill_progression_row(
-            str(row.skill_stage),
-            str(row.skill_type),
+            str(row["skill_stage"]),
+            str(row["skill_type"]),
         )
         stage_metadata = progression_stage_metadata(stage_key)
         insight_by_key[skill_key] = insight
         rows.append(
             {
                 "skill_key": skill_key,
-                "variant_title": str(row.variant_title),
-                "variant_label": str(getattr(row, "variant_label", row.variant_title)),
-                "skill_stage": str(row.skill_stage),
-                "skill_type": str(row.skill_type),
-                "skill_name": str(row.skill_name),
+                "variant_title": str(row["variant_title"]),
+                "variant_label": str(row.get("variant_label", row["variant_title"])),
+                "skill_stage": str(row["skill_stage"]),
+                "skill_type": str(row["skill_type"]),
+                "skill_name": str(row["skill_name"]),
                 "skill_label": skill_label,
-                "skill_family": normalize_skill_family_name(str(row.skill_name)),
+                "skill_family": normalize_skill_family_name(str(row["skill_name"])),
                 "progression_stage_key": stage_key,
                 "progression_stage": str(stage_metadata["label"]),
                 "stage_order": int(stage_metadata["order"]),
@@ -1487,7 +1485,7 @@ def build_skill_mechanics_frame(
                 "stat_bonuses": len(insight.stat_bonuses),
                 "trigger_count": len(insight.trigger_clauses),
                 "current_effect": insight.body_text,
-                "raw_description": str(row.description),
+                "raw_description": str(row["description"]),
             }
         )
 
@@ -1540,69 +1538,69 @@ def build_progression_roadmap(
             )
 
     if not hero_skill_mechanics_df.empty:
-        for row in hero_skill_mechanics_df.itertuples(index=False):
+        for _, row in hero_skill_mechanics_df.iterrows():
             rows.append(
                 {
-                    "variant_title": str(row.variant_title),
+                    "variant_title": str(row["variant_title"]),
                     "variant_label": str(
-                        getattr(row, "variant_label", row.variant_title)
+                        row.get("variant_label", row["variant_title"])
                     ),
-                    "stage_label": str(row.progression_stage),
-                    "stage_order": int(row.stage_order),
+                    "stage_label": str(row["progression_stage"]),
+                    "stage_order": int(row["stage_order"]),
                     "source_kind": "skill",
-                    "source_name": str(row.skill_name),
-                    "family": str(row.skill_family),
-                    "progression_tracks": str(row.progression_tracks),
+                    "source_name": str(row["skill_name"]),
+                    "family": str(row["skill_family"]),
+                    "progression_tracks": str(row["progression_tracks"]),
                     "modifiers": "; ".join(
                         value
                         for value in (
                             (
-                                f"Cooldown {row.cooldown}"
-                                if row.cooldown != "-"
+                                f"Cooldown {row['cooldown']}"
+                                if row["cooldown"] != "-"
                                 else ""
                             ),
-                            f"SP {row.sp}" if row.sp != "-" else "",
+                            f"SP {row['sp']}" if row["sp"] != "-" else "",
                             (
-                                f"Top damage {row.top_coefficient}"
-                                if row.top_coefficient != "-"
-                                else ""
-                            ),
-                            (
-                                f"Durations {row.durations}"
-                                if row.durations != "-"
-                                else ""
-                            ),
-                            f"Stacks {row.stacks}" if row.stacks != "-" else "",
-                            (
-                                f"Chances {row.chances}"
-                                if row.chances != "-"
+                                f"Top damage {row['top_coefficient']}"
+                                if row["top_coefficient"] != "-"
                                 else ""
                             ),
                             (
-                                f"Thresholds {row.thresholds}"
-                                if row.thresholds != "-"
+                                f"Durations {row['durations']}"
+                                if row["durations"] != "-"
+                                else ""
+                            ),
+                            f"Stacks {row['stacks']}" if row["stacks"] != "-" else "",
+                            (
+                                f"Chances {row['chances']}"
+                                if row["chances"] != "-"
+                                else ""
+                            ),
+                            (
+                                f"Thresholds {row['thresholds']}"
+                                if row["thresholds"] != "-"
                                 else ""
                             ),
                         )
                         if value
                     )
                     or "-",
-                    "mechanics": str(row.mechanics),
-                    "stats": str(row.stats),
-                    "top_coefficient": str(row.top_coefficient),
-                    "excerpt": preview_value(str(row.current_effect), 220),
+                    "mechanics": str(row["mechanics"]),
+                    "stats": str(row["stats"]),
+                    "top_coefficient": str(row["top_coefficient"]),
+                    "excerpt": preview_value(str(row["current_effect"]), 220),
                     "table_key": "",
                 }
             )
 
     if not hero_sections.empty:
         section_columns = ["variant_title", "variant_label", "heading_title", "content"]
-        for row in hero_sections[section_columns].drop_duplicates().itertuples(index=False):
-            stage_key = classify_section_progression(str(row.heading_title))
+        for _, row in hero_sections[section_columns].drop_duplicates().iterrows():
+            stage_key = classify_section_progression(str(row["heading_title"]))
             if stage_key is None:
                 continue
             stage_metadata = progression_stage_metadata(stage_key)
-            content = str(row.content)
+            content = str(row["content"])
             insight = extract_skill_insight(content)
             tracks = insight_progression_tracks(insight)
             equipment_rows = (
@@ -1635,19 +1633,19 @@ def build_progression_roadmap(
                 or "-"
             )
             if equipment_rows:
-                table_key = f"{row.variant_title}::{row.heading_title}"
+                table_key = f"{row['variant_title']}::{row['heading_title']}"
                 equipment_tables[table_key] = pd.DataFrame(equipment_rows)
             rows.append(
                 {
-                    "variant_title": str(row.variant_title),
+                    "variant_title": str(row["variant_title"]),
                     "variant_label": str(
-                        getattr(row, "variant_label", row.variant_title)
+                        row.get("variant_label", row["variant_title"])
                     ),
                     "stage_label": str(stage_metadata["label"]),
                     "stage_order": int(stage_metadata["order"]),
                     "source_kind": "section",
-                    "source_name": str(row.heading_title),
-                    "family": str(row.heading_title),
+                    "source_name": str(row["heading_title"]),
+                    "family": str(row["heading_title"]),
                     "progression_tracks": format_progression_tracks(tracks),
                     "modifiers": modifiers,
                     "mechanics": join_or_dash(insight.mechanic_tags, 8),
@@ -1679,8 +1677,8 @@ def build_skill_family_progression_frame(
     rows: list[dict[str, object]] = []
     previous_values: set[str] = set()
     previous_mechanics: set[str] = set()
-    for row in family_df.itertuples(index=False):
-        insight = hero_insights[str(row.skill_key)]
+    for _, row in family_df.iterrows():
+        insight = hero_insights[str(row["skill_key"])]
         current_values = (
             {mention.value for mention in insight.numeric_mentions}
             | set(insight.durations)
@@ -1693,16 +1691,16 @@ def build_skill_family_progression_frame(
         added_mechanics = sorted(current_mechanics - previous_mechanics)
         rows.append(
             {
-                "stage": str(row.progression_stage),
-                "source": str(row.skill_name),
-                "captured_ladder": str(row.progression_tracks),
-                "cooldown": str(row.cooldown),
-                "sp": str(row.sp),
-                "top_coefficient": str(row.top_coefficient),
+                "stage": str(row["progression_stage"]),
+                "source": str(row["skill_name"]),
+                "captured_ladder": str(row["progression_tracks"]),
+                "cooldown": str(row["cooldown"]),
+                "sp": str(row["sp"]),
+                "top_coefficient": str(row["top_coefficient"]),
                 "added_modifiers": join_or_dash(added_values, 8),
                 "removed_modifiers": join_or_dash(removed_values, 8),
                 "added_mechanics": join_or_dash(added_mechanics, 8),
-                "excerpt": preview_value(str(row.current_effect), 180),
+                "excerpt": preview_value(str(row["current_effect"]), 180),
             }
         )
         previous_values = current_values
@@ -3277,10 +3275,10 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
         .reset_index(drop=True)
     )
     option_label_map = {
-        int(row.variant_id): (
-            f"#{int(row.meta_rank)} {row.variant_label} · {row.role}"
+        int(row["variant_id"]): (
+            f"#{int(row['meta_rank'])} {row['variant_label']} · {row['role']}"
         )
-        for row in roster_df.itertuples(index=False)
+        for _, row in roster_df.iterrows()
     }
     default_team_ids = build_default_team_variant_ids(variant_leaderboard_df, size=4)
     selected_variant_ids = st.multiselect(
@@ -3742,10 +3740,10 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
             for section in pvp_df["section"].unique():
                 st.markdown(f"### {section}")
                 section_data = pvp_df[pvp_df["section"] == section]
-                for row in section_data.itertuples(index=False):
-                    members = str(getattr(row, "members", ""))
-                    attrs = str(getattr(row, "attributes", ""))
-                    variant = int(getattr(row, "team_variant", 0)) if getattr(row, "team_variant", 0) else 0
+                for _, row in section_data.iterrows():
+                    members = str(row.get("members", ""))
+                    attrs = str(row.get("attributes", ""))
+                    variant = int(row["team_variant"]) if row.get("team_variant") else 0
                     label = f"Team {variant}" if variant else "Picks"
                     st.write(f"**{label}:** {members}")
                     if attrs:

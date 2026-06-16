@@ -119,9 +119,9 @@ def resolve_hero_identities(
     strategy_df: pd.DataFrame, namuwiki_df: pd.DataFrame
 ) -> pd.DataFrame:
     namu_rows = [
-        {str(key): str(value) for key, value in raw_row._asdict().items()}
-        for raw_row in namuwiki_df.itertuples(index=False)
-        if str(getattr(raw_row, "name_en_guess", "")).strip()
+        {str(key): str(value) for key, value in raw_row.items()}
+        for raw_row in namuwiki_df.to_dict(orient="records")
+        if str(raw_row.get("name_en_guess", "")).strip()
     ]
     rows_by_name: dict[str, list[dict[str, str]]] = {}
     for row in namu_rows:
@@ -130,8 +130,7 @@ def resolve_hero_identities(
     resolved_rows: list[dict[str, object]] = []
     seen_names: set[str] = set()
 
-    for raw_row_tuple in strategy_df.itertuples(index=False):
-        raw_row = raw_row_tuple._asdict()
+    for raw_row in strategy_df.to_dict(orient="records"):
         name_en = str(raw_row.get("name_en", "")).strip()
         if not name_en:
             continue
@@ -409,8 +408,8 @@ def _build_variant_signal_lookup(
 
     alias_map = _build_spreadsheet_variant_alias_map(unit_data_df)
     valid_variant_keys = {
-        (str(getattr(raw_row, "name_en", "")), str(getattr(raw_row, "variant_kind", "base")))
-        for raw_row in variant_profiles_df.itertuples(index=False)
+        (str(raw_row.get("name_en", "")), str(raw_row.get("variant_kind", "base")))
+        for raw_row in variant_profiles_df.to_dict(orient="records")
     }
     metric_names = [
         "pve_rank_points",
@@ -516,22 +515,22 @@ def _build_variant_signal_lookup(
     legacy_blend = float(variant_weights.get("legacy_blend", 0.4))
 
     signal_lookup: dict[tuple[str, str], dict[str, object]] = {}
-    for raw_row in variant_profiles_df.itertuples(index=False):
+    for raw_row in variant_profiles_df.to_dict(orient="records"):
         variant_key = (
-            str(getattr(raw_row, "name_en", "")),
-            str(getattr(raw_row, "variant_kind", "base")),
+            str(raw_row.get("name_en", "")),
+            str(raw_row.get("variant_kind", "base")),
         )
         legacy_scores = {
             "adventure": _legacy_tier_numeric(
-                str(getattr(raw_row, "adventure_tier", "B")),
+                str(raw_row.get("adventure_tier", "B")),
                 settings,
             ),
             "battle": _legacy_tier_numeric(
-                str(getattr(raw_row, "battle_tier", "B")),
+                str(raw_row.get("battle_tier", "B")),
                 settings,
             ),
             "boss": _legacy_tier_numeric(
-                str(getattr(raw_row, "boss_tier", "B")),
+                str(raw_row.get("boss_tier", "B")),
                 settings,
             ),
         }
@@ -624,7 +623,7 @@ def _build_variant_signal_lookup(
             "score_basis": (
                 "spreadsheet_variant_signals"
                 if uses_spreadsheet_signals
-                else str(getattr(raw_row, "score_basis", "inherited_hero_modes"))
+                else str(raw_row.get("score_basis", "inherited_hero_modes"))
             ),
         }
 
@@ -707,13 +706,13 @@ def build_variant_profiles(
 
     hero_rows_by_name = {
         str(raw_row["name_en"]): raw_row
-        for raw_row in (row._asdict() for row in heroes_df.itertuples(index=False))
+        for raw_row in heroes_df.to_dict(orient="records")
     }
     outline_by_href = _build_variant_outline_lookup(variant_sections_df)
     rows: list[dict[str, object]] = []
     hero_ids_with_base_variant: set[int] = set()
 
-    for raw_row in (row._asdict() for row in variants_df.itertuples(index=False)):
+    for raw_row in variants_df.to_dict(orient="records"):
         name_en = str(raw_row.get("name_en_guess", "")).strip()
         variant_href = str(raw_row.get("variant_href", "")).strip()
         if not name_en or name_en not in hero_rows_by_name or not variant_href:
