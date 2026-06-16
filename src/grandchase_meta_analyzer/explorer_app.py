@@ -3743,10 +3743,10 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
             for section in pvp_df["section"].unique():
                 st.markdown(f"### {section}")
                 section_data = pvp_df[pvp_df["section"] == section]
-                for _, row in section_data.iterrows():
-                    members = str(row.get("members", ""))
-                    attrs = str(row.get("attributes", ""))
-                    variant = int(row["team_variant"]) if row.get("team_variant") else 0
+                for row in section_data.itertuples(index=False):
+                    members = str(getattr(row, "members", ""))
+                    attrs = str(getattr(row, "attributes", ""))
+                    variant = int(getattr(row, "team_variant", 0)) if getattr(row, "team_variant", 0) else 0
                     label = f"Team {variant}" if variant else "Picks"
                     st.write(f"**{label}:** {members}")
                     if attrs:
