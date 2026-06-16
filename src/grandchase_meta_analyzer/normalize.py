@@ -2569,38 +2569,36 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         variant_leaderboard_df.to_csv(variant_leaderboard_path, index=False)
         LOGGER.info("Wrote variant leaderboard to %s", variant_leaderboard_path)
 
+        progression_queries = {
+            "hero_progression_rows": "SELECT COUNT(*) FROM hero_progression_rows",
+            "hero_progression_values": "SELECT COUNT(*) FROM hero_progression_values",
+            "hero_progression_tracks": "SELECT COUNT(*) FROM hero_progression_tracks",
+            "hero_progression_tags": "SELECT COUNT(*) FROM hero_progression_tags",
+            "hero_progression_relationships": "SELECT COUNT(*) FROM hero_progression_relationships",
+            "hero_progression_equipment_stats": "SELECT COUNT(*) FROM hero_progression_equipment_stats",
+        }
         progression_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "hero_progression_rows",
-                "hero_progression_values",
-                "hero_progression_tracks",
-                "hero_progression_tags",
-                "hero_progression_relationships",
-                "hero_progression_equipment_stats",
-            )
+            table_name: int(connection.execute(query).fetchone()[0])
+            for table_name, query in progression_queries.items()
         }
 
+        spreadsheet_queries = {
+            "meta_unit_data": "SELECT COUNT(*) FROM meta_unit_data",
+            "meta_builds": "SELECT COUNT(*) FROM meta_builds",
+            "meta_pve_meta": "SELECT COUNT(*) FROM meta_pve_meta",
+            "meta_pvp_meta": "SELECT COUNT(*) FROM meta_pvp_meta",
+            "meta_content_usage": "SELECT COUNT(*) FROM meta_content_usage",
+            "meta_content_teams": "SELECT COUNT(*) FROM meta_content_teams",
+            "meta_equipment_presets": "SELECT COUNT(*) FROM meta_equipment_presets",
+            "meta_soul_imprint": "SELECT COUNT(*) FROM meta_soul_imprint",
+            "meta_changelog": "SELECT COUNT(*) FROM meta_changelog",
+            "meta_release_order": "SELECT COUNT(*) FROM meta_release_order",
+            "meta_content_keys": "SELECT COUNT(*) FROM meta_content_keys",
+            "meta_beginners_guide": "SELECT COUNT(*) FROM meta_beginners_guide",
+        }
         spreadsheet_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "meta_unit_data",
-                "meta_builds",
-                "meta_pve_meta",
-                "meta_pvp_meta",
-                "meta_content_usage",
-                "meta_content_teams",
-                "meta_equipment_presets",
-                "meta_soul_imprint",
-                "meta_changelog",
-                "meta_release_order",
-                "meta_content_keys",
-                "meta_beginners_guide",
-            )
+            table_name: int(connection.execute(query).fetchone()[0])
+            for table_name, query in spreadsheet_queries.items()
         }
 
     return {
