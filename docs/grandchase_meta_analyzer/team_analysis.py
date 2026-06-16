@@ -187,6 +187,12 @@ def build_team_source_frame(
     features_df: pd.DataFrame,
     selected_variant_ids: list[int],
 ) -> pd.DataFrame:
+    """Builds a unified DataFrame of team sources.
+
+    This function is actively used by explorer_app.py for the 'Team Lab' feature
+    to aggregate skill, section, and feature insights across selected heroes.
+    It should not be removed.
+    """
     selected_set = {int(variant_id) for variant_id in selected_variant_ids}
     rows: list[dict[str, object]] = []
 
