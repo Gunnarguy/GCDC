@@ -1508,19 +1508,19 @@ def build_progression_roadmap(
 
     if not hero_features.empty:
         feature_metadata = progression_stage_metadata("feature")
-        for _, row in (
+        for row in (
             hero_features[
                 ["variant_title", "variant_label", "feature_key", "feature_value"]
             ]
             .drop_duplicates()
-            .iterrows()
+            .itertuples(index=False)
         ):
-            feature_key = str(row["feature_key"])
+            feature_key = str(row.feature_key)
             rows.append(
                 {
-                    "variant_title": str(row["variant_title"]),
+                    "variant_title": str(row.variant_title),
                     "variant_label": str(
-                        row.get("variant_label", row["variant_title"])
+                        getattr(row, "variant_label", row.variant_title)
                     ),
                     "stage_label": str(feature_metadata["label"]),
                     "stage_order": int(feature_metadata["order"]),
@@ -1530,11 +1530,11 @@ def build_progression_roadmap(
                     ),
                     "family": "System",
                     "progression_tracks": "-",
-                    "modifiers": str(row["feature_value"]),
+                    "modifiers": str(row.feature_value),
                     "mechanics": FEATURE_LABELS.get(feature_key, feature_key),
                     "stats": "-",
                     "top_coefficient": "-",
-                    "excerpt": str(row["feature_value"]),
+                    "excerpt": str(row.feature_value),
                     "table_key": "",
                 }
             )
