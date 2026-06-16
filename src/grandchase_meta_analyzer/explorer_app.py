@@ -3696,26 +3696,26 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                 key="build_hero",
             )
             hero_builds = builds_df[builds_df["name"] == build_hero]
-            for _, brow in hero_builds.iterrows():
-                tag = str(brow.get("content_tag", ""))
+            for brow in hero_builds.itertuples(index=False):
+                tag = str(getattr(brow, "content_tag", ""))
                 label = f"**{build_hero}** ({tag})" if tag else f"**{build_hero}**"
                 st.markdown(label)
                 bc1, bc2, bc3 = st.columns(3)
                 with bc1:
                     st.markdown("Hero Traits")
-                    ht = [str(brow.get(f"hero_trait_{i}", "")) for i in range(1, 6)]
+                    ht = [str(getattr(brow, f"hero_trait_{i}", "")) for i in range(1, 6)]
                     st.write(" → ".join(t for t in ht if t))
                 with bc2:
                     st.markdown("Chaser Traits")
-                    ct = [str(brow.get(f"chaser_trait_{i}", "")) for i in range(1, 6)]
+                    ct = [str(getattr(brow, f"chaser_trait_{i}", "")) for i in range(1, 6)]
                     st.write(" → ".join(t for t in ct if t))
                 with bc3:
                     st.markdown("Gear")
                     st.write(
-                        f"Runes: {brow.get('rune_normal', '—')} / {brow.get('rune_special', '—')}"
+                        f"Runes: {getattr(brow, 'rune_normal', '—')} / {getattr(brow, 'rune_special', '—')}"
                     )
                     st.write(
-                        f"Ring: {brow.get('acc_ring', '—')} · Neck: {brow.get('acc_necklace', '—')} · Ear: {brow.get('acc_earring', '—')}"
+                        f"Ring: {getattr(brow, 'acc_ring', '—')} · Neck: {getattr(brow, 'acc_necklace', '—')} · Ear: {getattr(brow, 'acc_earring', '—')}"
                     )
                 st.divider()
 
