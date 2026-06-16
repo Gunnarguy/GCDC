@@ -707,13 +707,13 @@ def build_variant_profiles(
 
     hero_rows_by_name = {
         str(raw_row["name_en"]): raw_row
-        for raw_row in heroes_df.to_dict(orient="records")
+        for raw_row in (row._asdict() for row in heroes_df.itertuples(index=False))
     }
     outline_by_href = _build_variant_outline_lookup(variant_sections_df)
     rows: list[dict[str, object]] = []
     hero_ids_with_base_variant: set[int] = set()
 
-    for raw_row in variants_df.to_dict(orient="records"):
+    for raw_row in (row._asdict() for row in variants_df.itertuples(index=False)):
         name_en = str(raw_row.get("name_en_guess", "")).strip()
         variant_href = str(raw_row.get("variant_href", "")).strip()
         if not name_en or name_en not in hero_rows_by_name or not variant_href:
