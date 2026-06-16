@@ -3,7 +3,10 @@ from dataclasses import replace
 
 import pandas as pd
 
+import pytest
+
 from grandchase_meta_analyzer.normalize import (
+    _split_variant_members,
     build_database,
     build_variant_profiles,
     build_progression_records,
@@ -12,6 +15,24 @@ from grandchase_meta_analyzer.normalize import (
     resolve_hero_identities,
 )
 from grandchase_meta_analyzer.settings import load_settings
+
+
+@pytest.mark.parametrize(
+    "input_val,expected",
+    [
+        ("Elesis", ["Elesis"]),
+        ("Elesis, Ronan", ["Elesis", "Ronan"]),
+        ("Elesis,Ronan", ["Elesis", "Ronan"]),
+        ("Elesis\nRonan", ["Elesis", "Ronan"]),
+        ("Elesis/Ronan", ["Elesis", "Ronan"]),
+        ("Elesis, Ronan, \n", ["Elesis", "Ronan"]),
+        ("", []),
+        (None, []),
+        (pd.NA, []),
+    ],
+)
+def test_split_variant_members(input_val, expected) -> None:
+    assert _split_variant_members(input_val) == expected
 
 
 def test_resolve_hero_identities_matches_aliases() -> None:

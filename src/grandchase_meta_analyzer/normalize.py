@@ -352,7 +352,9 @@ def _resolve_spreadsheet_variant_key(
 
 
 def _split_variant_members(value: str) -> list[str]:
-    return [item.strip() for item in str(value).split(",") if item.strip()]
+    if pd.isna(value) or not value:
+        return []
+    return [m.strip() for m in re.split(r",|\n|/", str(value)) if m.strip()]
 
 
 def _content_mode_category(mode_name: str) -> str | None:
