@@ -3765,11 +3765,11 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                 if phase:
                     st.markdown(f"#### {phase}")
                 phase_data = ct_data[ct_data["phase"] == phase]
-                for _, row in phase_data.iterrows():
-                    team_type = str(row.get("team_type", "main"))
+                for row in phase_data.itertuples(index=False):
+                    team_type = str(getattr(row, "team_type", "main"))
                     emoji = "🟢" if team_type == "main" else "🔵"
-                    members = str(row.get("members", ""))
-                    notes = str(row.get("notes", ""))
+                    members = str(getattr(row, "members", ""))
+                    notes = str(getattr(row, "notes", ""))
                     label = f"{emoji} **{team_type.title()}:** {members}"
                     st.write(label)
                     if notes:
