@@ -253,9 +253,9 @@ def _build_variant_outline_lookup(variant_sections_df: pd.DataFrame) -> dict[str
         return {}
     outline_rows = outline_rows.drop_duplicates(subset=["variant_href"])
     return {
-        str(raw_row["variant_href"]): str(raw_row.get("content", ""))
-        for raw_row in outline_rows.to_dict(orient="records")
-        if str(raw_row.get("variant_href", "")).strip()
+        str(getattr(raw_row, "variant_href")): str(getattr(raw_row, "content", ""))
+        for raw_row in outline_rows.itertuples(index=False)
+        if str(getattr(raw_row, "variant_href", "")).strip()
     }
 
 
