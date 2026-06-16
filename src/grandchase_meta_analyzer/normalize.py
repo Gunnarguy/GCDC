@@ -2568,39 +2568,33 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         variant_leaderboard_df.to_csv(variant_leaderboard_path, index=False)
         LOGGER.info("Wrote variant leaderboard to %s", variant_leaderboard_path)
 
-        progression_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "hero_progression_rows",
-                "hero_progression_values",
-                "hero_progression_tracks",
-                "hero_progression_tags",
-                "hero_progression_relationships",
-                "hero_progression_equipment_stats",
-            )
-        }
+        def get_counts(tables: tuple[str, ...]) -> dict[str, int]:
+            query = " UNION ALL ".join(f"SELECT '{t}', COUNT(*) FROM {t}" for t in tables)
+            return dict(connection.execute(query).fetchall())
 
-        spreadsheet_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "meta_unit_data",
-                "meta_builds",
-                "meta_pve_meta",
-                "meta_pvp_meta",
-                "meta_content_usage",
-                "meta_content_teams",
-                "meta_equipment_presets",
-                "meta_soul_imprint",
-                "meta_changelog",
-                "meta_release_order",
-                "meta_content_keys",
-                "meta_beginners_guide",
-            )
-        }
+        progression_counts = get_counts((
+            "hero_progression_rows",
+            "hero_progression_values",
+            "hero_progression_tracks",
+            "hero_progression_tags",
+            "hero_progression_relationships",
+            "hero_progression_equipment_stats",
+        ))
+
+        spreadsheet_counts = get_counts((
+            "meta_unit_data",
+            "meta_builds",
+            "meta_pve_meta",
+            "meta_pvp_meta",
+            "meta_content_usage",
+            "meta_content_teams",
+            "meta_equipment_presets",
+            "meta_soul_imprint",
+            "meta_changelog",
+            "meta_release_order",
+            "meta_content_keys",
+            "meta_beginners_guide",
+        ))
 
     return {
         "heroes": int(len(heroes_df.index)),
