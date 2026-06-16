@@ -907,8 +907,8 @@ def max_numeric_token(values: list[str]) -> str:
 def render_pills(label: str, items: list[str]) -> None:
     if not items:
         return
-    pills = " ".join(f"<span class='gc-pill'>{item}</span>" for item in items)
-    st.markdown(f"**{label}**<br>{pills}", unsafe_allow_html=True)
+    pills = " ".join(f"<span class='gc-pill'>{html.escape(str(item))}</span>" for item in items)
+    st.markdown(f"**{html.escape(str(label))}**<br>{pills}", unsafe_allow_html=True)
 
 
 PATCH_TYPE_BADGE_CLASSES = {
