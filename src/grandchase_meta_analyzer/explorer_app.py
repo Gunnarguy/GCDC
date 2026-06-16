@@ -1595,12 +1595,12 @@ def build_progression_roadmap(
 
     if not hero_sections.empty:
         section_columns = ["variant_title", "variant_label", "heading_title", "content"]
-        for _, row in hero_sections[section_columns].drop_duplicates().iterrows():
-            stage_key = classify_section_progression(str(row["heading_title"]))
+        for row in hero_sections[section_columns].drop_duplicates().itertuples(index=False):
+            stage_key = classify_section_progression(str(row.heading_title))
             if stage_key is None:
                 continue
             stage_metadata = progression_stage_metadata(stage_key)
-            content = str(row["content"])
+            content = str(row.content)
             insight = extract_skill_insight(content)
             tracks = insight_progression_tracks(insight)
             equipment_rows = (
@@ -1633,19 +1633,19 @@ def build_progression_roadmap(
                 or "-"
             )
             if equipment_rows:
-                table_key = f"{row['variant_title']}::{row['heading_title']}"
+                table_key = f"{row.variant_title}::{row.heading_title}"
                 equipment_tables[table_key] = pd.DataFrame(equipment_rows)
             rows.append(
                 {
-                    "variant_title": str(row["variant_title"]),
+                    "variant_title": str(row.variant_title),
                     "variant_label": str(
-                        row.get("variant_label", row["variant_title"])
+                        getattr(row, "variant_label", row.variant_title)
                     ),
                     "stage_label": str(stage_metadata["label"]),
                     "stage_order": int(stage_metadata["order"]),
                     "source_kind": "section",
-                    "source_name": str(row["heading_title"]),
-                    "family": str(row["heading_title"]),
+                    "source_name": str(row.heading_title),
+                    "family": str(row.heading_title),
                     "progression_tracks": format_progression_tracks(tracks),
                     "modifiers": modifiers,
                     "mechanics": join_or_dash(insight.mechanic_tags, 8),
