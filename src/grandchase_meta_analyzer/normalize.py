@@ -408,8 +408,8 @@ def _build_variant_signal_lookup(
 
     alias_map = _build_spreadsheet_variant_alias_map(unit_data_df)
     valid_variant_keys = {
-        (str(raw_row.get("name_en", "")), str(raw_row.get("variant_kind", "base")))
-        for raw_row in variant_profiles_df.to_dict(orient="records")
+        (str(getattr(raw_row, "name_en", "")), str(getattr(raw_row, "variant_kind", "base")))
+        for raw_row in variant_profiles_df.itertuples(index=False)
     }
     metric_names = [
         "pve_rank_points",
