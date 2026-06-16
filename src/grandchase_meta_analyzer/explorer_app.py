@@ -3835,17 +3835,19 @@ def main() -> None:
     with st.sidebar:
         st.header("Atlas Controls")
         st.caption("Search the captured database without touching raw files.")
+        page_icons = {
+            "Overview": "📊",
+            "Search": "🔍",
+            "Hero Dossier": "📁",
+            "Comparisons": "⚖️",
+            "Team Lab": "🧪",
+            "Meta Database": "📚",
+        }
         page = st.radio(
             "View",
-            [
-                "Overview",
-                "Search",
-                "Hero Dossier",
-                "Comparisons",
-                "Team Lab",
-                "Meta Database",
-            ],
+            list(page_icons.keys()),
             index=0,
+            format_func=lambda p: f"{page_icons.get(p, '')} {p}",
         )
 
         hero_query = ""
