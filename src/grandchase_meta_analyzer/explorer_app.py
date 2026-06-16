@@ -1538,57 +1538,57 @@ def build_progression_roadmap(
             )
 
     if not hero_skill_mechanics_df.empty:
-        for _, row in hero_skill_mechanics_df.iterrows():
+        for row in hero_skill_mechanics_df.itertuples(index=False):
             rows.append(
                 {
-                    "variant_title": str(row["variant_title"]),
+                    "variant_title": str(row.variant_title),
                     "variant_label": str(
-                        row.get("variant_label", row["variant_title"])
+                        getattr(row, "variant_label", row.variant_title)
                     ),
-                    "stage_label": str(row["progression_stage"]),
-                    "stage_order": int(row["stage_order"]),
+                    "stage_label": str(row.progression_stage),
+                    "stage_order": int(row.stage_order),
                     "source_kind": "skill",
-                    "source_name": str(row["skill_name"]),
-                    "family": str(row["skill_family"]),
-                    "progression_tracks": str(row["progression_tracks"]),
+                    "source_name": str(row.skill_name),
+                    "family": str(row.skill_family),
+                    "progression_tracks": str(row.progression_tracks),
                     "modifiers": "; ".join(
                         value
                         for value in (
                             (
-                                f"Cooldown {row['cooldown']}"
-                                if row["cooldown"] != "-"
+                                f"Cooldown {row.cooldown}"
+                                if row.cooldown != "-"
                                 else ""
                             ),
-                            f"SP {row['sp']}" if row["sp"] != "-" else "",
+                            f"SP {row.sp}" if row.sp != "-" else "",
                             (
-                                f"Top damage {row['top_coefficient']}"
-                                if row["top_coefficient"] != "-"
-                                else ""
-                            ),
-                            (
-                                f"Durations {row['durations']}"
-                                if row["durations"] != "-"
-                                else ""
-                            ),
-                            f"Stacks {row['stacks']}" if row["stacks"] != "-" else "",
-                            (
-                                f"Chances {row['chances']}"
-                                if row["chances"] != "-"
+                                f"Top damage {row.top_coefficient}"
+                                if row.top_coefficient != "-"
                                 else ""
                             ),
                             (
-                                f"Thresholds {row['thresholds']}"
-                                if row["thresholds"] != "-"
+                                f"Durations {row.durations}"
+                                if row.durations != "-"
+                                else ""
+                            ),
+                            f"Stacks {row.stacks}" if row.stacks != "-" else "",
+                            (
+                                f"Chances {row.chances}"
+                                if row.chances != "-"
+                                else ""
+                            ),
+                            (
+                                f"Thresholds {row.thresholds}"
+                                if row.thresholds != "-"
                                 else ""
                             ),
                         )
                         if value
                     )
                     or "-",
-                    "mechanics": str(row["mechanics"]),
-                    "stats": str(row["stats"]),
-                    "top_coefficient": str(row["top_coefficient"]),
-                    "excerpt": preview_value(str(row["current_effect"]), 220),
+                    "mechanics": str(row.mechanics),
+                    "stats": str(row.stats),
+                    "top_coefficient": str(row.top_coefficient),
+                    "excerpt": preview_value(str(row.current_effect), 220),
                     "table_key": "",
                 }
             )
