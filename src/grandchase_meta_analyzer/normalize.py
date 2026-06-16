@@ -119,9 +119,9 @@ def resolve_hero_identities(
     strategy_df: pd.DataFrame, namuwiki_df: pd.DataFrame
 ) -> pd.DataFrame:
     namu_rows = [
-        {str(key): str(value) for key, value in raw_row.items()}
-        for raw_row in namuwiki_df.to_dict(orient="records")
-        if str(raw_row.get("name_en_guess", "")).strip()
+        {str(key): str(value) for key, value in raw_row._asdict().items()}
+        for raw_row in namuwiki_df.itertuples(index=False)
+        if str(getattr(raw_row, "name_en_guess", "")).strip()
     ]
     rows_by_name: dict[str, list[dict[str, str]]] = {}
     for row in namu_rows:
@@ -130,8 +130,8 @@ def resolve_hero_identities(
     resolved_rows: list[dict[str, object]] = []
     seen_names: set[str] = set()
 
-    for raw_row in strategy_df.to_dict(orient="records"):
-        name_en = str(raw_row.get("name_en", "")).strip()
+    for raw_row in strategy_df.itertuples(index=False):
+        name_en = str(getattr(raw_row, "name_en", "")).strip()
         if not name_en:
             continue
         namu_candidates = rows_by_name.get(name_en, [])
@@ -149,11 +149,11 @@ def resolve_hero_identities(
             {
                 "name_en": name_en,
                 "name_ko": (namu_row or {}).get("name_ko", ""),
-                "role": str(raw_row.get("role", "Unknown")) or "Unknown",
+                "role": str(getattr(raw_row, "role", "Unknown")) or "Unknown",
                 "rarity": "SS" if namu_row else "S",
-                "adventure_tier": str(raw_row.get("adventure", "B")) or "B",
-                "battle_tier": str(raw_row.get("battle", "B")) or "B",
-                "boss_tier": str(raw_row.get("boss", "B")) or "B",
+                "adventure_tier": str(getattr(raw_row, "adventure", "B")) or "B",
+                "battle_tier": str(getattr(raw_row, "battle", "B")) or "B",
+                "boss_tier": str(getattr(raw_row, "boss", "B")) or "B",
                 "sources": "strategywiki,namuwiki" if namu_row else "strategywiki",
             }
         )
