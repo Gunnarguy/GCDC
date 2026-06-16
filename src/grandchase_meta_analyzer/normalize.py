@@ -515,22 +515,22 @@ def _build_variant_signal_lookup(
     legacy_blend = float(variant_weights.get("legacy_blend", 0.4))
 
     signal_lookup: dict[tuple[str, str], dict[str, object]] = {}
-    for raw_row in variant_profiles_df.to_dict(orient="records"):
+    for raw_row in variant_profiles_df.itertuples(index=False):
         variant_key = (
-            str(raw_row.get("name_en", "")),
-            str(raw_row.get("variant_kind", "base")),
+            str(getattr(raw_row, "name_en", "")),
+            str(getattr(raw_row, "variant_kind", "base")),
         )
         legacy_scores = {
             "adventure": _legacy_tier_numeric(
-                str(raw_row.get("adventure_tier", "B")),
+                str(getattr(raw_row, "adventure_tier", "B")),
                 settings,
             ),
             "battle": _legacy_tier_numeric(
-                str(raw_row.get("battle_tier", "B")),
+                str(getattr(raw_row, "battle_tier", "B")),
                 settings,
             ),
             "boss": _legacy_tier_numeric(
-                str(raw_row.get("boss_tier", "B")),
+                str(getattr(raw_row, "boss_tier", "B")),
                 settings,
             ),
         }
@@ -623,7 +623,7 @@ def _build_variant_signal_lookup(
             "score_basis": (
                 "spreadsheet_variant_signals"
                 if uses_spreadsheet_signals
-                else str(raw_row.get("score_basis", "inherited_hero_modes"))
+                else str(getattr(raw_row, "score_basis", "inherited_hero_modes"))
             ),
         }
 
