@@ -653,25 +653,39 @@ def _apply_variant_signal_profiles(
     if not signal_lookup:
         return result
 
-    for index, raw_row in result.iterrows():
-        variant_key = (
-            str(raw_row.get("name_en", "")),
-            str(raw_row.get("variant_kind", "base")),
+    name_series = result.get("name_en", pd.Series("", index=result.index))
+    # Original behavior used str(NaN) -> "nan". This keeps it identical to the original raw_row.get("name_en", "") which then passes to str()
+    name_series = name_series.astype(str)
+
+    kind_series = result.get("variant_kind", pd.Series("base", index=result.index))
+    kind_series = kind_series.astype(str)
+
+    keys = pd.Series(
+        zip(name_series, kind_series),
+        index=result.index,
+    )
+
+    updates = keys.map(signal_lookup)
+    mask = updates.notna()
+
+    if mask.any():
+        valid_updates = updates[mask]
+        updates_df = pd.DataFrame(valid_updates.tolist(), index=valid_updates.index)
+
+        result.loc[mask, "adventure_mode_score"] = (
+            updates_df["adventure_mode_score"].astype(str).astype(float)
         )
-        signal_row = signal_lookup.get(variant_key)
-        if signal_row is None:
-            continue
-        result.at[index, "adventure_mode_score"] = float(
-            str(signal_row["adventure_mode_score"])
+        result.loc[mask, "battle_mode_score"] = (
+            updates_df["battle_mode_score"].astype(str).astype(float)
         )
-        result.at[index, "battle_mode_score"] = float(
-            str(signal_row["battle_mode_score"])
+        result.loc[mask, "boss_mode_score"] = (
+            updates_df["boss_mode_score"].astype(str).astype(float)
         )
-        result.at[index, "boss_mode_score"] = float(str(signal_row["boss_mode_score"]))
-        result.at[index, "adventure_tier"] = str(signal_row["adventure_tier"])
-        result.at[index, "battle_tier"] = str(signal_row["battle_tier"])
-        result.at[index, "boss_tier"] = str(signal_row["boss_tier"])
-        result.at[index, "score_basis"] = str(signal_row["score_basis"])
+        result.loc[mask, "adventure_tier"] = updates_df["adventure_tier"].astype(str)
+        result.loc[mask, "battle_tier"] = updates_df["battle_tier"].astype(str)
+        result.loc[mask, "boss_tier"] = updates_df["boss_tier"].astype(str)
+        result.loc[mask, "score_basis"] = updates_df["score_basis"].astype(str)
+
     return result
 
 
