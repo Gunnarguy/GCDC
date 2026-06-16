@@ -2569,37 +2569,27 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         LOGGER.info("Wrote variant leaderboard to %s", variant_leaderboard_path)
 
         progression_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "hero_progression_rows",
-                "hero_progression_values",
-                "hero_progression_tracks",
-                "hero_progression_tags",
-                "hero_progression_relationships",
-                "hero_progression_equipment_stats",
-            )
+            "hero_progression_rows": int(connection.execute("SELECT COUNT(*) FROM hero_progression_rows").fetchone()[0]),
+            "hero_progression_values": int(connection.execute("SELECT COUNT(*) FROM hero_progression_values").fetchone()[0]),
+            "hero_progression_tracks": int(connection.execute("SELECT COUNT(*) FROM hero_progression_tracks").fetchone()[0]),
+            "hero_progression_tags": int(connection.execute("SELECT COUNT(*) FROM hero_progression_tags").fetchone()[0]),
+            "hero_progression_relationships": int(connection.execute("SELECT COUNT(*) FROM hero_progression_relationships").fetchone()[0]),
+            "hero_progression_equipment_stats": int(connection.execute("SELECT COUNT(*) FROM hero_progression_equipment_stats").fetchone()[0]),
         }
 
         spreadsheet_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "meta_unit_data",
-                "meta_builds",
-                "meta_pve_meta",
-                "meta_pvp_meta",
-                "meta_content_usage",
-                "meta_content_teams",
-                "meta_equipment_presets",
-                "meta_soul_imprint",
-                "meta_changelog",
-                "meta_release_order",
-                "meta_content_keys",
-                "meta_beginners_guide",
-            )
+            "meta_unit_data": int(connection.execute("SELECT COUNT(*) FROM meta_unit_data").fetchone()[0]),
+            "meta_builds": int(connection.execute("SELECT COUNT(*) FROM meta_builds").fetchone()[0]),
+            "meta_pve_meta": int(connection.execute("SELECT COUNT(*) FROM meta_pve_meta").fetchone()[0]),
+            "meta_pvp_meta": int(connection.execute("SELECT COUNT(*) FROM meta_pvp_meta").fetchone()[0]),
+            "meta_content_usage": int(connection.execute("SELECT COUNT(*) FROM meta_content_usage").fetchone()[0]),
+            "meta_content_teams": int(connection.execute("SELECT COUNT(*) FROM meta_content_teams").fetchone()[0]),
+            "meta_equipment_presets": int(connection.execute("SELECT COUNT(*) FROM meta_equipment_presets").fetchone()[0]),
+            "meta_soul_imprint": int(connection.execute("SELECT COUNT(*) FROM meta_soul_imprint").fetchone()[0]),
+            "meta_changelog": int(connection.execute("SELECT COUNT(*) FROM meta_changelog").fetchone()[0]),
+            "meta_release_order": int(connection.execute("SELECT COUNT(*) FROM meta_release_order").fetchone()[0]),
+            "meta_content_keys": int(connection.execute("SELECT COUNT(*) FROM meta_content_keys").fetchone()[0]),
+            "meta_beginners_guide": int(connection.execute("SELECT COUNT(*) FROM meta_beginners_guide").fetchone()[0]),
         }
 
     return {
