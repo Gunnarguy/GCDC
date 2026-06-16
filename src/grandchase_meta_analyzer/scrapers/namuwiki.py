@@ -361,7 +361,8 @@ def _extract_release_year(cells: list[str]) -> int | None:
 
 
 def _looks_like_release_date(text: str) -> bool:
-    return bool(MONTH_NAME_PATTERN.search(text))
+    """True if text looks like mm-dd or mm.dd."""
+    return bool(re.search(r"\b\d{1,2}[-./]\d{1,2}\b", text))
 
 
 def _parse_release_date_iso(date_text: str, release_year: int | None) -> str:

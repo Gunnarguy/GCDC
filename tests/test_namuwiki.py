@@ -8,6 +8,7 @@ from grandchase_meta_analyzer.scrapers.namuwiki import (
     _extract_variant_page_skills,
     _extract_source_notes,
     _extract_variant_rows,
+    _looks_like_release_date,
 )
 
 
@@ -186,6 +187,23 @@ def test_extract_system_references_collects_global_growth_sections() -> None:
         == "Liking grants profile rewards and stat gains."
     )
     assert rows_by_key["destiny"]["trust_tier"] == "community_wiki"
+
+
+def test_looks_like_release_date() -> None:
+    # Happy paths
+    assert _looks_like_release_date("12-25") is True
+    assert _looks_like_release_date("01.01") is True
+    assert _looks_like_release_date("1/2") is True
+    assert _looks_like_release_date("12/31") is True
+    assert _looks_like_release_date("Some text 10-25 with date") is True
+
+    # Negative cases / Edge cases
+    assert _looks_like_release_date("Hello World") is False
+    assert _looks_like_release_date("123-456") is False
+    assert _looks_like_release_date("") is False
+    assert _looks_like_release_date("1225") is False
+    assert _looks_like_release_date("10--25") is False
+    assert _looks_like_release_date("12-345") is False
 
 
 def test_extract_release_history_collects_release_rows_and_dates() -> None:
