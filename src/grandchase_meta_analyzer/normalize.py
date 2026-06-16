@@ -119,9 +119,9 @@ def resolve_hero_identities(
     strategy_df: pd.DataFrame, namuwiki_df: pd.DataFrame
 ) -> pd.DataFrame:
     namu_rows = [
-        {str(key): str(value) for key, value in raw_row.items()}
-        for raw_row in namuwiki_df.to_dict(orient="records")
-        if str(raw_row.get("name_en_guess", "")).strip()
+        {str(key): str(value) for key, value in raw_row._asdict().items()}
+        for raw_row in namuwiki_df.itertuples(index=False)
+        if str(getattr(raw_row, "name_en_guess", "")).strip()
     ]
     rows_by_name: dict[str, list[dict[str, str]]] = {}
     for row in namu_rows:
@@ -130,7 +130,8 @@ def resolve_hero_identities(
     resolved_rows: list[dict[str, object]] = []
     seen_names: set[str] = set()
 
-    for raw_row in strategy_df.to_dict(orient="records"):
+    for raw_row_tuple in strategy_df.itertuples(index=False):
+        raw_row = raw_row_tuple._asdict()
         name_en = str(raw_row.get("name_en", "")).strip()
         if not name_en:
             continue
