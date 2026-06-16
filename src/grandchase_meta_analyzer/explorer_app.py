@@ -1416,13 +1416,13 @@ def build_role_family_frame(
     )
 
 
-def build_skill_label(row: pd.Series) -> str:
+def build_skill_label(skill_stage: str, skill_type: str, skill_name: str) -> str:
     return " · ".join(
         part
         for part in (
-            str(row["skill_stage"]).replace("_", " ").title(),
-            str(row["skill_type"]).title(),
-            str(row["skill_name"]),
+            str(skill_stage).replace("_", " ").title(),
+            str(skill_type).title(),
+            str(skill_name),
         )
         if part
     )
@@ -1446,26 +1446,26 @@ def build_skill_mechanics_frame(
 
     insight_by_key: dict[str, object] = {}
     rows: list[dict[str, object]] = []
-    for _, row in unique_skills.iterrows():
-        skill_label = build_skill_label(row)
-        skill_key = f"{row['variant_title']}::{skill_label}"
-        insight = extract_skill_insight(str(row["description"]))
+    for row in unique_skills.itertuples(index=False):
+        skill_label = build_skill_label(str(row.skill_stage), str(row.skill_type), str(row.skill_name))
+        skill_key = f"{row.variant_title}::{skill_label}"
+        insight = extract_skill_insight(str(row.description))
         stage_key = classify_skill_progression_row(
-            str(row["skill_stage"]),
-            str(row["skill_type"]),
+            str(row.skill_stage),
+            str(row.skill_type),
         )
         stage_metadata = progression_stage_metadata(stage_key)
         insight_by_key[skill_key] = insight
         rows.append(
             {
                 "skill_key": skill_key,
-                "variant_title": str(row["variant_title"]),
-                "variant_label": str(row.get("variant_label", row["variant_title"])),
-                "skill_stage": str(row["skill_stage"]),
-                "skill_type": str(row["skill_type"]),
-                "skill_name": str(row["skill_name"]),
+                "variant_title": str(row.variant_title),
+                "variant_label": str(getattr(row, "variant_label", row.variant_title)),
+                "skill_stage": str(row.skill_stage),
+                "skill_type": str(row.skill_type),
+                "skill_name": str(row.skill_name),
                 "skill_label": skill_label,
-                "skill_family": normalize_skill_family_name(str(row["skill_name"])),
+                "skill_family": normalize_skill_family_name(str(row.skill_name)),
                 "progression_stage_key": stage_key,
                 "progression_stage": str(stage_metadata["label"]),
                 "stage_order": int(stage_metadata["order"]),
@@ -1487,7 +1487,7 @@ def build_skill_mechanics_frame(
                 "stat_bonuses": len(insight.stat_bonuses),
                 "trigger_count": len(insight.trigger_clauses),
                 "current_effect": insight.body_text,
-                "raw_description": str(row["description"]),
+                "raw_description": str(row.description),
             }
         )
 
