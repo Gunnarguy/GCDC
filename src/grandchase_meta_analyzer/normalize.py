@@ -2568,38 +2568,42 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         variant_leaderboard_df.to_csv(variant_leaderboard_path, index=False)
         LOGGER.info("Wrote variant leaderboard to %s", variant_leaderboard_path)
 
+        progression_tables = (
+            "hero_progression_rows",
+            "hero_progression_values",
+            "hero_progression_tracks",
+            "hero_progression_tags",
+            "hero_progression_relationships",
+            "hero_progression_equipment_stats",
+        )
+        progression_query = " UNION ALL ".join(
+            f"SELECT '{t}', COUNT(*) FROM {t}" for t in progression_tables
+        )
         progression_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "hero_progression_rows",
-                "hero_progression_values",
-                "hero_progression_tracks",
-                "hero_progression_tags",
-                "hero_progression_relationships",
-                "hero_progression_equipment_stats",
-            )
+            table_name: int(count)
+            for table_name, count in connection.execute(progression_query).fetchall()
         }
 
+        spreadsheet_tables = (
+            "meta_unit_data",
+            "meta_builds",
+            "meta_pve_meta",
+            "meta_pvp_meta",
+            "meta_content_usage",
+            "meta_content_teams",
+            "meta_equipment_presets",
+            "meta_soul_imprint",
+            "meta_changelog",
+            "meta_release_order",
+            "meta_content_keys",
+            "meta_beginners_guide",
+        )
+        spreadsheet_query = " UNION ALL ".join(
+            f"SELECT '{t}', COUNT(*) FROM {t}" for t in spreadsheet_tables
+        )
         spreadsheet_counts = {
-            table_name: int(
-                connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-            )
-            for table_name in (
-                "meta_unit_data",
-                "meta_builds",
-                "meta_pve_meta",
-                "meta_pvp_meta",
-                "meta_content_usage",
-                "meta_content_teams",
-                "meta_equipment_presets",
-                "meta_soul_imprint",
-                "meta_changelog",
-                "meta_release_order",
-                "meta_content_keys",
-                "meta_beginners_guide",
-            )
+            table_name: int(count)
+            for table_name, count in connection.execute(spreadsheet_query).fetchall()
         }
 
     return {
