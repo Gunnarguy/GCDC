@@ -1679,8 +1679,8 @@ def build_skill_family_progression_frame(
     rows: list[dict[str, object]] = []
     previous_values: set[str] = set()
     previous_mechanics: set[str] = set()
-    for _, row in family_df.iterrows():
-        insight = hero_insights[str(row["skill_key"])]
+    for row in family_df.itertuples(index=False):
+        insight = hero_insights[str(row.skill_key)]
         current_values = (
             {mention.value for mention in insight.numeric_mentions}
             | set(insight.durations)
@@ -1693,16 +1693,16 @@ def build_skill_family_progression_frame(
         added_mechanics = sorted(current_mechanics - previous_mechanics)
         rows.append(
             {
-                "stage": str(row["progression_stage"]),
-                "source": str(row["skill_name"]),
-                "captured_ladder": str(row["progression_tracks"]),
-                "cooldown": str(row["cooldown"]),
-                "sp": str(row["sp"]),
-                "top_coefficient": str(row["top_coefficient"]),
+                "stage": str(row.progression_stage),
+                "source": str(row.skill_name),
+                "captured_ladder": str(row.progression_tracks),
+                "cooldown": str(row.cooldown),
+                "sp": str(row.sp),
+                "top_coefficient": str(row.top_coefficient),
                 "added_modifiers": join_or_dash(added_values, 8),
                 "removed_modifiers": join_or_dash(removed_values, 8),
                 "added_mechanics": join_or_dash(added_mechanics, 8),
-                "excerpt": preview_value(str(row["current_effect"]), 180),
+                "excerpt": preview_value(str(row.current_effect), 180),
             }
         )
         previous_values = current_values
