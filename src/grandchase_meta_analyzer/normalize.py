@@ -303,18 +303,30 @@ def _build_spreadsheet_variant_alias_map(
     if unit_data_df.empty:
         return alias_map
 
-    for raw_row in unit_data_df.to_dict(orient="records"):
-        base_name, variant_kind = _parse_spreadsheet_variant_identity(
-            str(raw_row.get("name", ""))
-        )
+    for raw_row in unit_data_df.itertuples(index=False):
+        name = getattr(raw_row, "name", "")
+        name = "" if pd.isna(name) else str(name)
+
+        base_name, variant_kind = _parse_spreadsheet_variant_identity(name)
         if not base_name:
             continue
+
         canonical_key = (base_name, variant_kind)
+
+        longname = getattr(raw_row, "longname", "")
+        longname = "" if pd.isna(longname) else str(longname)
+
+        shortname = getattr(raw_row, "shortname", "")
+        shortname = "" if pd.isna(shortname) else str(shortname)
+
+        keysname = getattr(raw_row, "keysname", "")
+        keysname = "" if pd.isna(keysname) else str(keysname)
+
         alias_candidates = {
-            str(raw_row.get("name", "")),
-            str(raw_row.get("longname", "")),
-            str(raw_row.get("shortname", "")),
-            str(raw_row.get("keysname", "")),
+            name,
+            longname,
+            shortname,
+            keysname,
             base_name,
         }
         if variant_kind == "former":
