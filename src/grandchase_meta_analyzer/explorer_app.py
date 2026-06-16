@@ -876,13 +876,15 @@ def build_variant_kind_label_map(variants_df: pd.DataFrame) -> dict[str, str]:
     if variants_df.empty:
         return {}
     labels: dict[str, str] = {}
-    for _, row in (
-        variants_df[["variant_kind", "variant_suffix"]].drop_duplicates().iterrows()
+    for row in (
+        variants_df[["variant_kind", "variant_suffix"]]
+        .drop_duplicates()
+        .itertuples(index=False)
     ):
-        kind = str(row["variant_kind"])
+        kind = str(row.variant_kind)
         labels.setdefault(
             kind,
-            format_variant_kind_label(kind, str(row.get("variant_suffix", ""))),
+            format_variant_kind_label(kind, str(row.variant_suffix)),
         )
     return labels
 
