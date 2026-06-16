@@ -120,7 +120,7 @@ def resolve_hero_identities(
 ) -> pd.DataFrame:
     namu_rows = [
         {str(key): str(value) for key, value in raw_row.items()}
-        for raw_row in namuwiki_df.to_dict(orient="records")
+        for raw_row in (nt._asdict() for nt in namuwiki_df.itertuples(index=False) )
         if str(raw_row.get("name_en_guess", "")).strip()
     ]
     rows_by_name: dict[str, list[dict[str, str]]] = {}
@@ -130,7 +130,8 @@ def resolve_hero_identities(
     resolved_rows: list[dict[str, object]] = []
     seen_names: set[str] = set()
 
-    for raw_row in strategy_df.to_dict(orient="records"):
+    for raw_row_nt in strategy_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         name_en = str(raw_row.get("name_en", "")).strip()
         if not name_en:
             continue
@@ -254,7 +255,7 @@ def _build_variant_outline_lookup(variant_sections_df: pd.DataFrame) -> dict[str
     outline_rows = outline_rows.drop_duplicates(subset=["variant_href"])
     return {
         str(raw_row["variant_href"]): str(raw_row.get("content", ""))
-        for raw_row in outline_rows.to_dict(orient="records")
+        for raw_row in (nt._asdict() for nt in outline_rows.itertuples(index=False) )
         if str(raw_row.get("variant_href", "")).strip()
     }
 
@@ -303,7 +304,8 @@ def _build_spreadsheet_variant_alias_map(
     if unit_data_df.empty:
         return alias_map
 
-    for raw_row in unit_data_df.to_dict(orient="records"):
+    for raw_row_nt in unit_data_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         base_name, variant_kind = _parse_spreadsheet_variant_identity(
             str(raw_row.get("name", ""))
         )
@@ -409,7 +411,7 @@ def _build_variant_signal_lookup(
     alias_map = _build_spreadsheet_variant_alias_map(unit_data_df)
     valid_variant_keys = {
         (str(raw_row.get("name_en", "")), str(raw_row.get("variant_kind", "base")))
-        for raw_row in variant_profiles_df.to_dict(orient="records")
+        for raw_row in (nt._asdict() for nt in variant_profiles_df.itertuples(index=False) )
     }
     metric_names = [
         "pve_rank_points",
@@ -515,7 +517,8 @@ def _build_variant_signal_lookup(
     legacy_blend = float(variant_weights.get("legacy_blend", 0.4))
 
     signal_lookup: dict[tuple[str, str], dict[str, object]] = {}
-    for raw_row in variant_profiles_df.to_dict(orient="records"):
+    for raw_row_nt in variant_profiles_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         variant_key = (
             str(raw_row.get("name_en", "")),
             str(raw_row.get("variant_kind", "base")),
@@ -706,13 +709,14 @@ def build_variant_profiles(
 
     hero_rows_by_name = {
         str(raw_row["name_en"]): raw_row
-        for raw_row in heroes_df.to_dict(orient="records")
+        for raw_row in (nt._asdict() for nt in heroes_df.itertuples(index=False) )
     }
     outline_by_href = _build_variant_outline_lookup(variant_sections_df)
     rows: list[dict[str, object]] = []
     hero_ids_with_base_variant: set[int] = set()
 
-    for raw_row in variants_df.to_dict(orient="records"):
+    for raw_row_nt in variants_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         name_en = str(raw_row.get("name_en_guess", "")).strip()
         variant_href = str(raw_row.get("variant_href", "")).strip()
         if not name_en or name_en not in hero_rows_by_name or not variant_href:
@@ -750,7 +754,8 @@ def build_variant_profiles(
         if variant_kind == "base":
             hero_ids_with_base_variant.add(int(hero_row["hero_id"]))
 
-    for hero_row in heroes_df.to_dict(orient="records"):
+    for hero_row_nt in heroes_df.itertuples(index=False):
+        hero_row = hero_row_nt._asdict()
         hero_id = int(hero_row["hero_id"])
         if hero_id in hero_ids_with_base_variant:
             continue
@@ -814,7 +819,8 @@ def compute_variant_meta_scores(
         )
 
     score_rows: list[dict[str, object]] = []
-    for raw_row in variant_profiles_df.to_dict(orient="records"):
+    for raw_row_nt in variant_profiles_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         if all(
             raw_row.get(column_name, "") != ""
             for column_name in (
@@ -881,7 +887,8 @@ def compute_meta_scores(
     heroes_df: pd.DataFrame, settings: RuntimeSettings
 ) -> pd.DataFrame:
     score_rows: list[dict[str, object]] = []
-    for raw_row in heroes_df.to_dict(orient="records"):
+    for raw_row_nt in heroes_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         base_score, rarity_adjusted, final_meta_score = _score_components(
             str(raw_row["adventure_tier"]),
             str(raw_row["battle_tier"]),
@@ -911,7 +918,8 @@ def _build_mode_rows(
 ) -> list[tuple[int, str, str, int]]:
     tier_scores = settings.scoring["tier_scores"]
     rows: list[tuple[int, str, str, int]] = []
-    for raw_row in heroes_df.to_dict(orient="records"):
+    for raw_row_nt in heroes_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         for mode, column in (
             ("adventure", "adventure_tier"),
             ("battle", "battle_tier"),
@@ -1149,7 +1157,7 @@ def build_progression_records(
             "variant_title": str(raw_row.get("variant_title", "")),
             "variant_kind": str(raw_row.get("variant_kind", "base")),
         }
-        for raw_row in variants_df.to_dict(orient="records")
+        for raw_row in (nt._asdict() for nt in variants_df.itertuples(index=False) )
         if str(raw_row.get("name_en_guess", "")) in hero_id_by_name
         and str(raw_row.get("variant_href", "")) in variant_id_by_href
     }
@@ -1272,7 +1280,8 @@ def build_progression_records(
                 )
             )
 
-    for raw_row in variant_skills_df.to_dict(orient="records"):
+    for raw_row_nt in variant_skills_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         variant_href = str(raw_row.get("variant_href", ""))
         meta = variant_meta_by_href.get(variant_href)
         if meta is None:
@@ -1311,7 +1320,8 @@ def build_progression_records(
         )
         add_child_records(progression_key, insight, str(raw_row.get("source_page", "")))
 
-    for raw_row in variant_sections_df.to_dict(orient="records"):
+    for raw_row_nt in variant_sections_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         variant_href = str(raw_row.get("variant_href", ""))
         meta = variant_meta_by_href.get(variant_href)
         if meta is None:
@@ -1364,7 +1374,8 @@ def build_progression_records(
                     )
                 )
 
-    for raw_row in variant_features_df.to_dict(orient="records"):
+    for raw_row_nt in variant_features_df.itertuples(index=False):
+        raw_row = raw_row_nt._asdict()
         variant_href = str(raw_row.get("variant_href", ""))
         meta = variant_meta_by_href.get(variant_href)
         if meta is None:
@@ -2050,7 +2061,7 @@ def build_database(
                 str(raw_row["rarity"]),
                 str(raw_row["sources"]),
             )
-            for raw_row in heroes_df.to_dict(orient="records")
+            for raw_row in (nt._asdict() for nt in heroes_df.itertuples(index=False) )
         ]
         cursor.executemany(
             "INSERT INTO heroes (hero_id, name_en, name_ko, role, rarity, sources) VALUES (?, ?, ?, ?, ?, ?)",
@@ -2070,7 +2081,7 @@ def build_database(
                 float(raw_row["final_meta_score"]),
                 int(raw_row["meta_rank"]),
             )
-            for raw_row in scores_df.to_dict(orient="records")
+            for raw_row in (nt._asdict() for nt in scores_df.itertuples(index=False) )
         ]
         cursor.executemany(
             "INSERT INTO hero_meta_scores (hero_id, base_score, rarity_adjusted, final_meta_score, meta_rank) VALUES (?, ?, ?, ?, ?)",
@@ -2088,7 +2099,7 @@ def build_database(
         )
         hero_id_by_name = {
             str(raw_row["name_en"]): int(raw_row["hero_id"])
-            for raw_row in heroes_df.to_dict(orient="records")
+            for raw_row in (nt._asdict() for nt in heroes_df.itertuples(index=False) )
         }
         variant_rows = [
             (
@@ -2108,7 +2119,7 @@ def build_database(
                 str(raw_row.get("note_excerpt", "")),
                 str(raw_row.get("source", "namuwiki")),
             )
-            for raw_row in variant_profiles_df.to_dict(orient="records")
+            for raw_row in (nt._asdict() for nt in variant_profiles_df.itertuples(index=False) )
             if str(raw_row.get("variant_href", "")).strip()
         ]
         if variant_rows:
@@ -2168,7 +2179,7 @@ def build_database(
                     str(raw_row["content"]),
                     str(raw_row["source_page"]),
                 )
-                for raw_row in variant_sections_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in variant_sections_df.itertuples(index=False) )
                 if str(raw_row.get("variant_href", "")) in variant_id_by_href
             ]
             if variant_section_rows:
@@ -2190,7 +2201,7 @@ def build_database(
                     str(raw_row["description"]),
                     str(raw_row["source_page"]),
                 )
-                for raw_row in variant_skills_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in variant_skills_df.itertuples(index=False) )
                 if str(raw_row.get("variant_href", "")) in variant_id_by_href
             ]
             if variant_skill_rows:
@@ -2207,7 +2218,7 @@ def build_database(
                     str(raw_row["feature_value"]),
                     str(raw_row["source_page"]),
                 )
-                for raw_row in variant_features_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in variant_features_df.itertuples(index=False) )
                 if str(raw_row.get("variant_href", "")) in variant_id_by_href
             ]
             if variant_feature_rows:
@@ -2264,7 +2275,7 @@ def build_database(
                     str(raw_row["content"]),
                     str(raw_row["source_page"]),
                 )
-                for raw_row in notes_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in notes_df.itertuples(index=False) )
             ]
             cursor.executemany(
                 "INSERT INTO source_notes (source, note_key, title, content, source_page) VALUES (?, ?, ?, ?, ?)",
@@ -2289,7 +2300,7 @@ def build_database(
                     ),
                     str(raw_row.get("trust_tier", "community_wiki")),
                 )
-                for raw_row in system_references_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in system_references_df.itertuples(index=False) )
             ]
             cursor.executemany(
                 "INSERT INTO game_system_references (source, reference_key, title, section_path, content, source_page, game_era, is_legacy_system, trust_tier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -2316,7 +2327,7 @@ def build_database(
                     ),
                     str(raw_row.get("trust_tier", "community_wiki")),
                 )
-                for raw_row in system_reference_values_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in system_reference_values_df.itertuples(index=False) )
                 if str(raw_row.get("value_text", "")).strip()
             ]
             cursor.executemany(
@@ -2338,7 +2349,7 @@ def build_database(
                     str(raw_row.get("source_page", "")),
                     str(raw_row.get("trust_tier", "community_wiki")),
                 )
-                for raw_row in release_history_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in release_history_df.itertuples(index=False) )
                 if str(raw_row.get("hero_name_raw", "")).strip()
             ]
             cursor.executemany(
@@ -2354,7 +2365,7 @@ def build_database(
                     str(raw_row["rank"]),
                     str(raw_row["source_page"]),
                 )
-                for raw_row in chaser_df.to_dict(orient="records")
+                for raw_row in (nt._asdict() for nt in chaser_df.itertuples(index=False) )
             ]
             cursor.executemany(
                 "INSERT INTO chaser_traits (trait_name, description, rank, source_page) VALUES (?, ?, ?, ?)",
@@ -2369,7 +2380,7 @@ def build_database(
                     str(raw_row["description"]),
                     str(raw_row["source_page"]),
                 )
-                for index, raw_row in enumerate(skills_df.to_dict(orient="records"))
+                for index, raw_row in enumerate(nt._asdict() for nt in skills_df.itertuples(index=False))
             ]
             cursor.executemany(
                 "INSERT INTO skill_snippets (skill_id, skill_name, description, source_page) VALUES (?, ?, ?, ?)",
