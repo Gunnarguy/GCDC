@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from . import normalize
 from .llm import tag_skill_snippets
@@ -244,7 +243,3 @@ def run_pipeline(settings: RuntimeSettings) -> dict[str, dict[str, int]]:
     if llm_rows:
         summary["llm"] = {"skill_tags": len(llm_rows)}
     return summary
-
-
-def pipeline_log_path() -> Path:
-    return LOG_DIR / "pipeline.log"
