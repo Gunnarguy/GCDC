@@ -1,7 +1,12 @@
 from grandchase_meta_analyzer.explorer_skill_details import (
+    _unique_preserve_order,
     extract_skill_insight,
     parse_patch_entries,
 )
+
+
+def test_unique_preserve_order_empty_list() -> None:
+    assert _unique_preserve_order([]) == []
 
 
 def test_extract_skill_insight_reads_active_skill_metrics_and_patch_history() -> None:
