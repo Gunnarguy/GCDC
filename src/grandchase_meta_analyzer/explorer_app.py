@@ -3730,8 +3730,8 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                 for rank in sorted(group_data["tier_rank"].unique()):
                     rank_heroes = group_data[group_data["tier_rank"] == rank]
                     names = ", ".join(
-                        f"{r['hero_name']} ({r['attribute']})"
-                        for _, r in rank_heroes.iterrows()
+                        f"{r.hero_name} ({r.attribute})"
+                        for r in rank_heroes.itertuples(index=False)
                     )
                     st.write(f"**Tier {rank}:** {names}")
 
@@ -3743,10 +3743,11 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
             for section in pvp_df["section"].unique():
                 st.markdown(f"### {section}")
                 section_data = pvp_df[pvp_df["section"] == section]
-                for _, row in section_data.iterrows():
-                    members = str(row.get("members", ""))
-                    attrs = str(row.get("attributes", ""))
-                    variant = int(row["team_variant"]) if row.get("team_variant") else 0
+                for row in section_data.itertuples(index=False):
+                    members = str(getattr(row, "members", ""))
+                    attrs = str(getattr(row, "attributes", ""))
+                    team_var = getattr(row, "team_variant", 0)
+                    variant = int(team_var) if team_var else 0
                     label = f"Team {variant}" if variant else "Picks"
                     st.write(f"**{label}:** {members}")
                     if attrs:
@@ -3765,11 +3766,11 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                 if phase:
                     st.markdown(f"#### {phase}")
                 phase_data = ct_data[ct_data["phase"] == phase]
-                for _, row in phase_data.iterrows():
-                    team_type = str(row.get("team_type", "main"))
+                for row in phase_data.itertuples(index=False):
+                    team_type = str(getattr(row, "team_type", "main"))
                     emoji = "🟢" if team_type == "main" else "🔵"
-                    members = str(row.get("members", ""))
-                    notes = str(row.get("notes", ""))
+                    members = str(getattr(row, "members", ""))
+                    notes = str(getattr(row, "notes", ""))
                     label = f"{emoji} **{team_type.title()}:** {members}"
                     st.write(label)
                     if notes:
