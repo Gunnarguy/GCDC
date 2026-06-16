@@ -3277,10 +3277,10 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
         .reset_index(drop=True)
     )
     option_label_map = {
-        int(row["variant_id"]): (
-            f"#{int(row['meta_rank'])} {row['variant_label']} · {row['role']}"
+        int(row.variant_id): (
+            f"#{int(row.meta_rank)} {row.variant_label} · {row.role}"
         )
-        for _, row in roster_df.iterrows()
+        for row in roster_df.itertuples(index=False)
     }
     default_team_ids = build_default_team_variant_ids(variant_leaderboard_df, size=4)
     selected_variant_ids = st.multiselect(
