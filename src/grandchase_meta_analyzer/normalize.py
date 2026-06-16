@@ -102,12 +102,9 @@ SPREADSHEET_BOSS_TEAM_CONTENTS = {
     "Final Core",
     "Berkas Lair",
 }
-VARIANT_ROLE_PATTERNS = (
-    (re.compile(r"\b(?:guardian|tank|defen(?:se|sive))\b", re.IGNORECASE), "Tank"),
-    (re.compile(r"\b(?:assault|warrior)\b", re.IGNORECASE), "Assault"),
-    (re.compile(r"\b(?:magic|magical|mage)\b", re.IGNORECASE), "Mage"),
-    (re.compile(r"\b(?:sniper|ranger|archer)\b", re.IGNORECASE), "Ranger"),
-    (re.compile(r"\b(?:healing|healer|support)\b", re.IGNORECASE), "Healer"),
+VARIANT_ROLE_COMBINED_PATTERN = re.compile(
+    r"\b(?:(?P<Tank>guardian|tank|defen(?:se|sive))|(?P<Assault>assault|warrior)|(?P<Mage>magic|magical|mage)|(?P<Ranger>sniper|ranger|archer)|(?P<Healer>healing|healer|support))\b",
+    re.IGNORECASE,
 )
 VARIANT_RARITY_PATTERN = re.compile(
     r"\b(SS|SR|S|A|B)\s*[- ]?(?:grade|rank)\b",
@@ -261,9 +258,9 @@ def _build_variant_outline_lookup(variant_sections_df: pd.DataFrame) -> dict[str
 
 def _infer_variant_role(outline_text: str, fallback_role: str) -> str:
     cleaned = normalize_text(outline_text)
-    for pattern, role in VARIANT_ROLE_PATTERNS:
-        if pattern.search(cleaned):
-            return role
+    match = VARIANT_ROLE_COMBINED_PATTERN.search(cleaned)
+    if match:
+        return match.lastgroup
     return str(fallback_role or "Unknown")
 
 
