@@ -102,9 +102,12 @@ SPREADSHEET_BOSS_TEAM_CONTENTS = {
     "Final Core",
     "Berkas Lair",
 }
-VARIANT_ROLE_COMBINED_PATTERN = re.compile(
-    r"\b(?:(?P<Tank>guardian|tank|defen(?:se|sive))|(?P<Assault>assault|warrior)|(?P<Mage>magic|magical|mage)|(?P<Ranger>sniper|ranger|archer)|(?P<Healer>healing|healer|support))\b",
-    re.IGNORECASE,
+VARIANT_ROLE_PATTERNS = (
+    (re.compile(r"\b(?:guardian|tank|defen(?:se|sive))\b", re.IGNORECASE), "Tank"),
+    (re.compile(r"\b(?:assault|warrior)\b", re.IGNORECASE), "Assault"),
+    (re.compile(r"\b(?:magic|magical|mage)\b", re.IGNORECASE), "Mage"),
+    (re.compile(r"\b(?:sniper|ranger|archer)\b", re.IGNORECASE), "Ranger"),
+    (re.compile(r"\b(?:healing|healer|support)\b", re.IGNORECASE), "Healer"),
 )
 VARIANT_RARITY_PATTERN = re.compile(
     r"\b(SS|SR|S|A|B)\s*[- ]?(?:grade|rank)\b",
@@ -258,9 +261,9 @@ def _build_variant_outline_lookup(variant_sections_df: pd.DataFrame) -> dict[str
 
 def _infer_variant_role(outline_text: str, fallback_role: str) -> str:
     cleaned = normalize_text(outline_text)
-    match = VARIANT_ROLE_COMBINED_PATTERN.search(cleaned)
-    if match:
-        return match.lastgroup
+    for pattern, role in VARIANT_ROLE_PATTERNS:
+        if pattern.search(cleaned):
+            return role
     return str(fallback_role or "Unknown")
 
 
@@ -2573,8 +2576,10 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
             "hero_progression_relationships": "SELECT COUNT(*) FROM hero_progression_relationships",
             "hero_progression_equipment_stats": "SELECT COUNT(*) FROM hero_progression_equipment_stats",
         }
-        progression_union_query = " UNION ALL ".join(f"SELECT '{t}', ({q})" for t, q in progression_queries.items())
-        progression_counts = dict(connection.execute(progression_union_query).fetchall())
+        progression_counts = {
+            table_name: int(connection.execute(query).fetchone()[0])
+            for table_name, query in progression_queries.items()
+        }
 
         spreadsheet_queries = {
             "meta_unit_data": "SELECT COUNT(*) FROM meta_unit_data",
@@ -2590,8 +2595,10 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
             "meta_content_keys": "SELECT COUNT(*) FROM meta_content_keys",
             "meta_beginners_guide": "SELECT COUNT(*) FROM meta_beginners_guide",
         }
-        spreadsheet_union_query = " UNION ALL ".join(f"SELECT '{t}', ({q})" for t, q in spreadsheet_queries.items())
-        spreadsheet_counts = dict(connection.execute(spreadsheet_union_query).fetchall())
+        spreadsheet_counts = {
+            table_name: int(connection.execute(query).fetchone()[0])
+            for table_name, query in spreadsheet_queries.items()
+        }
 
     return {
         "heroes": int(len(heroes_df.index)),
