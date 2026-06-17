@@ -23,6 +23,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Sync Source to Docs and Cache-Bust
+        run: |
+          # Copy all source files to docs to keep them perfectly synced
+          cp -R src/grandchase_meta_analyzer docs/
+          
+          # Add a blank favicon to prevent 404s
+          touch docs/favicon.ico
+          
+          # Cache bust Stlite file URLs using the git commit SHA
+          sed -i "s/\\.py\"/\\.py?v=${GITHUB_SHA}\"/g" docs/index.html
+          sed -i "s/\\.db\"/\\.db?v=${GITHUB_SHA}\"/g" docs/index.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
