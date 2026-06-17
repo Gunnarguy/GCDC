@@ -31,9 +31,9 @@ jobs:
           # Add a blank favicon to prevent 404s
           touch docs/favicon.ico
           
-          # Cache bust Stlite file URLs using the git commit SHA
-          sed -i "s/\\.py\"/\\.py?v=${GITHUB_SHA}\"/g" docs/index.html
-          sed -i "s/\\.db\"/\\.db?v=${GITHUB_SHA}\"/g" docs/index.html
+          # Cache bust Stlite file URLs using the git commit SHA (only replacing within "url": "..." values)
+          sed -i 's/"url": "\([^"]*\.py\)"/"url": "\1?v='${GITHUB_SHA}'"/g' docs/index.html
+          sed -i 's/"url": "\([^"]*\.db\)"/"url": "\1?v='${GITHUB_SHA}'"/g' docs/index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
