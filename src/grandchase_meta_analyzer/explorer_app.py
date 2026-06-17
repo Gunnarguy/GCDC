@@ -77,6 +77,10 @@ st.set_page_config(
 )
 
 
+def render_empty_state(message: str, icon: str = "🔍") -> None:
+    st.info(message, icon=icon)
+
+
 def apply_styles() -> None:
     st.html(
         """
@@ -1854,7 +1858,7 @@ def render_search(
 
     with section_tab:
         if sections_df.empty:
-            st.info("No matching section blocks. Relax the filters and try again.")
+            render_empty_state("No matching section blocks. Relax the filters and try again.")
         else:
             preview_df = sections_df[
                 ["name_en", "variant_label", "heading_title", "section_path", "content"]
@@ -1877,7 +1881,7 @@ def render_search(
 
     with skill_tab:
         if skills_df.empty:
-            st.info("No matching parsed skill rows.")
+            render_empty_state("No matching parsed skill rows.")
         else:
             preview_df = skills_df[
                 [
@@ -1899,7 +1903,7 @@ def render_search(
 
     with feature_tab:
         if features_df.empty:
-            st.info("No matching feature flags.")
+            render_empty_state("No matching feature flags.")
         else:
             preview_df = features_df[
                 ["name_en", "variant_label", "feature_key", "feature_value"]
@@ -2103,7 +2107,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
         "The source usually exposes Chaser as 0/1/2/3 and Soul Imprint as 1/2/3/4/5 ladders rather than a literal 25/25 or 15/15 point sheet."
     )
     if roadmap_view_df.empty:
-        st.info("No progression roadmap rows are available for this hero.")
+        render_empty_state("No progression roadmap rows are available for this hero.", icon="📁")
     else:
         roadmap_columns = [
             "variant_label",
@@ -2137,8 +2141,9 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
     st.subheader("Exact Progression Ledger")
     if normalized_rows_view_df.empty:
-        st.info(
-            "No normalized progression tables are loaded yet. Run the normalize step once to persist exact stage rows into SQLite."
+        render_empty_state(
+            "No normalized progression tables are loaded yet. Run the normalize step once to persist exact stage rows into SQLite.",
+            icon="📁"
         )
     else:
         (
@@ -3601,8 +3606,9 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Unit Roster ──
     with tabs[0]:
         if unit_df.empty:
-            st.info(
-                "No unit data available. Run the pipeline to ingest spreadsheet data."
+            render_empty_state(
+                "No unit data available. Run the pipeline to ingest spreadsheet data.",
+                icon="📚"
             )
         else:
             # Filters
@@ -3685,7 +3691,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Builds ──
     with tabs[1]:
         if builds_df.empty:
-            st.info("No build data available.")
+            render_empty_state("No build data available.", icon="📚")
         else:
             build_hero = st.selectbox(
                 "Select hero",
@@ -3719,7 +3725,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── PvE Tiers ──
     with tabs[2]:
         if pve_df.empty:
-            st.info("No PvE meta data available.")
+            render_empty_state("No PvE meta data available.", icon="📚")
         else:
             for group in pve_df["tier_group"].unique():
                 group_data = pve_df[pve_df["tier_group"] == group]
@@ -3735,7 +3741,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── PvP Meta ──
     with tabs[3]:
         if pvp_df.empty:
-            st.info("No PvP meta data available.")
+            render_empty_state("No PvP meta data available.", icon="📚")
         else:
             for section in pvp_df["section"].unique():
                 st.markdown(f"### {section}")
@@ -3752,7 +3758,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Content Teams ──
     with tabs[4]:
         if teams_df.empty:
-            st.info("No content team data available.")
+            render_empty_state("No content team data available.", icon="📚")
         else:
             contents = sorted(teams_df["content"].unique())
             content_pick = st.selectbox("Content", contents, key="ct_content")
@@ -3775,7 +3781,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Content Usage ──
     with tabs[5]:
         if usage_df.empty:
-            st.info("No content usage data available.")
+            render_empty_state("No content usage data available.", icon="📚")
         else:
             # Pivot: hero × content mode
             pivot = usage_df.pivot_table(
@@ -3792,7 +3798,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Equipment Presets ──
     with tabs[6]:
         if equip_df.empty:
-            st.info("No equipment preset data available.")
+            render_empty_state("No equipment preset data available.", icon="📚")
         else:
             show_equip = [c for c in equip_df.columns if c != "preset_id"]
             st.dataframe(
@@ -3802,7 +3808,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Changelog ──
     with tabs[7]:
         if changelog_df.empty:
-            st.info("No changelog data available.")
+            render_empty_state("No changelog data available.", icon="📚")
         else:
             st.dataframe(
                 changelog_df[["date", "entry"]],
