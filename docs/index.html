@@ -18,7 +18,11 @@
             "grandchase.db": {
                         "url": "./grandchase.db"
             },
-            "app.py": `import streamlit as st
+            "app.py": `import sys
+if 'typing_extensions' in sys.modules:
+    import importlib
+    importlib.reload(sys.modules['typing_extensions'])
+import streamlit as st
 import grandchase_meta_analyzer.explorer_app as app
 from pathlib import Path
 app.DB_PATH = Path('grandchase.db')
