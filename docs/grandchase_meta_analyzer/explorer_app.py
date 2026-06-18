@@ -78,7 +78,7 @@ st.set_page_config(
 
 
 def apply_styles() -> None:
-    st.html(
+    st.markdown(
         """
         <style>
             .stApp {
@@ -198,7 +198,8 @@ def apply_styles() -> None:
                 line-height: 1.5;
             }
         </style>
-        """
+        """,
+        unsafe_allow_html=True,
     )
 
 
@@ -907,7 +908,7 @@ def render_pills(label: str, items: list[str]) -> None:
     if not items:
         return
     pills = " ".join(f"<span class='gc-pill'>{html.escape(str(item))}</span>" for item in items)
-    st.html(f"<b>{html.escape(str(label))}</b><br>{pills}")
+    st.markdown(f"<b>{html.escape(str(label))}</b><br>{pills}", unsafe_allow_html=True)
 
 
 PATCH_TYPE_BADGE_CLASSES = {
@@ -932,7 +933,7 @@ def render_patch_history_entries(entries: list[object]) -> None:
         badge_class = patch_type_badge_class(change_type)
         date_text = html.escape(str(getattr(entry, "date", "") or "Undated"))
         change_text = html.escape(str(getattr(entry, "change", "") or ""))
-        st.html(
+        st.markdown(
             (
                 "<div class='gc-patch-entry'>"
                 "<div class='gc-patch-meta'>"
@@ -941,7 +942,8 @@ def render_patch_history_entries(entries: list[object]) -> None:
                 "</div>"
                 f"<p class='gc-patch-change'>{change_text}</p>"
                 "</div>"
-            )
+            ),
+            unsafe_allow_html=True,
         )
 
 
@@ -1709,7 +1711,7 @@ def build_skill_family_progression_frame(
 
 
 def render_header() -> None:
-    st.html(
+    st.markdown(
         """
         <div class="gc-hero">
             <h1>GrandChase Atlas</h1>
@@ -1719,7 +1721,8 @@ def render_header() -> None:
                 from the stored local data only.
             </p>
         </div>
-        """
+        """,
+        unsafe_allow_html=True,
     )
 
 
