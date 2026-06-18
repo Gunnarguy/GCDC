@@ -12,40 +12,13 @@
     <script>
       stlite.mount(
         {
-          requirements: ["pandas", "streamlit", "sqlite3", "typing-extensions>=4.10.0"],
+          requirements: ["pandas", "streamlit", "sqlite3", "altair<5.3.0"],
           entrypoint: "app.py",
           files: {
             "grandchase.db": {
                         "url": "./grandchase.db"
             },
-            "app.py": `import sys
-import asyncio
-import streamlit as st
-
-async def upgrade_typing_extensions():
-    import micropip
-    try:
-        await micropip.install('typing-extensions>=4.10.0')
-        if 'typing_extensions' in sys.modules:
-            import importlib
-            importlib.reload(sys.modules['typing_extensions'])
-        st.session_state['typing_extensions_ready'] = True
-    except Exception as e:
-        st.session_state['typing_extensions_ready'] = f"Error: {e}"
-    st.experimental_rerun()
-
-if 'typing_extensions_ready' not in st.session_state:
-    st.session_state['typing_extensions_ready'] = False
-    asyncio.ensure_future(upgrade_typing_extensions())
-
-ready = st.session_state['typing_extensions_ready']
-if ready is False:
-    st.info("Upgrading typing_extensions...")
-    st.stop()
-elif isinstance(ready, str):
-    st.error(f"Failed to upgrade typing_extensions: {ready}")
-    st.stop()
-
+            "app.py": `import streamlit as st
 import grandchase_meta_analyzer.explorer_app as app
 from pathlib import Path
 app.DB_PATH = Path('grandchase.db')
