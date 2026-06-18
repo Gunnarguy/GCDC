@@ -12,16 +12,25 @@
     <script>
       stlite.mount(
         {
-          requirements: ["pandas", "streamlit", "sqlite3", "typing-extensions>=4.10.0"],
+          requirements: ["pandas", "streamlit", "sqlite3"],
           entrypoint: "app.py",
           files: {
             "grandchase.db": {
                         "url": "./grandchase.db"
             },
             "app.py": `import sys
-import importlib
-if 'typing_extensions' in sys.modules:
-    importlib.reload(sys.modules['typing_extensions'])
+import typing_extensions
+
+# Patch missing TypeAliasType in typing_extensions for Altair compatibility in Stlite
+if not hasattr(typing_extensions, "TypeAliasType"):
+    class TypeAliasType:
+        def __init__(self, name, value, type_params=()):
+            self.__name__ = name
+            self.__value__ = value
+            self.__type_params__ = type_params
+        def __repr__(self):
+            return f"TypeAliasType({self.__name__}, {self.__value__})"
+    typing_extensions.TypeAliasType = TypeAliasType
 
 import streamlit as st
 import grandchase_meta_analyzer.explorer_app as app
