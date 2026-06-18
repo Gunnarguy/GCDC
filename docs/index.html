@@ -12,13 +12,17 @@
     <script>
       stlite.mount(
         {
-          requirements: ["pandas", "streamlit"],
+          requirements: ["pandas", "streamlit", "sqlite3"],
           entrypoint: "app.py",
           files: {
             "grandchase.db": {
                         "url": "./grandchase.db"
             },
-            "app.py": "import streamlit as st\\nimport grandchase_meta_analyzer.explorer_app as app\\nfrom pathlib import Path\\napp.DB_PATH = Path('grandchase.db')\\napp.main()",
+            "app.py": `import streamlit as st
+import grandchase_meta_analyzer.explorer_app as app
+from pathlib import Path
+app.DB_PATH = Path('grandchase.db')
+app.main()`,
             "grandchase_meta_analyzer/paths.py": {
                         "url": "./grandchase_meta_analyzer/paths.py"
             },

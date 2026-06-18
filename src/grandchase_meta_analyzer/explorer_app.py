@@ -1109,7 +1109,7 @@ def render_readable_dataframe(
 ) -> None:
     st.dataframe(
         frame,
-        width="stretch",
+        use_container_width=True,
         hide_index=True,
         height=height,
         column_config=build_column_config(
@@ -1756,18 +1756,18 @@ def render_overview(data: dict[str, pd.DataFrame]) -> None:
                     "final_meta_score",
                 ]
             ].head(15),
-            width="stretch",
+            use_container_width=True,
             hide_index=True,
             height=560,
         )
     with right:
         st.subheader("Role Summary")
-        st.dataframe(role_summary_df, width="stretch", hide_index=True, height=280)
+        st.dataframe(role_summary_df, use_container_width=True, hide_index=True, height=280)
         st.subheader("Variant Mix")
         st.bar_chart(variant_mix_df.set_index("variant_kind"))
 
     st.subheader("Coverage Leaders")
-    st.dataframe(coverage_df.head(18), width="stretch", hide_index=True, height=460)
+    st.dataframe(coverage_df.head(18), use_container_width=True, hide_index=True, height=460)
 
 
 def render_search(
@@ -1862,7 +1862,7 @@ def render_search(
             preview_df["content"] = preview_text(preview_df["content"], 320)
             st.dataframe(
                 preview_df.head(row_limit),
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
                 height=520,
             )
@@ -1892,7 +1892,7 @@ def render_search(
             preview_df["description"] = preview_text(preview_df["description"], 220)
             st.dataframe(
                 preview_df.head(row_limit),
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
                 height=520,
             )
@@ -1906,7 +1906,7 @@ def render_search(
             ].copy()
             st.dataframe(
                 preview_df.head(row_limit),
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
                 height=420,
             )
@@ -2120,7 +2120,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
         st.dataframe(
             roadmap_view_df[roadmap_columns],
             height=420,
-            width="stretch",
+            use_container_width=True,
             hide_index=True,
         )
         visible_tables = {
@@ -2133,7 +2133,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
             st.markdown("**Dedicated Equipment Stat Tables**")
             for table_key, frame in visible_tables.items():
                 with st.expander(table_key):
-                    st.dataframe(frame, width="stretch", hide_index=True)
+                    st.dataframe(frame, use_container_width=True, hide_index=True)
 
     st.subheader("Exact Progression Ledger")
     if normalized_rows_view_df.empty:
@@ -2283,7 +2283,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
         ]
         st.dataframe(
             hero_skill_mechanics_df[matrix_columns],
-            width="stretch",
+            use_container_width=True,
             hide_index=True,
             height=420,
         )
@@ -2311,7 +2311,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                     "mechanics",
                 ]
             ].copy()
-            st.dataframe(preview_df, width="stretch", hide_index=True, height=420)
+            st.dataframe(preview_df, use_container_width=True, hide_index=True, height=420)
 
             st.subheader("Skill Inspector")
             selected_skill_label = st.selectbox(
@@ -2434,7 +2434,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                         },
                     ]
                 )
-                st.dataframe(summary_rows, width="stretch", hide_index=True)
+                st.dataframe(summary_rows, use_container_width=True, hide_index=True)
                 st.write(skill_insight.body_text or "No current effect text captured.")
                 if selected_relationships_df.empty:
                     st.caption(
@@ -2478,7 +2478,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                 else:
                     st.dataframe(
                         numeric_rows,
-                        width="stretch",
+                        use_container_width=True,
                         hide_index=True,
                         height=280,
                     )
@@ -2489,7 +2489,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                 else:
                     st.dataframe(
                         scaling_rows,
-                        width="stretch",
+                        use_container_width=True,
                         hide_index=True,
                         height=220,
                     )
@@ -2500,7 +2500,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                 else:
                     st.dataframe(
                         stat_bonus_rows,
-                        width="stretch",
+                        use_container_width=True,
                         hide_index=True,
                         height=180,
                     )
@@ -2534,7 +2534,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                 if not mechanics_rows.empty:
                     st.dataframe(
                         mechanics_rows,
-                        width="stretch",
+                        use_container_width=True,
                         hide_index=True,
                         height=220,
                     )
@@ -2547,7 +2547,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                 else:
                     st.dataframe(
                         trigger_rows,
-                        width="stretch",
+                        use_container_width=True,
                         hide_index=True,
                         height=220,
                     )
@@ -2626,7 +2626,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
         else:
             st.dataframe(
                 variant_features[["feature_key", "feature_value"]],
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
                 height=220,
             )
