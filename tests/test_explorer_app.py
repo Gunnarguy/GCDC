@@ -1,6 +1,5 @@
 from grandchase_meta_analyzer.explorer_app import format_progression_tracks
 from grandchase_meta_analyzer.explorer_skill_details import ProgressionTrack
-import pytest
 
 def test_format_progression_tracks_empty() -> None:
     assert format_progression_tracks([]) == "-"

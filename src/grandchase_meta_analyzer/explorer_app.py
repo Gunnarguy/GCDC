@@ -1854,7 +1854,7 @@ def render_search(
 
     with section_tab:
         if sections_df.empty:
-            st.info("No matching section blocks. Relax the filters and try again.")
+            st.info("No matching section blocks. Relax the filters and try again.", icon="🔍")
         else:
             preview_df = sections_df[
                 ["name_en", "variant_label", "heading_title", "section_path", "content"]
@@ -1877,7 +1877,7 @@ def render_search(
 
     with skill_tab:
         if skills_df.empty:
-            st.info("No matching parsed skill rows.")
+            st.info("No matching parsed skill rows.", icon="🔍")
         else:
             preview_df = skills_df[
                 [
@@ -1899,7 +1899,7 @@ def render_search(
 
     with feature_tab:
         if features_df.empty:
-            st.info("No matching feature flags.")
+            st.info("No matching feature flags.", icon="🔍")
         else:
             preview_df = features_df[
                 ["name_en", "variant_label", "feature_key", "feature_value"]
@@ -2103,7 +2103,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
         "The source usually exposes Chaser as 0/1/2/3 and Soul Imprint as 1/2/3/4/5 ladders rather than a literal 25/25 or 15/15 point sheet."
     )
     if roadmap_view_df.empty:
-        st.info("No progression roadmap rows are available for this hero.")
+        st.info("No progression roadmap rows are available for this hero.", icon="📭")
     else:
         roadmap_columns = [
             "variant_label",
@@ -2137,9 +2137,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
     st.subheader("Exact Progression Ledger")
     if normalized_rows_view_df.empty:
-        st.info(
-            "No normalized progression tables are loaded yet. Run the normalize step once to persist exact stage rows into SQLite."
-        )
+        st.info("No normalized progression tables are loaded yet. Run the normalize step once to persist exact stage rows into SQLite.", icon="ℹ️")
     else:
         (
             ledger_tab,
@@ -2231,9 +2229,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
         with relationship_tab:
             if normalized_relationships_view_df.empty:
-                st.info(
-                    "No explicit non-stacking, overwrite, or exclusivity rules were found in the captured sources for this scope."
-                )
+                st.info("No explicit non-stacking, overwrite, or exclusivity rules were found in the captured sources for this scope.", icon="📭")
             else:
                 render_readable_dataframe(
                     build_relationship_frame(
@@ -2250,7 +2246,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
         with equipment_tab:
             if normalized_equipment_view_df.empty:
-                st.info("No normalized equipment rows are available for this scope.")
+                st.info("No normalized equipment rows are available for this scope.", icon="📭")
             else:
                 render_readable_dataframe(
                     normalized_equipment_view_df,
@@ -2260,7 +2256,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
     st.subheader("Hero Mechanics Matrix")
     if hero_skill_mechanics_df.empty:
-        st.info("No parsed mechanics matrix is available for this hero.")
+        st.info("No parsed mechanics matrix is available for this hero.", icon="📭")
     else:
         matrix_columns = [
             "variant_label",
@@ -2297,7 +2293,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
             hero_skill_mechanics_df["variant_title"] == selected_variant
         ].copy()
         if variant_mechanics_df.empty:
-            st.info("No parsed skill rows for this variant.")
+            st.info("No parsed skill rows for this variant.", icon="📭")
         else:
             preview_df = variant_mechanics_df[
                 [
@@ -2472,9 +2468,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
                 st.markdown("**Categorized Numeric Mentions**")
                 if numeric_rows.empty:
-                    st.info(
-                        "No categorized numeric mentions were parsed for this skill."
-                    )
+                    st.info("No categorized numeric mentions were parsed for this skill.", icon="📭")
                 else:
                     st.dataframe(
                         numeric_rows,
@@ -2485,7 +2479,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
                 st.markdown("**Scaling Ladders**")
                 if scaling_rows.empty:
-                    st.info("No multi-step scaling ladders were parsed for this skill.")
+                    st.info("No multi-step scaling ladders were parsed for this skill.", icon="📭")
                 else:
                     st.dataframe(
                         scaling_rows,
@@ -2496,7 +2490,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
                 st.markdown("**Flat Stat Bonuses**")
                 if stat_bonus_rows.empty:
-                    st.info("No flat stat bonuses were parsed for this skill.")
+                    st.info("No flat stat bonuses were parsed for this skill.", icon="📭")
                 else:
                     st.dataframe(
                         stat_bonus_rows,
@@ -2539,11 +2533,11 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                         height=220,
                     )
                 else:
-                    st.info("No stack, chance, threshold, or target rules were parsed.")
+                    st.info("No stack, chance, threshold, or target rules were parsed.", icon="📭")
 
                 st.markdown("**Trigger Clauses**")
                 if trigger_rows.empty:
-                    st.info("No explicit trigger clauses were parsed for this skill.")
+                    st.info("No explicit trigger clauses were parsed for this skill.", icon="📭")
                 else:
                     st.dataframe(
                         trigger_rows,
@@ -2557,9 +2551,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                     "Only explicit relationship facts are shown here. If the source text does not say a skill conflicts, overwrites, or fails to stack with something, the table stays empty rather than guessing."
                 )
                 if selected_relationships_df.empty:
-                    st.info(
-                        "No explicit relationship rows were captured for this exact skill entry."
-                    )
+                    st.info("No explicit relationship rows were captured for this exact skill entry.", icon="📭")
                 else:
                     render_readable_dataframe(
                         selected_relationships_df,
@@ -2594,9 +2586,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
                     "Added and removed modifiers are derived from the parsed numeric mentions, durations, stack rules, and proc chances in each stage row."
                 )
                 if family_progression_df.empty:
-                    st.info(
-                        "No stage-to-stage evolution rows were found for this skill family."
-                    )
+                    st.info("No stage-to-stage evolution rows were found for this skill family.", icon="📭")
                 else:
                     render_readable_dataframe(
                         family_progression_df,
@@ -2612,7 +2602,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
             with patch_tab:
                 if not skill_insight.patch_entries:
-                    st.info("No patch history parsed for this skill block.")
+                    st.info("No patch history parsed for this skill block.", icon="📭")
                 else:
                     render_patch_history_entries(skill_insight.patch_entries)
 
@@ -2622,7 +2612,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
     with top_right:
         st.subheader("Feature Flags")
         if variant_features.empty:
-            st.info("No feature flags for this variant.")
+            st.info("No feature flags for this variant.", icon="📭")
         else:
             st.dataframe(
                 variant_features[["feature_key", "feature_value"]],
@@ -2633,7 +2623,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
 
         st.subheader("Patch Notes")
         if variant_patches.empty:
-            st.info("No patch-note blocks for this variant.")
+            st.info("No patch-note blocks for this variant.", icon="📭")
         else:
             for row in variant_patches.head(8).itertuples(index=False):
                 with st.expander(row.heading_title):
@@ -2766,7 +2756,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
         hero_metrics[5].metric(f"{right_hero} Relations", len(right_relations.index))
 
         if hero_compare_df.empty:
-            st.info("No normalized comparison rows matched the current filters.")
+            st.info("No normalized comparison rows matched the current filters.", icon="🔍")
         else:
             display_df = hero_compare_df.rename(
                 columns={
@@ -2931,7 +2921,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
         )
         with family_detail_tab:
             if family_values_df.empty:
-                st.info("No exact modifier rows matched the current family filters.")
+                st.info("No exact modifier rows matched the current family filters.", icon="🔍")
             else:
                 render_readable_dataframe(
                     family_values_df[
@@ -2960,9 +2950,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                 )
         with family_track_tab:
             if family_track_df.empty:
-                st.info(
-                    "No captured progression track steps matched the current family filters."
-                )
+                st.info("No captured progression track steps matched the current family filters.", icon="🔍")
             else:
                 render_readable_dataframe(
                     family_track_df[
@@ -2989,9 +2977,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                 )
         with family_relation_tab:
             if family_relationships_df.empty:
-                st.info(
-                    "No explicit non-stacking, overwrite, or exclusivity rules were found for this skill family in captured sources."
-                )
+                st.info("No explicit non-stacking, overwrite, or exclusivity rules were found for this skill family in captured sources.", icon="📭")
             else:
                 render_readable_dataframe(
                     family_relationships_df,
@@ -3055,7 +3041,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
         stage_metrics[3].metric("Explicit Relations", len(stage_relationships_df.index))
 
         if stage_rows_df.empty:
-            st.info("No progression rows matched the current stage filters.")
+            st.info("No progression rows matched the current stage filters.", icon="🔍")
         else:
             render_readable_dataframe(
                 stage_rows_df[
@@ -3188,7 +3174,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
             )
         with role_stage_tab:
             if role_coverage_df.empty:
-                st.info("No stage coverage rows matched the current role filters.")
+                st.info("No stage coverage rows matched the current role filters.", icon="🔍")
             else:
                 render_readable_dataframe(
                     role_coverage_df,
@@ -3197,9 +3183,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                 )
         with role_family_tab:
             if role_family_df.empty:
-                st.info(
-                    "No skill-family comparison rows matched the current role filters."
-                )
+                st.info("No skill-family comparison rows matched the current role filters.", icon="🔍")
             else:
                 render_readable_dataframe(
                     role_family_df,
@@ -3209,9 +3193,7 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                 )
         with role_relation_tab:
             if role_relationship_df.empty:
-                st.info(
-                    "No explicit non-stacking, overwrite, or exclusivity rules were captured for the current role filters."
-                )
+                st.info("No explicit non-stacking, overwrite, or exclusivity rules were captured for the current role filters.", icon="🔍")
             else:
                 relationship_preview_df = role_relationship_df[
                     [
@@ -3294,7 +3276,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
         st.warning("Only the first 4 selected units are analyzed in Team Lab.")
         selected_variant_ids = selected_variant_ids[:4]
     if not selected_variant_ids:
-        st.info("Select up to 4 units to inspect SP economy and defensive coverage.")
+        st.info("Select up to 4 units to inspect SP economy and defensive coverage.", icon="👈")
         return
 
     selected_roster_df = roster_df[
@@ -3381,9 +3363,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
         left_col, right_col = st.columns(2)
         with left_col:
             if sp_summary_df.empty:
-                st.info(
-                    "No explicit SP generation or SP cost-management clauses were found for the selected units."
-                )
+                st.info("No explicit SP generation or SP cost-management clauses were found for the selected units.", icon="👈")
             else:
                 render_readable_dataframe(
                     sp_summary_df,
@@ -3393,9 +3373,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
                 )
         with right_col:
             if defense_summary_df.empty:
-                st.info(
-                    "No explicit defensive clauses were found for the selected units."
-                )
+                st.info("No explicit defensive clauses were found for the selected units.", icon="👈")
             else:
                 render_readable_dataframe(
                     defense_summary_df,
@@ -3406,7 +3384,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
 
     with sp_tab:
         if skill_cost_df.empty:
-            st.info("No skill SP costs were captured for the selected units.")
+            st.info("No skill SP costs were captured for the selected units.", icon="👈")
         else:
             render_readable_dataframe(
                 skill_cost_df,
@@ -3416,9 +3394,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
                 number_formats={"sp_cost": "%.2f", "cooldown_seconds": "%.2f"},
             )
         if sp_evidence_df.empty:
-            st.info(
-                "No explicit SP generation, discount, or free-cast clauses were captured for the selected units."
-            )
+            st.info("No explicit SP generation, discount, or free-cast clauses were captured for the selected units.", icon="👈")
         else:
             render_readable_dataframe(
                 sp_evidence_df,
@@ -3439,9 +3415,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
 
     with defense_tab:
         if defense_summary_df.empty:
-            st.info(
-                "No explicit defensive toolkit rows were captured for the selected units."
-            )
+            st.info("No explicit defensive toolkit rows were captured for the selected units.", icon="👈")
         else:
             render_readable_dataframe(
                 defense_summary_df,
@@ -3450,7 +3424,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
                 medium_columns=("defense_type",),
             )
         if defense_evidence_df.empty:
-            st.info("No defensive evidence rows matched the selected units.")
+            st.info("No defensive evidence rows matched the selected units.", icon="🔍")
         else:
             render_readable_dataframe(
                 defense_evidence_df[
@@ -3483,9 +3457,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
         value_tab, track_tab = st.tabs(["Exact Values", "Track Steps"])
         with value_tab:
             if team_values_df.empty:
-                st.info(
-                    "No stored exact-value rows are available for the selected units."
-                )
+                st.info("No stored exact-value rows are available for the selected units.", icon="👈")
             else:
                 render_readable_dataframe(
                     team_values_df[
@@ -3512,9 +3484,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
                 )
         with track_tab:
             if team_tracks_df.empty:
-                st.info(
-                    "No stored progression-track rows are available for the selected units."
-                )
+                st.info("No stored progression-track rows are available for the selected units.", icon="👈")
             else:
                 render_readable_dataframe(
                     team_tracks_df[
@@ -3542,9 +3512,7 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
 
     with overlap_tab:
         if team_relationships_df.empty:
-            st.info(
-                "No explicit non-stacking, overwrite, or exclusivity rules were captured for the selected units."
-            )
+            st.info("No explicit non-stacking, overwrite, or exclusivity rules were captured for the selected units.", icon="👈")
         else:
             render_readable_dataframe(
                 team_relationships_df,
@@ -3601,9 +3569,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Unit Roster ──
     with tabs[0]:
         if unit_df.empty:
-            st.info(
-                "No unit data available. Run the pipeline to ingest spreadsheet data."
-            )
+            st.info("No unit data available. Run the pipeline to ingest spreadsheet data.", icon="ℹ️")
         else:
             # Filters
             fc1, fc2, fc3 = st.columns(3)
@@ -3685,7 +3651,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Builds ──
     with tabs[1]:
         if builds_df.empty:
-            st.info("No build data available.")
+            st.info("No build data available.", icon="📭")
         else:
             build_hero = st.selectbox(
                 "Select hero",
@@ -3719,7 +3685,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── PvE Tiers ──
     with tabs[2]:
         if pve_df.empty:
-            st.info("No PvE meta data available.")
+            st.info("No PvE meta data available.", icon="📭")
         else:
             for group in pve_df["tier_group"].unique():
                 group_data = pve_df[pve_df["tier_group"] == group]
@@ -3735,7 +3701,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── PvP Meta ──
     with tabs[3]:
         if pvp_df.empty:
-            st.info("No PvP meta data available.")
+            st.info("No PvP meta data available.", icon="📭")
         else:
             for section in pvp_df["section"].unique():
                 st.markdown(f"### {section}")
@@ -3752,7 +3718,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Content Teams ──
     with tabs[4]:
         if teams_df.empty:
-            st.info("No content team data available.")
+            st.info("No content team data available.", icon="📭")
         else:
             contents = sorted(teams_df["content"].unique())
             content_pick = st.selectbox("Content", contents, key="ct_content")
@@ -3775,7 +3741,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Content Usage ──
     with tabs[5]:
         if usage_df.empty:
-            st.info("No content usage data available.")
+            st.info("No content usage data available.", icon="📭")
         else:
             # Pivot: hero × content mode
             pivot = usage_df.pivot_table(
@@ -3792,7 +3758,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Equipment Presets ──
     with tabs[6]:
         if equip_df.empty:
-            st.info("No equipment preset data available.")
+            st.info("No equipment preset data available.", icon="📭")
         else:
             show_equip = [c for c in equip_df.columns if c != "preset_id"]
             st.dataframe(
@@ -3802,7 +3768,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Changelog ──
     with tabs[7]:
         if changelog_df.empty:
-            st.info("No changelog data available.")
+            st.info("No changelog data available.", icon="📭")
         else:
             st.dataframe(
                 changelog_df[["date", "entry"]],
