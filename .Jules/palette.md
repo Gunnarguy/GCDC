@@ -5,3 +5,7 @@
 ## 2025-06-15 - Added Visual Icons to Sidebar Navigation
 **Learning:** Adding relevant emoji icons to primary navigation elements (like `st.radio` options in a sidebar) significantly improves the scannability of the interface. Users can visually parse options faster than reading text labels alone. Streamlit's `format_func` in `st.radio` is an excellent mechanism to inject these icons without changing the underlying value list logic.
 **Action:** Always consider prepending relevant icons to core navigation menus and tabs to make the UI feel more welcoming and easier to scan quickly.
+
+## 2025-06-19 - Added Visual Icons to Empty States in st.info
+**Learning:** Streamlit's `st.info()` provides an excellent, native `icon` parameter which drastically improves the scannability of empty states and error notices. When dealing with complex analytical dashboards that frequently display "No data found" due to filters, distinguishing these blocks with relevant icons (e.g., `📭` for no data, `🔍` for no filter results) adds a subtle but effective layer of visual hierarchy and delight without any custom CSS.
+**Action:** Consistently use the `icon` parameter when rendering Streamlit informational elements (`st.info`, `st.warning`, `st.error`, `st.success`) to quickly convey context before the user even reads the text.
