@@ -7,5 +7,5 @@
 **Action:** Always consider prepending relevant icons to core navigation menus and tabs to make the UI feel more welcoming and easier to scan quickly.
 
 ## 2025-06-17 - Empty State Visual Differentiation
-**Learning:** Default informational banners (like Streamlit's `st.info`) for empty states can create a sterile user experience when repeated frequently across many data tables or search results, blending in with standard text or alerts. However, introducing completely custom HTML/CSS can violate design constraints.
-**Action:** Utilize built-in visual aids, such as passing contextual emoji via the `icon` parameter in Streamlit's `st.info()`, to create visually distinct empty states (e.g. `icon="🔍"` for search, `icon="📚"` for database views). This improves UX without breaking the boundary of avoiding custom CSS.
+**Learning:** Default informational banners (like Streamlit's `st.info`) for empty states can create a sterile user experience when repeated frequently across many data tables or search results. However, introducing completely custom HTML/CSS violates design constraints. Additionally, standard unicode emojis can render inconsistently or fail completely on Safari.
+**Action:** Utilize built-in visual aids via Streamlit's native Material Symbols shortcodes (e.g. `icon=":material/search:"` for search, `icon=":material/menu_book:"` for database views). This improves UX and ensures pixel-perfect, cross-browser compatibility across Safari and Chrome without needing custom CSS.

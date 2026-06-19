@@ -77,7 +77,7 @@ st.set_page_config(
 )
 
 
-def render_empty_state(message: str, icon: str = "🔍") -> None:
+def render_empty_state(message: str, icon: str = ":material/search:") -> None:
     st.info(message, icon=icon)
 
 
@@ -2110,7 +2110,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
         "The source usually exposes Chaser as 0/1/2/3 and Soul Imprint as 1/2/3/4/5 ladders rather than a literal 25/25 or 15/15 point sheet."
     )
     if roadmap_view_df.empty:
-        render_empty_state("No progression roadmap rows are available for this hero.", icon="📁")
+        render_empty_state("No progression roadmap rows are available for this hero.", icon=":material/folder:")
     else:
         roadmap_columns = [
             "variant_label",
@@ -2146,7 +2146,7 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
     if normalized_rows_view_df.empty:
         render_empty_state(
             "No normalized progression tables are loaded yet. Run the normalize step once to persist exact stage rows into SQLite.",
-            icon="📁"
+            icon=":material/folder:"
         )
     else:
         (
@@ -3611,7 +3611,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
         if unit_df.empty:
             render_empty_state(
                 "No unit data available. Run the pipeline to ingest spreadsheet data.",
-                icon="📚"
+                icon=":material/menu_book:"
             )
         else:
             # Filters
@@ -3694,7 +3694,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Builds ──
     with tabs[1]:
         if builds_df.empty:
-            render_empty_state("No build data available.", icon="📚")
+            render_empty_state("No build data available.", icon=":material/menu_book:")
         else:
             build_hero = st.selectbox(
                 "Select hero",
@@ -3728,7 +3728,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── PvE Tiers ──
     with tabs[2]:
         if pve_df.empty:
-            render_empty_state("No PvE meta data available.", icon="📚")
+            render_empty_state("No PvE meta data available.", icon=":material/menu_book:")
         else:
             for group in pve_df["tier_group"].unique():
                 group_data = pve_df[pve_df["tier_group"] == group]
@@ -3744,7 +3744,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── PvP Meta ──
     with tabs[3]:
         if pvp_df.empty:
-            render_empty_state("No PvP meta data available.", icon="📚")
+            render_empty_state("No PvP meta data available.", icon=":material/menu_book:")
         else:
             for section in pvp_df["section"].unique():
                 st.markdown(f"### {section}")
@@ -3761,7 +3761,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Content Teams ──
     with tabs[4]:
         if teams_df.empty:
-            render_empty_state("No content team data available.", icon="📚")
+            render_empty_state("No content team data available.", icon=":material/menu_book:")
         else:
             contents = sorted(teams_df["content"].unique())
             content_pick = st.selectbox("Content", contents, key="ct_content")
@@ -3784,7 +3784,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Content Usage ──
     with tabs[5]:
         if usage_df.empty:
-            render_empty_state("No content usage data available.", icon="📚")
+            render_empty_state("No content usage data available.", icon=":material/menu_book:")
         else:
             # Pivot: hero × content mode
             pivot = usage_df.pivot_table(
@@ -3801,7 +3801,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Equipment Presets ──
     with tabs[6]:
         if equip_df.empty:
-            render_empty_state("No equipment preset data available.", icon="📚")
+            render_empty_state("No equipment preset data available.", icon=":material/menu_book:")
         else:
             show_equip = [c for c in equip_df.columns if c != "preset_id"]
             st.dataframe(
@@ -3811,7 +3811,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
     # ── Changelog ──
     with tabs[7]:
         if changelog_df.empty:
-            render_empty_state("No changelog data available.", icon="📚")
+            render_empty_state("No changelog data available.", icon=":material/menu_book:")
         else:
             st.dataframe(
                 changelog_df[["date", "entry"]],

@@ -12,3 +12,6 @@ data/raw/*.json
 data/raw/*.html
 data/processed/*.db
 logs/*.log
+
+# Archived Diffs
+.Jules/archive/
