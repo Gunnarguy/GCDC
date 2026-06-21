@@ -2737,12 +2737,14 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
         )
         shared_only = shared_col.checkbox("Shared families only", value=True)
 
-        stage_filter = st.multiselect("Stages", stage_options, default=[])
+        stage_filter = st.multiselect("Stages", stage_options, default=[], placeholder="Select stages", help="Filter by skill stages")
         kind_filter = st.multiselect(
             "Variant kinds",
             variant_kind_options,
             default=[],
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
+            placeholder="Select variant kinds",
+            help="Filter by variant kinds (e.g., Base, Chaser)",
         )
 
         hero_compare_df = build_hero_vs_hero_frame(
@@ -2834,15 +2836,17 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
             )
 
     with family_tab:
-        selected_family = st.selectbox("Skill family", skill_family_options)
-        role_filter = st.multiselect("Roles", role_options, default=[])
+        selected_family = st.selectbox("Skill family", skill_family_options, index=None, placeholder="Choose a family", help="Filter by skill family")
+        role_filter = st.multiselect("Roles", role_options, default=[], placeholder="Select roles", help="Filter by unit roles")
         kind_filter = st.multiselect(
             "Variant kinds",
             variant_kind_options,
             default=[],
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
+            placeholder="Select variant kinds",
+            help="Filter by variant kinds (e.g., Base, Chaser)",
         )
-        stage_filter = st.multiselect("Stages", stage_options, default=[])
+        stage_filter = st.multiselect("Stages", stage_options, default=[], placeholder="Select stages", help="Filter by skill stages")
 
         family_rows_df = build_skill_family_comparison_frame(
             comparison_rows_df,
@@ -3013,13 +3017,15 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                 )
 
     with stage_tab:
-        selected_stage = st.selectbox("Stage", stage_options)
-        role_filter = st.multiselect("Roles", role_options, default=[])
+        selected_stage = st.selectbox("Stage", stage_options, index=None, placeholder="Choose a stage", help="Filter by skill stage")
+        role_filter = st.multiselect("Roles", role_options, default=[], placeholder="Select roles", help="Filter by unit roles")
         kind_filter = st.multiselect(
             "Variant kinds",
             variant_kind_options,
             default=[],
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
+            placeholder="Select variant kinds",
+            help="Filter by variant kinds (e.g., Base, Chaser)",
         )
         source_kind_filter = st.multiselect(
             "Source kinds",
@@ -3118,8 +3124,10 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
             variant_kind_options,
             default=[],
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
+            placeholder="Select variant kinds",
+            help="Filter by variant kinds (e.g., Base, Chaser)",
         )
-        stage_filter = st.multiselect("Stages", stage_options, default=[])
+        stage_filter = st.multiselect("Stages", stage_options, default=[], placeholder="Select stages", help="Filter by skill stages")
 
         role_coverage_df = build_role_stage_coverage_frame(
             comparison_rows_df,
@@ -3297,10 +3305,8 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
             int(variant_id), str(variant_id)
         ),
         help="Select up to 4 units. If you choose more than 4, only the first 4 are analyzed.",
+        max_selections=4,
     )
-    if len(selected_variant_ids) > 4:
-        st.warning("Only the first 4 selected units are analyzed in Team Lab.")
-        selected_variant_ids = selected_variant_ids[:4]
     if not selected_variant_ids:
         st.info("Select up to 4 units to inspect SP economy and defensive coverage.")
         return
