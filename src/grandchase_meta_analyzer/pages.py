@@ -97,7 +97,7 @@ def export_pages_site(
     <script>
       stlite.mount(
         {{
-          requirements: ["typing_extensions>=4.10", "pandas", "streamlit"],
+          requirements: ["pandas", "streamlit"],
           entrypoint: "app.py",
           files: {json.dumps(stlite_files, indent=12)}
         }},
