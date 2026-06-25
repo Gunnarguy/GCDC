@@ -97,7 +97,7 @@ def export_pages_site(
     <script>
       stlite.mount(
         {{
-          requirements: ["pandas", "streamlit"],
+          requirements: ["altair<5.3.0", "pandas", "streamlit", "sqlite3"],
           entrypoint: "app.py",
           files: {json.dumps(stlite_files, indent=12)}
         }},
