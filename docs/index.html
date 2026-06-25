@@ -12,7 +12,7 @@
     <script>
       stlite.mount(
         {
-          requirements: ["pandas", "streamlit", "sqlite3"],
+          requirements: ["pandas", "streamlit"],
           entrypoint: "app.py",
           files: {
             "grandchase.db": {
@@ -31,6 +31,17 @@ if not hasattr(typing_extensions, "TypeAliasType"):
         def __repr__(self):
             return f"TypeAliasType({self.__name__}, {self.__value__})"
     typing_extensions.TypeAliasType = TypeAliasType
+
+if not hasattr(typing_extensions, "TypeIs"):
+    if hasattr(typing_extensions, "TypeGuard"):
+        typing_extensions.TypeIs = typing_extensions.TypeGuard
+    else:
+        class _TypeIsMeta(type):
+            def __getitem__(cls, item):
+                return bool
+        class TypeIs(metaclass=_TypeIsMeta):
+            pass
+        typing_extensions.TypeIs = TypeIs
 
 import streamlit as st
 import grandchase_meta_analyzer.explorer_app as app
