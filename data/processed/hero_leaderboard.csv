@@ -1,6 +1,6 @@
 hero_id,name_en,name_ko,role,rarity,adventure_tier,battle_tier,boss_tier,sources,base_score,rarity_adjusted,final_meta_score,meta_rank
 28,Ley,레이,Mage,SS,SS,SS,SS,"unit_data,strategywiki,namuwiki",5.0,6.0,6.9,1
-27,Lass,,Assault,SS,SS,SS,SS,unit_data,5.0,6.0,6.9,2
+27,Lass,라스,Assault,SS,SS,SS,SS,"unit_data,strategywiki,namuwiki",5.0,6.0,6.9,2
 2,Amy,에이미,Healer,SS,SS,SS,SS,"unit_data,strategywiki,namuwiki",5.0,6.0,6.9,3
 25,Jin,진,Tank,SS,SS,S,SS,"unit_data,strategywiki,namuwiki",4.7,5.64,6.49,4
 15,Elesis,엘리시스,Assault,SS,SS,S,S,"unit_data,strategywiki,namuwiki",4.5,5.4,6.21,5
@@ -16,22 +16,22 @@ hero_id,name_en,name_ko,role,rarity,adventure_tier,battle_tier,boss_tier,sources
 3,Arme,아르메,Mage,SS,S,A,A,"unit_data,strategywiki,namuwiki",3.5,4.2,4.83,15
 30,Lire,리르,Ranger,SS,A,A,SS,"unit_data,strategywiki,namuwiki",3.4,4.08,4.69,16
 43,Scarde,,Healer,SS,B,B,B,unit_data,2.0,2.4,2.76,17
-34,Myrielle,,Ranger,SS,B,B,B,unit_data,2.0,2.4,2.76,18
+34,Myrielle,미리엘,Ranger,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,18
 50,Zero,제로,Tank,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,19
 49,Werner,,Ranger,SS,B,B,B,unit_data,2.0,2.4,2.76,20
 48,Vice,바이스,Mage,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,21
 47,Veigas,베이가스,Mage,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,22
-35,Myst,,Tank,SS,B,B,B,unit_data,2.0,2.4,2.76,23
+35,Myst,미스트,Tank,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,23
 33,Metatron,메타트론,Mage,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,24
 36,Nelia,,Mage,SS,B,B,B,unit_data,2.0,2.4,2.76,25
-37,Nepteon,,Assault,SS,B,B,B,unit_data,2.0,2.4,2.76,26
-38,Ragnar,,Ranger,SS,B,B,B,unit_data,2.0,2.4,2.76,27
+37,Nepteon,가이안,Assault,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,26
+38,Ragnar,라그나,Ranger,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,27
 46,Urara,우라라,Healer,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,28
 45,Tia,티아,Tank,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,29
 44,Sol,솔,Assault,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,30
 1,Ai,아이,Mage,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,31
 26,Lapis,라피스,Ranger,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,32
-32,Mayden,,Ranger,SS,B,B,B,unit_data,2.0,2.4,2.76,33
+32,Mayden,메이덴,Ranger,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,33
 11,Deia,,Ranger,SS,B,B,B,unit_data,2.0,2.4,2.76,34
 4,Asin,아신,Tank,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,35
 5,Ayla,,Mage,SS,B,B,B,unit_data,2.0,2.4,2.76,36
@@ -41,7 +41,7 @@ hero_id,name_en,name_ko,role,rarity,adventure_tier,battle_tier,boss_tier,sources
 9,Cindy,신디,Healer,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,40
 10,Decanee,데카네,Ranger,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,41
 12,Deia T,,Healer,SS,B,B,B,unit_data,2.0,2.4,2.76,42
-24,Iyoung,,Ranger,SS,B,B,B,unit_data,2.0,2.4,2.76,43
+24,Iyoung,이영,Ranger,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,43
 17,Esnar,,Assault,SS,B,B,B,unit_data,2.0,2.4,2.76,44
 18,Europa,유로파,Assault,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,45
 19,Ganymede,가니메데,Mage,SS,B,B,B,"unit_data,strategywiki,namuwiki",2.0,2.4,2.76,46

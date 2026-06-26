@@ -2497,6 +2497,24 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
     sheets = ingest_spreadsheet()
     unit_data_df = sheets.get("unit_data", pd.DataFrame())
 
+    # Map name aliases (e.g. Young Lee -> Iyoung, Lars -> Lass, Gaian -> Nepteon)
+    name_mappings = {
+        "Young Lee": "Iyoung",
+        "Lars": "Lass",
+        "Maiden": "Mayden",
+        "Miriel": "Myrielle",
+        "Mist": "Myst",
+        "Ragna": "Ragnar",
+        "Gaian": "Nepteon",
+    }
+    for old_name, new_name in name_mappings.items():
+        namuwiki_df["name_en_guess"] = namuwiki_df["name_en_guess"].replace(old_name, new_name)
+        namuwiki_df["variant_name_en"] = namuwiki_df["variant_name_en"].replace(old_name, new_name)
+        namuwiki_df["variant_title"] = namuwiki_df["variant_title"].str.replace(old_name, new_name, regex=False)
+        variant_sections_df["name_en_guess"] = variant_sections_df["name_en_guess"].replace(old_name, new_name)
+        variant_skills_df["name_en_guess"] = variant_skills_df["name_en_guess"].replace(old_name, new_name)
+        namuwiki_release_history_df["hero_name_raw"] = namuwiki_release_history_df["hero_name_raw"].replace(old_name, new_name)
+
     heroes_df = resolve_hero_identities(strategy_df, namuwiki_df, unit_data_df)
     
     # Augment namuwiki_df with missing variants from unit_data
