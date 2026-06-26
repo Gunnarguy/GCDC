@@ -116,7 +116,7 @@ VARIANT_RARITY_PATTERN = re.compile(
 
 
 def resolve_hero_identities(
-    strategy_df: pd.DataFrame, namuwiki_df: pd.DataFrame
+    strategy_df: pd.DataFrame, namuwiki_df: pd.DataFrame, unitdata_df: pd.DataFrame
 ) -> pd.DataFrame:
     namu_rows = [
         {str(key): str(value) for key, value in raw_row.items()}
@@ -127,58 +127,42 @@ def resolve_hero_identities(
     for row in namu_rows:
         rows_by_name.setdefault(str(row["name_en_guess"]), []).append(row)
 
+    strat_rows_by_name = {
+        str(row.get("name_en", "")).strip(): row
+        for row in strategy_df.to_dict(orient="records")
+        if str(row.get("name_en", "")).strip()
+    }
+
     resolved_rows: list[dict[str, object]] = []
     seen_names: set[str] = set()
 
-    for raw_row in strategy_df.to_dict(orient="records"):
-        name_en = str(raw_row.get("name_en", "")).strip()
-        if not name_en:
+    for raw_row in unitdata_df.to_dict(orient="records"):
+        if raw_row.get("job_type", "") != "Base":
             continue
+        
+        name_en = str(raw_row.get("name", "")).strip()
+        if not name_en or name_en in seen_names:
+            continue
+            
         namu_candidates = rows_by_name.get(name_en, [])
         namu_row = next(
-            (
-                row
-                for row in namu_candidates
-                if row.get("variant_kind", "base") == "base"
-            ),
+            (row for row in namu_candidates if row.get("variant_kind", "base") == "base"),
             namu_candidates[0] if namu_candidates else None,
         )
+        strat_row = strat_rows_by_name.get(name_en, {})
+        
         seen_names.add(name_en)
 
         resolved_rows.append(
             {
                 "name_en": name_en,
                 "name_ko": (namu_row or {}).get("name_ko", ""),
-                "role": str(raw_row.get("role", "Unknown")) or "Unknown",
-                "rarity": "SS" if namu_row else "S",
-                "adventure_tier": str(raw_row.get("adventure", "B")) or "B",
-                "battle_tier": str(raw_row.get("battle", "B")) or "B",
-                "boss_tier": str(raw_row.get("boss", "B")) or "B",
-                "sources": "strategywiki,namuwiki" if namu_row else "strategywiki",
-            }
-        )
-
-    for name_en, namu_candidates in rows_by_name.items():
-        if name_en in seen_names:
-            continue
-        representative_row = next(
-            (
-                row
-                for row in namu_candidates
-                if row.get("variant_kind", "base") == "base"
-            ),
-            namu_candidates[0],
-        )
-        resolved_rows.append(
-            {
-                "name_en": name_en,
-                "name_ko": str(representative_row.get("name_ko", "")).strip(),
-                "role": "Unknown",
-                "rarity": str(representative_row.get("rarity", "SS")) or "SS",
-                "adventure_tier": "B",
-                "battle_tier": "B",
-                "boss_tier": "B",
-                "sources": "namuwiki",
+                "role": str(raw_row.get("unit_class", "")) or str(strat_row.get("role", "Unknown")) or "Unknown",
+                "rarity": "SS",  # Assume SS for all meta units
+                "adventure_tier": str(strat_row.get("adventure", "B")) or "B",
+                "battle_tier": str(strat_row.get("battle", "B")) or "B",
+                "boss_tier": str(strat_row.get("boss", "B")) or "B",
+                "sources": "unit_data,strategywiki,namuwiki" if namu_row else "unit_data",
             }
         )
 
@@ -1583,6 +1567,7 @@ def build_database(
     chaser_df: pd.DataFrame,
     skills_df: pd.DataFrame,
     settings: RuntimeSettings,
+    sheets: dict[str, pd.DataFrame],
 ) -> None:
     settings.database_path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(settings.database_path) as connection:
@@ -2077,7 +2062,7 @@ def build_database(
             score_rows,
         )
 
-        sheets = ingest_spreadsheet()
+        
 
         variant_profiles_df = build_variant_profiles(
             heroes_df,
@@ -2508,7 +2493,65 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         ignore_index=True,
     ).fillna("")
 
-    heroes_df = resolve_hero_identities(strategy_df, namuwiki_df)
+    from .ingest_spreadsheet import ingest_all as ingest_spreadsheet
+    sheets = ingest_spreadsheet()
+    unit_data_df = sheets.get("unit_data", pd.DataFrame())
+
+    heroes_df = resolve_hero_identities(strategy_df, namuwiki_df, unit_data_df)
+    
+    # Augment namuwiki_df with missing variants from unit_data
+    existing_variants = set(
+        f"{str(row.get('name_en_guess', '')).strip()}_{str(row.get('variant_kind', '')).strip()}"
+        for row in namuwiki_df.to_dict(orient="records")
+    )
+    
+    new_variant_rows = []
+    for raw_row in unit_data_df.to_dict(orient="records"):
+        job_type = str(raw_row.get("job_type", "")).strip().lower()
+        if job_type not in ["change", "special", "job type"]:
+            continue
+            
+        variant_name = str(raw_row.get("name", "")).strip()
+        
+        # Derive base name: "Elesis T" -> "Elesis", "Arme S" -> "Arme"
+        base_name = variant_name
+        variant_kind = "base"
+        variant_suffix = ""
+        if variant_name.endswith(" T"):
+            base_name = variant_name[:-2]
+            variant_kind = "former"
+            variant_suffix = "T"
+        elif variant_name.endswith(" S"):
+            base_name = variant_name[:-2]
+            variant_kind = "special"
+            variant_suffix = "S"
+        elif job_type == "special":
+            variant_kind = "special"
+            variant_suffix = "S"
+        elif job_type in ["change", "job type"]:
+            variant_kind = "former"
+            variant_suffix = "T"
+
+        var_key = f"{base_name}_{variant_kind}"
+        if var_key not in existing_variants:
+            new_variant_rows.append({
+                "name_ko": "",
+                "name_en_guess": base_name,
+                "variant_name_en": variant_name,
+                "rarity": "SS",
+                "variant_kind": variant_kind,
+                "variant_suffix": variant_suffix,
+                "availability_marker": "",
+                "variant_title": variant_name,
+                "variant_href": f"synthetic_{variant_name.replace(' ', '_').lower()}",
+                "note_excerpt": "",
+                "source": "unit_data",
+            })
+            existing_variants.add(var_key)
+            
+    if new_variant_rows:
+        namuwiki_df = pd.concat([namuwiki_df, pd.DataFrame(new_variant_rows)], ignore_index=True)
+
     scores_df = compute_meta_scores(heroes_df, settings)
     build_database(
         heroes_df,
@@ -2524,6 +2567,7 @@ def run(settings: RuntimeSettings) -> dict[str, int]:
         chaser_df,
         skills_df,
         settings,
+        sheets,
     )
 
     leaderboard_df = heroes_df.merge(scores_df, on="hero_id").sort_values(

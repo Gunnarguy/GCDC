@@ -18,36 +18,7 @@
             "grandchase.db": {
                         "url": "./grandchase.db"
             },
-            "app.py": `import sys
-import typing_extensions
-
-# Patch missing TypeAliasType in typing_extensions for Altair compatibility in Stlite
-if not hasattr(typing_extensions, "TypeAliasType"):
-    class TypeAliasType:
-        def __init__(self, name, value, type_params=()):
-            self.__name__ = name
-            self.__value__ = value
-            self.__type_params__ = type_params
-        def __repr__(self):
-            return f"TypeAliasType({self.__name__}, {self.__value__})"
-    typing_extensions.TypeAliasType = TypeAliasType
-
-if not hasattr(typing_extensions, "TypeIs"):
-    if hasattr(typing_extensions, "TypeGuard"):
-        typing_extensions.TypeIs = typing_extensions.TypeGuard
-    else:
-        class _TypeIsMeta(type):
-            def __getitem__(cls, item):
-                return bool
-        class TypeIs(metaclass=_TypeIsMeta):
-            pass
-        typing_extensions.TypeIs = TypeIs
-
-import streamlit as st
-import grandchase_meta_analyzer.explorer_app as app
-from pathlib import Path
-app.DB_PATH = Path('grandchase.db')
-app.main()`,
+            "app.py": "import sys\\nimport typing_extensions\\n\\n# Patch missing TypeAliasType in typing_extensions for Altair compatibility in Stlite\\nif not hasattr(typing_extensions, 'TypeAliasType'):\\n    class TypeAliasType:\\n        def __init__(self, name, value, type_params=()):\\n            self.__name__ = name\\n            self.__value__ = value\\n            self.__type_params__ = type_params\\n        def __repr__(self):\\n            return f'TypeAliasType({self.__name__}, {self.__value__})'\\n    typing_extensions.TypeAliasType = TypeAliasType\\n\\n# Patch missing TypeIs in typing_extensions for Altair compatibility in Stlite\\nif not hasattr(typing_extensions, 'TypeIs'):\\n    if hasattr(typing_extensions, 'TypeGuard'):\\n        typing_extensions.TypeIs = typing_extensions.TypeGuard\\n    else:\\n        class _TypeIsMeta(type):\\n            def __getitem__(cls, item):\\n                return bool\\n        class TypeIs(metaclass=_TypeIsMeta):\\n            pass\\n        typing_extensions.TypeIs = TypeIs\\n\\nimport streamlit as st\\nimport grandchase_meta_analyzer.explorer_app as app\\nfrom pathlib import Path\\napp.DB_PATH = Path('grandchase.db')\\napp.main()",
             "grandchase_meta_analyzer/paths.py": {
                         "url": "./grandchase_meta_analyzer/paths.py"
             },

@@ -32,7 +32,39 @@ def export_pages_site(
     
     stlite_files = {
         "grandchase.db": {"url": "./grandchase.db"},
-        "app.py": "import streamlit as st\\nimport grandchase_meta_analyzer.explorer_app as app\\nfrom pathlib import Path\\napp.DB_PATH = Path('grandchase.db')\\napp.main()"
+        "app.py": (
+            "import sys\\n"
+            "import typing_extensions\\n"
+            "\\n"
+            "# Patch missing TypeAliasType in typing_extensions for Altair compatibility in Stlite\\n"
+            "if not hasattr(typing_extensions, 'TypeAliasType'):\\n"
+            "    class TypeAliasType:\\n"
+            "        def __init__(self, name, value, type_params=()):\\n"
+            "            self.__name__ = name\\n"
+            "            self.__value__ = value\\n"
+            "            self.__type_params__ = type_params\\n"
+            "        def __repr__(self):\\n"
+            "            return f'TypeAliasType({self.__name__}, {self.__value__})'\\n"
+            "    typing_extensions.TypeAliasType = TypeAliasType\\n"
+            "\\n"
+            "# Patch missing TypeIs in typing_extensions for Altair compatibility in Stlite\\n"
+            "if not hasattr(typing_extensions, 'TypeIs'):\\n"
+            "    if hasattr(typing_extensions, 'TypeGuard'):\\n"
+            "        typing_extensions.TypeIs = typing_extensions.TypeGuard\\n"
+            "    else:\\n"
+            "        class _TypeIsMeta(type):\\n"
+            "            def __getitem__(cls, item):\\n"
+            "                return bool\\n"
+            "        class TypeIs(metaclass=_TypeIsMeta):\\n"
+            "            pass\\n"
+            "        typing_extensions.TypeIs = TypeIs\\n"
+            "\\n"
+            "import streamlit as st\\n"
+            "import grandchase_meta_analyzer.explorer_app as app\\n"
+            "from pathlib import Path\\n"
+            "app.DB_PATH = Path('grandchase.db')\\n"
+            "app.main()"
+        )
     }
     
     for py_file in src_dir.rglob("*.py"):
@@ -57,15 +89,15 @@ def export_pages_site(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GrandChase Atlas</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.75.0/build/stlite.css" />
   </head>
   <body>
     <div id="root"></div>
-    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.75.0/build/stlite.js"></script>
     <script>
       stlite.mount(
         {{
-          requirements: ["pandas", "streamlit"],
+          requirements: ["altair<5.3.0", "pandas", "streamlit", "sqlite3"],
           entrypoint: "app.py",
           files: {json.dumps(stlite_files, indent=12)}
         }},
