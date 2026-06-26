@@ -1,96 +1,95 @@
 variant_id,hero_id,name_en,name_ko,variant_name_en,variant_kind,variant_suffix,availability_marker,variant_role,variant_rarity,variant_title,note_excerpt,adventure_tier,battle_tier,boss_tier,base_score,rarity_adjusted,final_meta_score,meta_rank,score_basis
-52,28,Ley,레이,Ray,former,T,T,Mage,SS,Ray (Grand Chase for kakao)/former hero,Ray (T),S,A,A,3.15,3.79,4.35,1,spreadsheet_variant_signals
-83,16,Sieghart,지크하르트,Sieghart,base,,,Assault,SS,Sieghart (Grand Chase for kakao),Sieghart,S,B,B,3.13,3.75,4.31,2,spreadsheet_variant_signals
-51,28,Ley,레이,Ray,base,,,Mage,SS,Ray (Grand Chase for kakao),ray,S,A,A,3.11,3.73,4.29,3,spreadsheet_variant_signals
+51,28,Ley,레이,Ray,former,T,T,Mage,SS,Ray (Grand Chase for kakao)/former hero,Ray (T),S,A,A,3.15,3.79,4.35,1,spreadsheet_variant_signals
+82,16,Sieghart,지크하르트,Sieghart,base,,,Assault,SS,Sieghart (Grand Chase for kakao),Sieghart,S,B,B,3.13,3.75,4.31,2,spreadsheet_variant_signals
+50,28,Ley,레이,Ray,base,,,Mage,SS,Ray (Grand Chase for kakao),ray,S,A,A,3.11,3.73,4.29,3,spreadsheet_variant_signals
 3,2,Amy,에이미,Amy,base,,,Healer,SS,Amy (Grand Chase for kakao),Amy,A,A,A,3.07,3.68,4.23,4,spreadsheet_variant_signals
-49,27,Lass,라스,Lass,base,,,Assault,SS,Lass (Grand Chase for kakao),Lars,A,A,A,3.05,3.66,4.21,5,spreadsheet_variant_signals
-55,29,Lime,라임,Lime,special,S,S,Mage,SS,Lime (Grand Chase for Kakao)/Special Hero,Lime (S),B,SS,B,3.05,3.66,4.21,6,spreadsheet_variant_signals
-84,16,Sieghart,지크하르트,Sieghart,former,T,T,Tank,SS,Sieghart (Grand Chase for kakao)/former hero,Sieghart (T),A,S,B,2.99,3.59,4.13,7,spreadsheet_variant_signals
-77,41,Rufus,루퍼스,Rufus,base,,5,Ranger,SS,Rufus (Grand Chase for kakao),Rufus 5,A,B,A,2.93,3.51,4.04,8,spreadsheet_variant_signals
+48,27,Lass,라스,Lass,base,,,Assault,SS,Lass (Grand Chase for kakao),Lars,A,A,A,3.05,3.66,4.21,5,spreadsheet_variant_signals
+54,29,Lime,라임,Lime,special,S,S,Mage,SS,Lime (Grand Chase for Kakao)/Special Hero,Lime (S),B,SS,B,3.05,3.66,4.21,6,spreadsheet_variant_signals
+83,16,Sieghart,지크하르트,Sieghart,former,T,T,Tank,SS,Sieghart (Grand Chase for kakao)/former hero,Sieghart (T),A,S,B,2.99,3.59,4.13,7,spreadsheet_variant_signals
+76,41,Rufus,루퍼스,Rufus,base,,5,Ranger,SS,Rufus (Grand Chase for kakao),Rufus 5,A,B,A,2.93,3.51,4.04,8,spreadsheet_variant_signals
 45,25,Jin,진,Jin,former,T,T,Tank,SS,Jin (Grand Chase for kakao)/former hero,Jin (T),A,B,A,2.91,3.49,4.02,9,spreadsheet_variant_signals
-76,40,Ronan,로난,Ronan,former,T,T,Tank,SS,Ronan (Grand Chase for kakao)/former hero,Ronan (T),A,A,B,2.91,3.49,4.01,10,spreadsheet_variant_signals
+75,40,Ronan,로난,Ronan,former,T,T,Tank,SS,Ronan (Grand Chase for kakao)/former hero,Ronan (T),A,A,B,2.91,3.49,4.01,10,spreadsheet_variant_signals
 4,2,Amy,에이미,Amy,former,T,T,Assault,SS,Amy (Grand Chase for kakao)/former hero,Amy (T),A,A,A,2.85,3.43,3.94,11,spreadsheet_variant_signals
-59,31,Mari,마리,Marie,base,,,Mage,SS,Marie (Grand Chase for kakao),number of animals,A,B,B,2.74,3.29,3.78,12,spreadsheet_variant_signals
-50,27,Lass,라스,Lass,former,T,T,Assault,SS,Lass (Grand Chase for kakao)/former hero,Lars (T),A,A,A,2.72,3.27,3.76,13,spreadsheet_variant_signals
-58,30,Lire,리르,Lirer,special,S,S,Ranger,SS,Lirer (Grand Chase for Kakao)/Special Hero,Lir (S),A,B,A,2.72,3.27,3.76,14,spreadsheet_variant_signals
+58,31,Mari,마리,Marie,base,,,Mage,SS,Marie (Grand Chase for kakao),number of animals,A,B,B,2.74,3.29,3.78,12,spreadsheet_variant_signals
+49,27,Lass,라스,Lass,former,T,T,Assault,SS,Lass (Grand Chase for kakao)/former hero,Lars (T),A,A,A,2.72,3.27,3.76,13,spreadsheet_variant_signals
+57,30,Lire,리르,Lirer,special,S,S,Ranger,SS,Lirer (Grand Chase for Kakao)/Special Hero,Lir (S),A,B,A,2.72,3.27,3.76,14,spreadsheet_variant_signals
 27,15,Elesis,엘리시스,Elesis,former,T,T,Tank,SS,Elesis (Grand Chase for kakao)/former hero,Elesis (T),A,B,B,2.72,3.27,3.75,15,spreadsheet_variant_signals
 24,14,Edel,에델,Ethel,base,,,Assault,SS,Ethel (Grand Chase for kakao),Ethel,A,B,A,2.7,3.24,3.72,16,spreadsheet_variant_signals
 26,15,Elesis,엘리시스,Elesis,base,,1,Assault,SS,Elesis (Grand Chase for kakao),Elesis 1,A,B,A,2.68,3.21,3.7,17,spreadsheet_variant_signals
-57,30,Lire,리르,Lire,former,T,T,Assault,SS,Lire (Grand Chase for kakao)/former hero,Lire (T),A,B,A,2.66,3.19,3.67,18,spreadsheet_variant_signals
-74,39,Rin,린,Lin,former,T,T,Mage,SS,Lin (Grand Chase for Kakao)/Former Hero,Lin (T),A,A,B,2.65,3.18,3.66,19,spreadsheet_variant_signals
+56,30,Lire,리르,Lire,former,T,T,Assault,SS,Lire (Grand Chase for kakao)/former hero,Lire (T),A,B,A,2.66,3.19,3.67,18,spreadsheet_variant_signals
+73,39,Rin,린,Lin,former,T,T,Mage,SS,Lin (Grand Chase for Kakao)/Former Hero,Lin (T),A,A,B,2.65,3.18,3.66,19,spreadsheet_variant_signals
 7,3,Arme,아르메,Arme,special,S,S,Mage,SS,Arme (Grand Chase for Kakao)/Special Hero,Arme (S),A,B,B,2.61,3.14,3.61,20,spreadsheet_variant_signals
 44,25,Jin,진,Jin,base,,,Tank,SS,Jin (Grand Chase for kakao),jin,A,B,A,2.6,3.12,3.59,21,spreadsheet_variant_signals
-54,29,Lime,라임,Lime,former,T,T,Tank,SS,Lime (Grand Chase for kakao)/former hero,Lime (T),B,A,B,2.55,3.06,3.52,22,spreadsheet_variant_signals
+53,29,Lime,라임,Lime,former,T,T,Tank,SS,Lime (Grand Chase for kakao)/former hero,Lime (T),B,A,B,2.55,3.06,3.52,22,spreadsheet_variant_signals
 28,15,Elesis,엘리시스,Elesis,special,S,S,Assault,SS,Elesis (Grand Chase for Kakao)/Special Hero,Elesis (S),A,B,B,2.52,3.02,3.48,23,spreadsheet_variant_signals
 23,13,Dio,디오,Dio,former,T,T,Tank,SS,Dio (Grand Chase for Kakao)/Former Hero,Dio (T),B,A,B,2.44,2.93,3.37,24,spreadsheet_variant_signals
-73,39,Rin,린,Lin,base,,,Healer,SS,Lin (Grand Chase for kakao),Lin,B,A,B,2.44,2.93,3.36,25,spreadsheet_variant_signals
-79,42,Ryan,라이언,Ryan,base,,4,Tank,SS,Ryan (Grand Chase for kakao),Ryan 4,A,B,B,2.42,2.9,3.34,26,spreadsheet_variant_signals
+72,39,Rin,린,Lin,base,,,Healer,SS,Lin (Grand Chase for kakao),Lin,B,A,B,2.44,2.93,3.36,25,spreadsheet_variant_signals
+78,42,Ryan,라이언,Ryan,base,,4,Tank,SS,Ryan (Grand Chase for kakao),Ryan 4,A,B,B,2.42,2.9,3.34,26,spreadsheet_variant_signals
 25,14,Edel,에델,Ethel,former,T,T,Assault,SS,Ethel (Grand Chase for kakao)/former hero,Ethel (T),B,B,A,2.4,2.88,3.31,27,spreadsheet_variant_signals
-80,42,Ryan,라이언,Ryan,former,T,T,Tank,SS,Ryan (Grand Chase for Kakao)/Former Hero,Ryan (T),A,B,B,2.35,2.82,3.24,28,spreadsheet_variant_signals
+79,42,Ryan,라이언,Ryan,former,T,T,Tank,SS,Ryan (Grand Chase for Kakao)/Former Hero,Ryan (T),A,B,B,2.35,2.82,3.24,28,spreadsheet_variant_signals
 22,13,Dio,디오,D.O,base,,,Assault,SS,D.O (Grand Chase for kakao),D.I.O,B,A,B,2.31,2.77,3.18,29,spreadsheet_variant_signals
-53,29,Lime,라임,Lime,base,,,Healer,SS,Lime (Grand Chase for kakao),Lime,B,A,B,2.31,2.77,3.18,30,spreadsheet_variant_signals
-78,41,Rufus,루퍼스,Rufus,former,T,T,Mage,SS,Rufus (Grand Chase for Kakao)/Former Hero,Rufus (T),B,B,A,2.29,2.75,3.16,31,spreadsheet_variant_signals
+52,29,Lime,라임,Lime,base,,,Healer,SS,Lime (Grand Chase for kakao),Lime,B,A,B,2.31,2.77,3.18,30,spreadsheet_variant_signals
+77,41,Rufus,루퍼스,Rufus,former,T,T,Mage,SS,Rufus (Grand Chase for Kakao)/Former Hero,Rufus (T),B,B,A,2.29,2.75,3.16,31,spreadsheet_variant_signals
 17,9,Cindy,신디,Cindy,former,T,T,Mage,SS,Cindy (Grand Chase for Kakao)/Former Hero,Cindy (T),A,C,B,2.25,2.69,3.1,32,spreadsheet_variant_signals
 6,3,Arme,아르메,Arme,former,T,T,Mage,SS,Arme (Grand Chase for kakao)/former hero,Arme (T),B,B,B,2.23,2.67,3.07,33,spreadsheet_variant_signals
-88,46,Urara,우라라,Urara,base,,,Healer,SS,Urara (Grand Chase for Kakao),Urara,A,C,B,2.2,2.65,3.04,34,spreadsheet_variant_signals
-62,32,Mayden,메이덴,Mayden,former,T,T,Healer,SS,Mayden (Grand Chase for Kakao)/Former Hero,Maiden (T),A,C,B,2.19,2.63,3.02,35,spreadsheet_variant_signals
-65,34,Myrielle,미리엘,Myrielle,base,,,Ranger,SS,Myrielle (Grand Chase for Kakao),Miriel,B,B,B,2.18,2.62,3.02,36,spreadsheet_variant_signals
-70,37,Nepteon,가이안,Nepteon,base,X,X,Mage,SS,Nepteon (Grand Chase for Kakao)/SS grade,Gaian (X),A,C,B,2.18,2.62,3.01,37,spreadsheet_variant_signals
-56,30,Lire,리르,Lire,base,,,Ranger,SS,Lire (Grand Chase for kakao),lire,B,B,A,2.18,2.61,3.0,38,spreadsheet_variant_signals
-75,40,Ronan,로난,Ronan,base,,,Tank,SS,Ronan (Grand Chase for kakao),Ronan,B,A,C,2.17,2.61,3.0,39,spreadsheet_variant_signals
-60,31,Mari,마리,Marie,former,T,T,Mage,SS,Marie (Grand Chase for kakao)/former hero,Marie (T),B,B,B,2.14,2.57,2.96,40,spreadsheet_variant_signals
+87,46,Urara,우라라,Urara,base,,,Healer,SS,Urara (Grand Chase for Kakao),Urara,A,C,B,2.2,2.65,3.04,34,spreadsheet_variant_signals
+61,32,Mayden,메이덴,Mayden,former,T,T,Healer,SS,Mayden (Grand Chase for Kakao)/Former Hero,Maiden (T),A,C,B,2.19,2.63,3.02,35,spreadsheet_variant_signals
+64,34,Myrielle,미리엘,Myrielle,base,,,Ranger,SS,Myrielle (Grand Chase for Kakao),Miriel,B,B,B,2.18,2.62,3.02,36,spreadsheet_variant_signals
+69,37,Nepteon,가이안,Nepteon,base,X,X,Mage,SS,Nepteon (Grand Chase for Kakao)/SS grade,Gaian (X),A,C,B,2.18,2.62,3.01,37,spreadsheet_variant_signals
+55,30,Lire,리르,Lire,base,,,Ranger,SS,Lire (Grand Chase for kakao),lire,B,B,A,2.18,2.61,3.0,38,spreadsheet_variant_signals
+74,40,Ronan,로난,Ronan,base,,,Tank,SS,Ronan (Grand Chase for kakao),Ronan,B,A,C,2.17,2.61,3.0,39,spreadsheet_variant_signals
+59,31,Mari,마리,Marie,former,T,T,Mage,SS,Marie (Grand Chase for kakao)/former hero,Marie (T),B,B,B,2.14,2.57,2.96,40,spreadsheet_variant_signals
 41,23,Io,이오,Io,base,,,Ranger,SS,Io (Grand Chase for kakao),io,A,C,B,2.12,2.54,2.93,41,spreadsheet_variant_signals
 13,7,Bram,,Bram,base,,,Assault,SS,Bram,,A,C,B,2.11,2.53,2.91,42,spreadsheet_variant_signals
 5,3,Arme,아르메,Arme,base,,2,Mage,SS,Arme (Grand Chase for kakao),arme 2,B,B,B,2.02,2.42,2.79,43,spreadsheet_variant_signals
 34,19,Ganymede,가니메데,Ganymede,former,T,T,Mage,SS,Ganymede (Grand Chase for Kakao)/Former Hero,Ganymede (T),B,C,B,2.02,2.42,2.79,44,spreadsheet_variant_signals
-63,33,Metatron,메타트론,Metatron,base,,,Mage,SS,Metatron (Grand Chase for Kakao),metatron,B,B,B,2.01,2.42,2.78,45,spreadsheet_variant_signals
+62,33,Metatron,메타트론,Metatron,base,,,Mage,SS,Metatron (Grand Chase for Kakao),metatron,B,B,B,2.01,2.42,2.78,45,spreadsheet_variant_signals
 10,5,Ayla,,Ayla,base,,,Mage,SS,Ayla,,B,B,B,2.0,2.4,2.76,46,inherited_hero_modes
 12,6,Bastet,바스테트,Bastet T,former,T,,Ranger,SS,Bastet T,,B,B,B,2.0,2.4,2.76,47,inherited_hero_modes
 21,12,Deia T,,Deia T,base,,,Healer,SS,Deia T,,B,B,B,2.0,2.4,2.76,48,inherited_hero_modes
-46,51,Kallia,,Kallia,base,,,Assault,SS,Kallia,,B,B,B,2.0,2.4,2.76,49,inherited_hero_modes
-64,33,Metatron,메타트론,Metatron T,former,T,,Mage,SS,Metatron T,,B,B,B,2.0,2.4,2.76,50,inherited_hero_modes
-95,50,Zero,제로,Zero,former,T,T,Tank,SS,Zero (Grand Chase for Kakao)/Former Hero,Zero (T),B,C,B,2.0,2.4,2.76,51,spreadsheet_variant_signals
-67,35,Myst,미스트,Myst,former,T,T,Tank,SS,Myst (Grand Chase for Kakao)/Former Hero,Mist (T),B,C,B,1.96,2.35,2.7,52,spreadsheet_variant_signals
-33,19,Ganymede,가니메데,Ganymede,base,,,Mage,SS,Ganymede (Grand Chase for kakao),Ganymede,B,C,B,1.94,2.33,2.68,53,spreadsheet_variant_signals
-87,45,Tia,티아,Tia,former,T,T,Tank,SS,Tia (Grand Chase for Kakao)/Former Hero,Tia (T),B,C,B,1.95,2.33,2.68,54,spreadsheet_variant_signals
-47,26,Lapis,라피스,Lapis,base,,,Ranger,SS,Lapis (Grand Chase for kakao),Lapis,B,C,B,1.92,2.3,2.65,55,spreadsheet_variant_signals
-16,9,Cindy,신디,Cindy,base,,,Healer,SS,Cindy (Grand Chase for kakao),Cindy,B,C,B,1.91,2.3,2.64,56,spreadsheet_variant_signals
-19,10,Decanee,데카네,Decane,former,T,T,Assault,SS,Decane (Grand Chase for Kakao)/Former Hero,Decane (T),B,C,B,1.9,2.27,2.62,57,spreadsheet_variant_signals
-40,22,Hwarin,,Hwarin T,former,T,,Healer,SS,Hwarin T,,B,C,B,1.85,2.22,2.56,58,spreadsheet_variant_signals
-9,4,Asin,아신,Asin,former,T,T,Tank,SS,Asin (Grand Chase for Kakao)/Former Hero,Asin (T),C,A,B,1.82,2.19,2.52,59,spreadsheet_variant_signals
-8,4,Asin,아신,Asin,base,,,Tank,SS,Asin (Grand Chase for kakao),Asin,C,A,C,1.81,2.18,2.5,60,spreadsheet_variant_signals
-86,45,Tia,티아,Tia,base,,,Tank,SS,Tia (Grand Chase for kakao),Tia,B,C,B,1.75,2.1,2.42,61,spreadsheet_variant_signals
-36,20,Grandiel,,Grandiel T,former,T,,Healer,SS,Grandiel T,,C,B,B,1.74,2.08,2.4,62,spreadsheet_variant_signals
-81,43,Scarde,,Scarde,base,,,Healer,SS,Scarde,,B,C,B,1.74,2.08,2.4,63,spreadsheet_variant_signals
-69,36,Nelia,,Nelia T,former,T,,Mage,SS,Nelia T,,B,C,B,1.71,2.05,2.35,64,spreadsheet_variant_signals
-30,17,Esnar,,Esnar T,former,T,,Assault,SS,Esnar T,,B,C,C,1.66,1.99,2.29,65,spreadsheet_variant_signals
-43,24,Iyoung,이영,Iyoung,base,,,Ranger,SS,Iyoung (Grand Chase for Kakao),Young Lee,C,B,B,1.64,1.97,2.27,66,spreadsheet_variant_signals
-20,11,Deia,,Deia,base,,,Ranger,SS,Deia,,C,B,B,1.64,1.96,2.26,67,spreadsheet_variant_signals
-72,38,Ragnar,라그나,Ragnar,former,T,T,Healer,SS,Ragnar (Grand Chase for Kakao)/Former Hero,Ragnar (T),C,B,C,1.62,1.94,2.23,68,spreadsheet_variant_signals
-94,50,Zero,제로,Zero,base,,,Tank,SS,Zero (Grand Chase for kakao),Zero,C,B,B,1.61,1.93,2.22,69,spreadsheet_variant_signals
-68,36,Nelia,,Nelia,base,,,Mage,SS,Nelia,,C,B,C,1.6,1.92,2.21,70,spreadsheet_variant_signals
-11,6,Bastet,바스테트,Bastet,base,,,Ranger,SS,Bastet (Grand Chase for Kakao),bastet,C,B,B,1.58,1.9,2.18,71,spreadsheet_variant_signals
-35,20,Grandiel,,Grandiel,base,,,Healer,SS,Grandiel,,B,C,B,1.57,1.89,2.17,72,spreadsheet_variant_signals
-42,23,Io,이오,Io,former,T,T,Healer,SS,Io (Grand Chase for kakao)/former hero,Io (T),B,C,B,1.57,1.89,2.17,73,spreadsheet_variant_signals
-71,38,Ragnar,라그나,Ragnar,base,,,Ranger,SS,Ragnar (Grand Chase for kakao),Ragnar,C,B,B,1.56,1.88,2.16,74,spreadsheet_variant_signals
-15,8,Callisto,칼리스토,Callisto,former,T,T,Tank,SS,Callisto (Grand Chase for Kakao)/Former Hero,Callisto (T),B,C,B,1.56,1.87,2.15,75,spreadsheet_variant_signals
-89,47,Veigas,베이가스,Veigas,base,,,Mage,SS,Veigas (Grand Chase for kakao),Vegas,B,C,B,1.56,1.87,2.15,76,spreadsheet_variant_signals
-31,18,Europa,유로파,Europa,base,,,Assault,SS,Europa (Grand Chase for kakao),europa,C,B,C,1.55,1.86,2.14,77,spreadsheet_variant_signals
-32,18,Europa,유로파,Europa,former,T,T,Assault,SS,Europa (Grand Chase for kakao)/former hero,Europa (T),B,C,C,1.54,1.85,2.13,78,spreadsheet_variant_signals
-61,32,Mayden,메이덴,Mayden,base,,,Ranger,SS,Mayden (Grand Chase for Kakao),Maiden,B,C,C,1.54,1.85,2.13,79,spreadsheet_variant_signals
-92,49,Werner,,Werner,base,,,Ranger,SS,Werner,,B,C,C,1.54,1.85,2.12,80,spreadsheet_variant_signals
-93,49,Werner,,Werner T,former,T,,Ranger,SS,Werner T,,B,C,C,1.53,1.84,2.12,81,spreadsheet_variant_signals
-2,1,Ai,아이,Ai,former,T,T,Tank,SS,Ai (Grand Chase for Kakao)/Former Hero,Child (T),C,C,B,1.53,1.84,2.11,82,spreadsheet_variant_signals
-39,22,Hwarin,,Hwarin,base,,,Healer,SS,Hwarin,,C,B,C,1.53,1.84,2.11,83,spreadsheet_variant_signals
-48,26,Lapis,라피스,Lapis,former,T,T,Assault,SS,Lapis (Grand Chase for kakao)/former hero,Lapis (T),B,C,C,1.53,1.84,2.11,84,spreadsheet_variant_signals
-85,44,Sol,솔,Sol,base,,,Assault,SS,Sol (Grand Chase for kakao),brush,B,C,C,1.53,1.84,2.11,85,spreadsheet_variant_signals
-91,48,Vice,바이스,Vice,base,,,Mage,SS,Vice (Grand Chase for kakao),vise,B,C,B,1.53,1.84,2.11,86,spreadsheet_variant_signals
-14,8,Callisto,칼리스토,Callisto,base,,,Assault,SS,Callisto (Grand Chase for kakao),Callisto,B,C,C,1.52,1.83,2.1,87,spreadsheet_variant_signals
-29,17,Esnar,,Esnar,base,,,Assault,SS,Esnar,,B,C,C,1.52,1.82,2.1,88,spreadsheet_variant_signals
-82,43,Scarde,,Scarde T,former,T,,Healer,SS,Scarde T,,B,C,C,1.52,1.83,2.1,89,spreadsheet_variant_signals
-90,47,Veigas,베이가스,Vegas,former,T,T,Mage,SS,Vegas (Grand Chase for Kakao)/Former Hero,Vegas (T),B,C,C,1.52,1.83,2.1,90,spreadsheet_variant_signals
-1,1,Ai,아이,Ai,base,,,Mage,SS,Ai (Grand Chase for kakao),kid,C,B,B,1.52,1.82,2.09,91,spreadsheet_variant_signals
-66,35,Myst,미스트,Myst,base,,,Tank,SS,Myst (Grand Chase for kakao),mist,C,B,C,1.48,1.78,2.05,92,spreadsheet_variant_signals
-18,10,Decanee,데카네,Decane,base,,,Ranger,SS,Decane (Grand Chase for kakao),Decane,C,B,C,1.47,1.76,2.02,93,spreadsheet_variant_signals
-37,21,Harpe,하르페,Harpe,base,,,Mage,SS,Harpe (Grand Chase for kakao),Harpe,C,B,C,1.47,1.76,2.02,94,spreadsheet_variant_signals
-38,21,Harpe,하르페,Harpe,former,T,T,Tank,SS,Harpe (Grand Chase for kakao)/former hero,Harpe (T),C,B,C,1.47,1.76,2.02,95,spreadsheet_variant_signals
+63,33,Metatron,메타트론,Metatron T,former,T,,Mage,SS,Metatron T,,B,B,B,2.0,2.4,2.76,49,inherited_hero_modes
+94,50,Zero,제로,Zero,former,T,T,Tank,SS,Zero (Grand Chase for Kakao)/Former Hero,Zero (T),B,C,B,2.0,2.4,2.76,50,spreadsheet_variant_signals
+66,35,Myst,미스트,Myst,former,T,T,Tank,SS,Myst (Grand Chase for Kakao)/Former Hero,Mist (T),B,C,B,1.96,2.35,2.7,51,spreadsheet_variant_signals
+33,19,Ganymede,가니메데,Ganymede,base,,,Mage,SS,Ganymede (Grand Chase for kakao),Ganymede,B,C,B,1.94,2.33,2.68,52,spreadsheet_variant_signals
+86,45,Tia,티아,Tia,former,T,T,Tank,SS,Tia (Grand Chase for Kakao)/Former Hero,Tia (T),B,C,B,1.95,2.33,2.68,53,spreadsheet_variant_signals
+46,26,Lapis,라피스,Lapis,base,,,Ranger,SS,Lapis (Grand Chase for kakao),Lapis,B,C,B,1.92,2.3,2.65,54,spreadsheet_variant_signals
+16,9,Cindy,신디,Cindy,base,,,Healer,SS,Cindy (Grand Chase for kakao),Cindy,B,C,B,1.91,2.3,2.64,55,spreadsheet_variant_signals
+19,10,Decanee,데카네,Decane,former,T,T,Assault,SS,Decane (Grand Chase for Kakao)/Former Hero,Decane (T),B,C,B,1.9,2.27,2.62,56,spreadsheet_variant_signals
+40,22,Hwarin,,Hwarin T,former,T,,Healer,SS,Hwarin T,,B,C,B,1.85,2.22,2.56,57,spreadsheet_variant_signals
+9,4,Asin,아신,Asin,former,T,T,Tank,SS,Asin (Grand Chase for Kakao)/Former Hero,Asin (T),C,A,B,1.82,2.19,2.52,58,spreadsheet_variant_signals
+8,4,Asin,아신,Asin,base,,,Tank,SS,Asin (Grand Chase for kakao),Asin,C,A,C,1.81,2.18,2.5,59,spreadsheet_variant_signals
+85,45,Tia,티아,Tia,base,,,Tank,SS,Tia (Grand Chase for kakao),Tia,B,C,B,1.75,2.1,2.42,60,spreadsheet_variant_signals
+36,20,Grandiel,,Grandiel T,former,T,,Healer,SS,Grandiel T,,C,B,B,1.74,2.08,2.4,61,spreadsheet_variant_signals
+80,43,Scarde,,Scarde,base,,,Healer,SS,Scarde,,B,C,B,1.74,2.08,2.4,62,spreadsheet_variant_signals
+68,36,Nelia,,Nelia T,former,T,,Mage,SS,Nelia T,,B,C,B,1.71,2.05,2.35,63,spreadsheet_variant_signals
+30,17,Esnar,,Esnar T,former,T,,Assault,SS,Esnar T,,B,C,C,1.66,1.99,2.29,64,spreadsheet_variant_signals
+43,24,Iyoung,이영,Iyoung,base,,,Ranger,SS,Iyoung (Grand Chase for Kakao),Young Lee,C,B,B,1.64,1.97,2.27,65,spreadsheet_variant_signals
+20,11,Deia,,Deia,base,,,Ranger,SS,Deia,,C,B,B,1.64,1.96,2.26,66,spreadsheet_variant_signals
+71,38,Ragnar,라그나,Ragnar,former,T,T,Healer,SS,Ragnar (Grand Chase for Kakao)/Former Hero,Ragnar (T),C,B,C,1.62,1.94,2.23,67,spreadsheet_variant_signals
+93,50,Zero,제로,Zero,base,,,Tank,SS,Zero (Grand Chase for kakao),Zero,C,B,B,1.61,1.93,2.22,68,spreadsheet_variant_signals
+67,36,Nelia,,Nelia,base,,,Mage,SS,Nelia,,C,B,C,1.6,1.92,2.21,69,spreadsheet_variant_signals
+11,6,Bastet,바스테트,Bastet,base,,,Ranger,SS,Bastet (Grand Chase for Kakao),bastet,C,B,B,1.58,1.9,2.18,70,spreadsheet_variant_signals
+35,20,Grandiel,,Grandiel,base,,,Healer,SS,Grandiel,,B,C,B,1.57,1.89,2.17,71,spreadsheet_variant_signals
+42,23,Io,이오,Io,former,T,T,Healer,SS,Io (Grand Chase for kakao)/former hero,Io (T),B,C,B,1.57,1.89,2.17,72,spreadsheet_variant_signals
+70,38,Ragnar,라그나,Ragnar,base,,,Ranger,SS,Ragnar (Grand Chase for kakao),Ragnar,C,B,B,1.56,1.88,2.16,73,spreadsheet_variant_signals
+15,8,Callisto,칼리스토,Callisto,former,T,T,Tank,SS,Callisto (Grand Chase for Kakao)/Former Hero,Callisto (T),B,C,B,1.56,1.87,2.15,74,spreadsheet_variant_signals
+88,47,Veigas,베이가스,Veigas,base,,,Mage,SS,Veigas (Grand Chase for kakao),Vegas,B,C,B,1.56,1.87,2.15,75,spreadsheet_variant_signals
+31,18,Europa,유로파,Europa,base,,,Assault,SS,Europa (Grand Chase for kakao),europa,C,B,C,1.55,1.86,2.14,76,spreadsheet_variant_signals
+32,18,Europa,유로파,Europa,former,T,T,Assault,SS,Europa (Grand Chase for kakao)/former hero,Europa (T),B,C,C,1.54,1.85,2.13,77,spreadsheet_variant_signals
+60,32,Mayden,메이덴,Mayden,base,,,Ranger,SS,Mayden (Grand Chase for Kakao),Maiden,B,C,C,1.54,1.85,2.13,78,spreadsheet_variant_signals
+91,49,Werner,,Werner,base,,,Ranger,SS,Werner,,B,C,C,1.54,1.85,2.12,79,spreadsheet_variant_signals
+92,49,Werner,,Werner T,former,T,,Ranger,SS,Werner T,,B,C,C,1.53,1.84,2.12,80,spreadsheet_variant_signals
+2,1,Ai,아이,Ai,former,T,T,Tank,SS,Ai (Grand Chase for Kakao)/Former Hero,Child (T),C,C,B,1.53,1.84,2.11,81,spreadsheet_variant_signals
+39,22,Hwarin,,Hwarin,base,,,Healer,SS,Hwarin,,C,B,C,1.53,1.84,2.11,82,spreadsheet_variant_signals
+47,26,Lapis,라피스,Lapis,former,T,T,Assault,SS,Lapis (Grand Chase for kakao)/former hero,Lapis (T),B,C,C,1.53,1.84,2.11,83,spreadsheet_variant_signals
+84,44,Sol,솔,Sol,base,,,Assault,SS,Sol (Grand Chase for kakao),brush,B,C,C,1.53,1.84,2.11,84,spreadsheet_variant_signals
+90,48,Vice,바이스,Vice,base,,,Mage,SS,Vice (Grand Chase for kakao),vise,B,C,B,1.53,1.84,2.11,85,spreadsheet_variant_signals
+14,8,Callisto,칼리스토,Callisto,base,,,Assault,SS,Callisto (Grand Chase for kakao),Callisto,B,C,C,1.52,1.83,2.1,86,spreadsheet_variant_signals
+29,17,Esnar,,Esnar,base,,,Assault,SS,Esnar,,B,C,C,1.52,1.82,2.1,87,spreadsheet_variant_signals
+81,43,Scarde,,Scarde T,former,T,,Healer,SS,Scarde T,,B,C,C,1.52,1.83,2.1,88,spreadsheet_variant_signals
+89,47,Veigas,베이가스,Vegas,former,T,T,Mage,SS,Vegas (Grand Chase for Kakao)/Former Hero,Vegas (T),B,C,C,1.52,1.83,2.1,89,spreadsheet_variant_signals
+1,1,Ai,아이,Ai,base,,,Mage,SS,Ai (Grand Chase for kakao),kid,C,B,B,1.52,1.82,2.09,90,spreadsheet_variant_signals
+65,35,Myst,미스트,Myst,base,,,Tank,SS,Myst (Grand Chase for kakao),mist,C,B,C,1.48,1.78,2.05,91,spreadsheet_variant_signals
+18,10,Decanee,데카네,Decane,base,,,Ranger,SS,Decane (Grand Chase for kakao),Decane,C,B,C,1.47,1.76,2.02,92,spreadsheet_variant_signals
+37,21,Harpe,하르페,Harpe,base,,,Mage,SS,Harpe (Grand Chase for kakao),Harpe,C,B,C,1.47,1.76,2.02,93,spreadsheet_variant_signals
+38,21,Harpe,하르페,Harpe,former,T,T,Tank,SS,Harpe (Grand Chase for kakao)/former hero,Harpe (T),C,B,C,1.47,1.76,2.02,94,spreadsheet_variant_signals
