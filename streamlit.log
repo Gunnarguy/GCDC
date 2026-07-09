@@ -1,0 +1,178 @@
+2026-07-09 07:40:48.852 Uvicorn server started on :::8501
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.0.2:8501
+  External URL: http://34.27.142.64:8501
+
+2026-07-09 07:42:32.416 Uncaught app execution
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 129, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 795, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3928, in <module>
+    main()
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3827, in main
+    data = load_atlas()
+           ^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 281, in __call__
+    return self._get_or_create_cached_value(args, kwargs, spinner_message)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 326, in _get_or_create_cached_value
+    return self._handle_cache_miss(cache, value_key, func_args, func_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 385, in _handle_cache_miss
+    computed_value = self._info.func(*func_args, **func_kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 213, in load_atlas
+    raise FileNotFoundError(
+FileNotFoundError: Missing data/processed/grandchase.db. Run bash scripts/run_pipeline.sh first.
+2026-07-09 07:43:18.733 Uncaught app execution
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 129, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 795, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3928, in <module>
+    main()
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3827, in main
+    data = load_atlas()
+           ^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 281, in __call__
+    return self._get_or_create_cached_value(args, kwargs, spinner_message)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 326, in _get_or_create_cached_value
+    return self._handle_cache_miss(cache, value_key, func_args, func_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 385, in _handle_cache_miss
+    computed_value = self._info.func(*func_args, **func_kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 213, in load_atlas
+    raise FileNotFoundError(
+FileNotFoundError: Missing data/processed/grandchase.db. Run bash scripts/run_pipeline.sh first.
+2026-07-09 07:44:04.580 Uncaught app execution
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 129, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 795, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3928, in <module>
+    main()
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3827, in main
+    data = load_atlas()
+           ^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 281, in __call__
+    return self._get_or_create_cached_value(args, kwargs, spinner_message)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 326, in _get_or_create_cached_value
+    return self._handle_cache_miss(cache, value_key, func_args, func_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 385, in _handle_cache_miss
+    computed_value = self._info.func(*func_args, **func_kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 213, in load_atlas
+    raise FileNotFoundError(
+FileNotFoundError: Missing data/processed/grandchase.db. Run bash scripts/run_pipeline.sh first.
+2026-07-09 07:44:49.015 Uncaught app execution
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 129, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 795, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3928, in <module>
+    main()
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 3827, in main
+    data = load_atlas()
+           ^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 281, in __call__
+    return self._get_or_create_cached_value(args, kwargs, spinner_message)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 326, in _get_or_create_cached_value
+    return self._handle_cache_miss(cache, value_key, func_args, func_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.12/site-packages/streamlit/runtime/caching/cache_utils.py", line 385, in _handle_cache_miss
+    computed_value = self._info.func(*func_args, **func_kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/grandchase_meta_analyzer/explorer_app.py", line 213, in load_atlas
+    raise FileNotFoundError(
+FileNotFoundError: Missing data/processed/grandchase.db. Run bash scripts/run_pipeline.sh first.
+2026-07-09 07:45:34.511 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:45:34.520 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:45:35.351 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:45:35.359 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:04.498 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:04.503 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:04.530 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:05.497 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:05.504 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:59.780 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:59.783 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:46:59.805 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:47:01.173 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-07-09 07:47:01.179 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
