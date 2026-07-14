@@ -9,3 +9,7 @@
 ## 2025-06-17 - Empty State Visual Differentiation
 **Learning:** Default informational banners (like Streamlit's `st.info`) for empty states can create a sterile user experience when repeated frequently across many data tables or search results. However, introducing completely custom HTML/CSS violates design constraints. Additionally, standard unicode emojis can render inconsistently or fail completely on Safari.
 **Action:** Utilize built-in visual aids via Streamlit's native Material Symbols shortcodes (e.g. `icon=":material/search:"` for search, `icon=":material/menu_book:"` for database views). This improves UX and ensures pixel-perfect, cross-browser compatibility across Safari and Chrome without needing custom CSS.
+
+## 2025-07-14 - Native Selection Limits in Streamlit Multiselect
+**Learning:** For constraints on multi-selection lists (like choosing exactly 4 units for a team), using Streamlit's native `max_selections` argument on `st.multiselect` is vastly superior to allowing unbounded selection and showing an `st.warning` post-selection. It prevents the user from making invalid choices interactively, avoiding frustrating feedback loops.
+**Action:** Always prefer `max_selections=N` on `st.multiselect` over manual validation logic for enforcing selection counts. Pair it with clear `placeholder` text (e.g., "Choose up to 4...").
