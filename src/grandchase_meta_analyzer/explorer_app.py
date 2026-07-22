@@ -3293,14 +3293,12 @@ def render_team_lab(data: dict[str, pd.DataFrame]) -> None:
         "Units",
         roster_df["variant_id"].tolist(),
         default=default_team_ids,
+        max_selections=4,
         format_func=lambda variant_id: option_label_map.get(
             int(variant_id), str(variant_id)
         ),
-        help="Select up to 4 units. If you choose more than 4, only the first 4 are analyzed.",
+        help="Select up to 4 units to analyze.",
     )
-    if len(selected_variant_ids) > 4:
-        st.warning("Only the first 4 selected units are analyzed in Team Lab.")
-        selected_variant_ids = selected_variant_ids[:4]
     if not selected_variant_ids:
         st.info("Select up to 4 units to inspect SP economy and defensive coverage.")
         return
