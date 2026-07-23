@@ -1983,7 +1983,9 @@ def render_dossier(data: dict[str, pd.DataFrame], hero_name: str) -> None:
     selected_variant = st.selectbox(
         "Variant",
         variants,
-        index=variants.index(default_variant),
+        index=variants.index(default_variant) if default_variant else None,
+        placeholder="Select a variant...",
+        help="Choose a variant to view its details.",
         format_func=lambda variant_title: variant_label_by_title.get(
             variant_title, variant_title
         ),
@@ -2730,18 +2732,20 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
 
     with hero_tab:
         left_col, right_col, shared_col = st.columns([1, 1, 0.9])
-        left_hero = left_col.selectbox("Left hero", hero_options, index=0)
+        left_hero = left_col.selectbox("Left hero", hero_options, index=0, placeholder="Select left hero", help="First hero for comparison.")
         right_default_index = 1 if len(hero_options) > 1 else 0
         right_hero = right_col.selectbox(
-            "Right hero", hero_options, index=right_default_index
+            "Right hero", hero_options, index=right_default_index, placeholder="Select right hero", help="Second hero for comparison."
         )
         shared_only = shared_col.checkbox("Shared families only", value=True)
 
-        stage_filter = st.multiselect("Stages", stage_options, default=[])
+        stage_filter = st.multiselect("Stages", stage_options, default=[], placeholder="Select stages...", help="Filter progression by specific stage.")
         kind_filter = st.multiselect(
             "Variant kinds",
             variant_kind_options,
             default=[],
+            placeholder="Any variant kind...",
+            help="Filter by variant kind.",
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
         )
 
@@ -2834,15 +2838,17 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
             )
 
     with family_tab:
-        selected_family = st.selectbox("Skill family", skill_family_options)
-        role_filter = st.multiselect("Roles", role_options, default=[])
+        selected_family = st.selectbox("Skill family", skill_family_options, index=None, placeholder="Select skill family...", help="Filter by skill family across all variants.")
+        role_filter = st.multiselect("Roles", role_options, default=[], placeholder="Select roles...", help="Filter by hero roles.")
         kind_filter = st.multiselect(
             "Variant kinds",
             variant_kind_options,
             default=[],
+            placeholder="Any variant kind...",
+            help="Filter by variant kind.",
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
         )
-        stage_filter = st.multiselect("Stages", stage_options, default=[])
+        stage_filter = st.multiselect("Stages", stage_options, default=[], placeholder="Select stages...", help="Filter progression by specific stage.")
 
         family_rows_df = build_skill_family_comparison_frame(
             comparison_rows_df,
@@ -3013,12 +3019,14 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
                 )
 
     with stage_tab:
-        selected_stage = st.selectbox("Stage", stage_options)
-        role_filter = st.multiselect("Roles", role_options, default=[])
+        selected_stage = st.selectbox("Stage", stage_options, index=None, placeholder="Select stage...", help="Filter by progression stage.")
+        role_filter = st.multiselect("Roles", role_options, default=[], placeholder="Select roles...", help="Filter by hero roles.")
         kind_filter = st.multiselect(
             "Variant kinds",
             variant_kind_options,
             default=[],
+            placeholder="Any variant kind...",
+            help="Filter by variant kind.",
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
         )
         source_kind_filter = st.multiselect(
@@ -3117,9 +3125,11 @@ def render_comparisons(data: dict[str, pd.DataFrame]) -> None:
             "Variant kinds",
             variant_kind_options,
             default=[],
+            placeholder="Any variant kind...",
+            help="Filter by variant kind.",
             format_func=lambda kind: variant_kind_label_map.get(kind, kind),
         )
-        stage_filter = st.multiselect("Stages", stage_options, default=[])
+        stage_filter = st.multiselect("Stages", stage_options, default=[], placeholder="Select stages...", help="Filter progression by specific stage.")
 
         role_coverage_df = build_role_stage_coverage_frame(
             comparison_rows_df,
@@ -3651,6 +3661,9 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                     "Inspect unit",
                     display["name"].tolist(),
                     key="unit_inspect",
+                    index=None,
+                    placeholder="Select a unit to inspect...",
+                    help="View builds and traits for a specific unit.",
                 )
                 row = display[display["name"] == pick].iloc[0]
                 detail_c1, detail_c2 = st.columns(2)
@@ -3700,6 +3713,9 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                 "Select hero",
                 sorted(builds_df["name"].unique()),
                 key="build_hero",
+                index=None,
+                placeholder="Select a hero...",
+                help="View specific builds for a hero.",
             )
             hero_builds = builds_df[builds_df["name"] == build_hero]
             for _, brow in hero_builds.iterrows():
@@ -3764,7 +3780,7 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
             render_empty_state("No content team data available.", icon=":material/menu_book:")
         else:
             contents = sorted(teams_df["content"].unique())
-            content_pick = st.selectbox("Content", contents, key="ct_content")
+            content_pick = st.selectbox("Content", contents, key="ct_content", index=None, placeholder="Select content...", help="View teams for specific game content.")
             ct_data = teams_df[teams_df["content"] == content_pick]
 
             for phase in ct_data["phase"].unique():
@@ -3886,6 +3902,8 @@ def main() -> None:
             kind_filter = st.multiselect(
                 "Variant kinds",
                 available_kinds,
+                placeholder="Any variant kind...",
+                help="Filter sections by variant kind (e.g., T, S).",
                 format_func=lambda kind: variant_kind_label_map.get(kind, kind),
             )
             row_limit = st.slider(
@@ -3895,7 +3913,9 @@ def main() -> None:
 
         if page == "Hero Dossier":
             focus_hero = st.selectbox(
-                "Choose hero", hero_options, index=hero_options.index(default_hero)
+                "Choose hero", hero_options, index=hero_options.index(default_hero),
+                placeholder="Select a hero...",
+                help="Filter the dossier by specific hero.",
             )
             st.caption(
                 f"Showing {len(hero_options)} heroes. Default is {default_hero}."
