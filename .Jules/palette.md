@@ -9,3 +9,6 @@
 ## 2025-06-17 - Empty State Visual Differentiation
 **Learning:** Default informational banners (like Streamlit's `st.info`) for empty states can create a sterile user experience when repeated frequently across many data tables or search results. However, introducing completely custom HTML/CSS violates design constraints. Additionally, standard unicode emojis can render inconsistently or fail completely on Safari.
 **Action:** Utilize built-in visual aids via Streamlit's native Material Symbols shortcodes (e.g. `icon=":material/search:"` for search, `icon=":material/menu_book:"` for database views). This improves UX and ensures pixel-perfect, cross-browser compatibility across Safari and Chrome without needing custom CSS.
+## 2026-07-25 - Native Streamlit Input Tooltips
+**Learning:** Using `help` and `placeholder` arguments natively in Streamlit components (like `st.selectbox`, `st.multiselect`, `st.slider`, `st.checkbox`) is a cleaner UX pattern for providing context without cluttering the sidebar with separate markdown text.
+**Action:** Apply `help` and `placeholder` parameters to Streamlit input components where context is needed.

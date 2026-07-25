@@ -3887,15 +3887,23 @@ def main() -> None:
                 "Variant kinds",
                 available_kinds,
                 format_func=lambda kind: variant_kind_label_map.get(kind, kind),
+                placeholder="Select variant kinds...",
+                help="Filter the search results by the hero variant kind (e.g., Base, Job Change, Special).",
             )
             row_limit = st.slider(
-                "Result rows", min_value=10, max_value=100, value=30, step=5
+                "Result rows", min_value=10, max_value=100, value=30, step=5,
+                help="Limit the number of rows displayed in the search results."
             )
-            show_section_expanders = st.checkbox("Show section previews", value=False)
+            show_section_expanders = st.checkbox(
+                "Show section previews", value=False,
+                help="Expand sections to preview their text content directly in the results table."
+            )
 
         if page == "Hero Dossier":
             focus_hero = st.selectbox(
-                "Choose hero", hero_options, index=hero_options.index(default_hero)
+                "Choose hero", hero_options, index=hero_options.index(default_hero),
+                placeholder="Select a hero...",
+                help="Select a hero to view their full progression dossier, skills, and patch notes."
             )
             st.caption(
                 f"Showing {len(hero_options)} heroes. Default is {default_hero}."
