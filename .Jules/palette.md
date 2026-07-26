@@ -9,3 +9,7 @@
 ## 2025-06-17 - Empty State Visual Differentiation
 **Learning:** Default informational banners (like Streamlit's `st.info`) for empty states can create a sterile user experience when repeated frequently across many data tables or search results. However, introducing completely custom HTML/CSS violates design constraints. Additionally, standard unicode emojis can render inconsistently or fail completely on Safari.
 **Action:** Utilize built-in visual aids via Streamlit's native Material Symbols shortcodes (e.g. `icon=":material/search:"` for search, `icon=":material/menu_book:"` for database views). This improves UX and ensures pixel-perfect, cross-browser compatibility across Safari and Chrome without needing custom CSS.
+
+## 2026-07-26 - Defer Detail Rendering in Streamlit
+**Learning:** Automatically rendering detailed information panels for the first item in a selectbox (like a roster list) creates an overwhelming, cluttered empty state for users entering a page.
+**Action:** Use `index=None` and `placeholder` in `st.selectbox` and wrap the rendering logic in an `if selection:` block to create a clean empty state that waits for explicit user interaction.
