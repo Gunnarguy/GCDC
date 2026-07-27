@@ -3651,45 +3651,48 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                     "Inspect unit",
                     display["name"].tolist(),
                     key="unit_inspect",
+                    index=None,
+                    placeholder="Select a unit to inspect...",
                 )
-                row = display[display["name"] == pick].iloc[0]
-                detail_c1, detail_c2 = st.columns(2)
-                with detail_c1:
-                    st.markdown("**Hero Traits**")
-                    traits = []
-                    for i in range(1, 6):
-                        t = str(row.get(f"ht{i}", ""))
-                        p = str(row.get(f"hp{i}", ""))
-                        if t:
-                            traits.append(f"{t} ({p})" if p else t)
-                    st.write(" → ".join(traits) if traits else "—")
+                if pick:
+                    row = display[display["name"] == pick].iloc[0]
+                    detail_c1, detail_c2 = st.columns(2)
+                    with detail_c1:
+                        st.markdown("**Hero Traits**")
+                        traits = []
+                        for i in range(1, 6):
+                            t = str(row.get(f"ht{i}", ""))
+                            p = str(row.get(f"hp{i}", ""))
+                            if t:
+                                traits.append(f"{t} ({p})" if p else t)
+                        st.write(" → ".join(traits) if traits else "—")
 
-                    st.markdown("**Chaser Traits**")
-                    ctraits = []
-                    for i in range(1, 6):
-                        t = str(row.get(f"ct{i}", ""))
-                        p = str(row.get(f"cp{i}", ""))
-                        if t:
-                            ctraits.append(f"{t} ({p})" if p else t)
-                    st.write(" → ".join(ctraits) if ctraits else "—")
+                        st.markdown("**Chaser Traits**")
+                        ctraits = []
+                        for i in range(1, 6):
+                            t = str(row.get(f"ct{i}", ""))
+                            p = str(row.get(f"cp{i}", ""))
+                            if t:
+                                ctraits.append(f"{t} ({p})" if p else t)
+                        st.write(" → ".join(ctraits) if ctraits else "—")
 
-                with detail_c2:
-                    st.markdown("**Runes**")
-                    st.write(f"{row.get('rn1', '—')} / {row.get('rn2', '—')}")
-                    st.markdown("**Accessories**")
-                    st.write(
-                        f"Ring: {row.get('ac1', '—')} · Necklace: {row.get('ac2', '—')} · Earring: {row.get('ac3', '—')}"
-                    )
-                    st.markdown("**Equipment Set**")
-                    st.write(str(row.get("equip_set", "—")))
-                    st.markdown("**Transcendence**")
-                    tc1 = str(row.get("tc1", ""))
-                    tt1 = str(row.get("tt1", ""))
-                    tt2 = str(row.get("tt2", ""))
-                    if any([tc1, tt1, tt2]):
-                        st.write(f"Main: {tc1} → T3: {tt1}, T6: {tt2}")
-                    else:
-                        st.write("—")
+                    with detail_c2:
+                        st.markdown("**Runes**")
+                        st.write(f"{row.get('rn1', '—')} / {row.get('rn2', '—')}")
+                        st.markdown("**Accessories**")
+                        st.write(
+                            f"Ring: {row.get('ac1', '—')} · Necklace: {row.get('ac2', '—')} · Earring: {row.get('ac3', '—')}"
+                        )
+                        st.markdown("**Equipment Set**")
+                        st.write(str(row.get("equip_set", "—")))
+                        st.markdown("**Transcendence**")
+                        tc1 = str(row.get("tc1", ""))
+                        tt1 = str(row.get("tt1", ""))
+                        tt2 = str(row.get("tt2", ""))
+                        if any([tc1, tt1, tt2]):
+                            st.write(f"Main: {tc1} → T3: {tt1}, T6: {tt2}")
+                        else:
+                            st.write("—")
 
     # ── Builds ──
     with tabs[1]:
@@ -3700,30 +3703,33 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
                 "Select hero",
                 sorted(builds_df["name"].unique()),
                 key="build_hero",
+                index=None,
+                placeholder="Select a hero to view builds...",
             )
-            hero_builds = builds_df[builds_df["name"] == build_hero]
-            for _, brow in hero_builds.iterrows():
-                tag = str(brow.get("content_tag", ""))
-                label = f"**{build_hero}** ({tag})" if tag else f"**{build_hero}**"
-                st.markdown(label)
-                bc1, bc2, bc3 = st.columns(3)
-                with bc1:
-                    st.markdown("Hero Traits")
-                    ht = [str(brow.get(f"hero_trait_{i}", "")) for i in range(1, 6)]
-                    st.write(" → ".join(t for t in ht if t))
-                with bc2:
-                    st.markdown("Chaser Traits")
-                    ct = [str(brow.get(f"chaser_trait_{i}", "")) for i in range(1, 6)]
-                    st.write(" → ".join(t for t in ct if t))
-                with bc3:
-                    st.markdown("Gear")
-                    st.write(
-                        f"Runes: {brow.get('rune_normal', '—')} / {brow.get('rune_special', '—')}"
-                    )
-                    st.write(
-                        f"Ring: {brow.get('acc_ring', '—')} · Neck: {brow.get('acc_necklace', '—')} · Ear: {brow.get('acc_earring', '—')}"
-                    )
-                st.divider()
+            if build_hero:
+                hero_builds = builds_df[builds_df["name"] == build_hero]
+                for _, brow in hero_builds.iterrows():
+                    tag = str(brow.get("content_tag", ""))
+                    label = f"**{build_hero}** ({tag})" if tag else f"**{build_hero}**"
+                    st.markdown(label)
+                    bc1, bc2, bc3 = st.columns(3)
+                    with bc1:
+                        st.markdown("Hero Traits")
+                        ht = [str(brow.get(f"hero_trait_{i}", "")) for i in range(1, 6)]
+                        st.write(" → ".join(t for t in ht if t))
+                    with bc2:
+                        st.markdown("Chaser Traits")
+                        ct = [str(brow.get(f"chaser_trait_{i}", "")) for i in range(1, 6)]
+                        st.write(" → ".join(t for t in ct if t))
+                    with bc3:
+                        st.markdown("Gear")
+                        st.write(
+                            f"Runes: {brow.get('rune_normal', '—')} / {brow.get('rune_special', '—')}"
+                        )
+                        st.write(
+                            f"Ring: {brow.get('acc_ring', '—')} · Neck: {brow.get('acc_necklace', '—')} · Ear: {brow.get('acc_earring', '—')}"
+                        )
+                    st.divider()
 
     # ── PvE Tiers ──
     with tabs[2]:
@@ -3764,22 +3770,29 @@ def render_meta_database(data: dict[str, pd.DataFrame]) -> None:
             render_empty_state("No content team data available.", icon=":material/menu_book:")
         else:
             contents = sorted(teams_df["content"].unique())
-            content_pick = st.selectbox("Content", contents, key="ct_content")
-            ct_data = teams_df[teams_df["content"] == content_pick]
+            content_pick = st.selectbox(
+                "Content",
+                contents,
+                key="ct_content",
+                index=None,
+                placeholder="Select content to view teams...",
+            )
+            if content_pick:
+                ct_data = teams_df[teams_df["content"] == content_pick]
 
-            for phase in ct_data["phase"].unique():
-                if phase:
-                    st.markdown(f"#### {phase}")
-                phase_data = ct_data[ct_data["phase"] == phase]
-                for _, row in phase_data.iterrows():
-                    team_type = str(row.get("team_type", "main"))
-                    emoji = "🟢" if team_type == "main" else "🔵"
-                    members = str(row.get("members", ""))
-                    notes = str(row.get("notes", ""))
-                    label = f"{emoji} **{team_type.title()}:** {members}"
-                    st.write(label)
-                    if notes:
-                        st.caption(notes)
+                for phase in ct_data["phase"].unique():
+                    if phase:
+                        st.markdown(f"#### {phase}")
+                    phase_data = ct_data[ct_data["phase"] == phase]
+                    for _, row in phase_data.iterrows():
+                        team_type = str(row.get("team_type", "main"))
+                        emoji = "🟢" if team_type == "main" else "🔵"
+                        members = str(row.get("members", ""))
+                        notes = str(row.get("notes", ""))
+                        label = f"{emoji} **{team_type.title()}:** {members}"
+                        st.write(label)
+                        if notes:
+                            st.caption(notes)
 
     # ── Content Usage ──
     with tabs[5]:
