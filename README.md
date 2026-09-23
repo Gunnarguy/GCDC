@@ -1,6 +1,6 @@
 # GrandChase Meta Analyzer
 
-Offline tooling to scrape GrandChase community sources, normalize hero rankings, score the meta in SQLite, and analyze the results in Jupyter.
+Local tooling to scrape GrandChase community sources, normalize hero rankings, score the meta in SQLite, and analyze the results in Jupyter.
 
 ## What This Repo Includes
 
@@ -96,7 +96,7 @@ Pages runs the same Streamlit explorer in the browser through Stlite.
 
 ### Streamlit Community Cloud
 
-If you want the fuller Streamlit app instead of the static Pages export:
+If you want the same explorer served by Streamlit instead of the Pages export:
 
 1. Push the repository to GitHub.
 2. Keep `data/processed/grandchase.db` committed with `git add -f` whenever you want the hosted app refreshed.
