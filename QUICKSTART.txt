@@ -25,10 +25,10 @@ GRANDCHASE META ANALYZER QUICKSTART
    push the repo to GitHub
    enable GitHub Pages with GitHub Actions
    workflow: .github/workflows/pages.yml
-   commit data/processed/grandchase.db when you want hosted data refreshed
+   run make pages and commit docs/grandchase.db when you want hosted data refreshed
 
 8. Free hosted Streamlit deployment
    push the repo to GitHub
    deploy on Streamlit Community Cloud
    app entrypoint: streamlit_app.py
-   keep data/processed/grandchase.db committed when you want hosted data updated
+   keep data/processed/grandchase.db committed with git add -f when you want hosted data updated

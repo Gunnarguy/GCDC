@@ -81,7 +81,7 @@ There are now two free hosted paths in the repo.
 
 This is the path if you want a phone-friendly site on GitHub Pages with no server running on your Mac.
 
-1. Commit `data/processed/grandchase.db` whenever you want the hosted site refreshed.
+1. Run `make pages` and commit `docs/grandchase.db` whenever you want the hosted site refreshed.
 2. Build the static site locally if you want to preview it:
 
 ```bash
@@ -90,21 +90,21 @@ make pages
 
 3. Push to GitHub.
 4. In the repository settings, enable GitHub Pages and choose the GitHub Actions source.
-5. The workflow in `.github/workflows/pages.yml` will build `docs/data/atlas.json` and publish the static site.
+5. The workflow in `.github/workflows/pages.yml` copies `src/grandchase_meta_analyzer/` into `docs/` and publishes the static site.
 
-The GitHub Pages atlas keeps the overview, search, and hero dossier views. It does not yet mirror the full Streamlit comparisons workspace.
+Pages runs the same Streamlit explorer in the browser through Stlite.
 
 ### Streamlit Community Cloud
 
 If you want the fuller Streamlit app instead of the static Pages export:
 
 1. Push the repository to GitHub.
-2. Keep `data/processed/grandchase.db` committed whenever you want the hosted app refreshed.
+2. Keep `data/processed/grandchase.db` committed with `git add -f` whenever you want the hosted app refreshed.
 3. In Streamlit Community Cloud, create a new app from the repo.
 4. Set the main file path to `streamlit_app.py`.
 5. Deploy.
 
-No secrets are required for either hosted path. Both use the checked-in SQLite database.
+No secrets are required for either hosted path. Pages reads `docs/grandchase.db`; Streamlit reads `data/processed/grandchase.db`.
 
 ## Data Outputs
 
